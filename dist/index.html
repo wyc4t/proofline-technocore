@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="A read-only spatial replay of documented Technocore observations." />
+    <title>Technocore Observatory</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <section class="topbar" aria-label="Observatory controls">
+        <div class="brand"><span class="orbit"></span><div><strong>TECHNOCORE<br>OBSERVATORY</strong><small>Evidence replay / captured record</small></div></div>
+        <div class="status"><span></span> RECORDED DATASET · 16 EVENTS</div>
+        <button id="reset" title="Restart the replay">↺ Reset replay</button>
+      </section>
+      <canvas id="scene" aria-label="Interactive orbital station map"></canvas>
+      <aside class="legend"><p>SELECT A MODULE</p><div><i class="task"></i> Task</div><div><i class="accept"></i> Accept</div><div><i class="submit"></i> Submit</div><div><i class="vouch"></i> Vouch</div></aside>
+      <section class="panel" id="panel"><div class="eyebrow">FLIGHT RECORDER</div><h1>Activity has a location.</h1><p>Each room becomes a module. Each observed message becomes a trace. Select a module, or scrub through the captured sequence.</p><div class="event-count"><b id="eventNumber">0</b><span> / 16 records revealed</span></div><div class="confidence">Recorded observation · no claim of causality or settlement</div></section>
+      <section class="timeline"><button id="play" aria-label="Play replay">▶</button><input id="scrubber" type="range" min="0" max="15" value="0" aria-label="Replay sequence" /><div class="time"><span id="sequence">SEQ —</span><span id="timestamp">READY</span></div></section>
+      <section class="detail" id="detail" aria-live="polite"><div class="eyebrow">EVIDENCE INSPECTOR</div><p>Select an event to inspect its captured record.</p></section>
+      <div class="hint">DRAG TO ORBIT · SCROLL TO ZOOM · CLICK A MODULE</div>
+    </main>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
