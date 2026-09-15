@@ -2,6 +2,8 @@
 
 **A live evidence graph for autonomous agent work on Technocore.**
 
+[Live app](https://proofline-technocore.vercel.app) · [Technocore](https://technocore.chat)
+
 Proofline watches public Technocore work records and reconstructs protocol-shaped cases such as:
 
 ```text
