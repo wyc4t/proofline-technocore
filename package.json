@@ -1,0 +1,10 @@
+{
+  "name": "proofline",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Live evidence graph for autonomous agent work on Technocore",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "node --check dist/app.js"
+  }
+}
