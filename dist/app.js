@@ -9,7 +9,7 @@ const $=s=>document.querySelector(s);
 function parseMessage(message,room){
   const text=String(message.text||''),parts=text.split('|').map(x=>x.trim()),kind=String(parts[0]||'').split(/\s+/)[0].toUpperCase();
   if(!KINDS.has(kind)||!parts[1])return null;
-  return {kind,id:parts[1],text,room,seq:Number(message.seq),ts:String(message.ts||''),source:String(message.from||'anonymous'),signed:String(message.from||'').startsWith('did:key:'),stage:STAGE[kind]};
+  return {kind,id:parts[1],text,room,seq:Number(message.seq),ts:String(message.ts||''),source:String(message.from||'anonymous'),signed:String(message.from||'').startsWith('did:key:')&&typeof message.sig==='string'&&message.sig.length>0,stage:STAGE[kind]};
 }
 function words(text){return new Set(String(text).toLowerCase().match(/[a-z0-9][a-z0-9_-]{2,}/g)?.filter(w=>!STOP.has(w))||[])}
 function overlap(a,b){const aa=words(a),bb=words(b);if(!aa.size||!bb.size)return null;let common=0;for(const word of aa)if(bb.has(word))common++;return common/Math.min(aa.size,bb.size)}
@@ -47,7 +47,7 @@ function renderList(){
 function finding(host,label,value,detail,tone=''){
   const box=el('div',`finding ${tone}`),head=el('div','finding-head');head.append(el('b','',label),el('span','',value));box.append(head,el('p','',detail));host.append(box);
 }
-function recordDisclosure(record){const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}`),p=el('p','',record.text),source=el('div','source',`${record.signed?'SIGNED DID':'SELF-ASSERTED SOURCE'} · ${shortDid(record.source)} · ${record.ts}`);d.append(s,p,source);return d}
+function recordDisclosure(record){const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}`),p=el('p','',record.text),source=el('div','source',`${record.signed?'DID + SIGNATURE FIELDS PRESENT':'SELF-ASSERTED SOURCE'} · ${shortDid(record.source)} · ${record.ts}`);d.append(s,p,source);return d}
 function renderInspector(){
   const host=$('#inspector');host.replaceChildren();host.append(el('div','eyebrow','EVIDENCE PROFILE'));
   if(!selected){host.append(el('h2','',`No case selected`),el('p','','Select a live case to see what is present, what is missing, and which records support the assessment.'));return}
@@ -61,7 +61,7 @@ function renderInspector(){
   if(selected.semantic!==null)finding(host,'Lexical alignment signal',`${Math.round(selected.semantic*100)}% overlap`,'A rough shared-term check between request and result. It is a triage hint, not a judgment of semantic correctness.',selected.semantic<.08?'alert':'');
   host.append(el('div','eyebrow','SOURCE RECORDS'));for(const record of selected.list)host.append(recordDisclosure(record));
 }
-function render(){buildCases();renderSummary();if(selected)selected=cases.find(c=>c.id===selected.id)||null;if(!selected)selected=cases.find(c=>c.status==='disputed')||cases.find(c=>c.status==='complete')||cases[0]||null;renderList();renderInspector();drawGraph()}
+function render(){buildCases();renderSummary();if(selected)selected=cases.find(c=>c.id===selected.id)||null;if(!selected)selected=cases.find(c=>c.status==='complete')||cases.find(c=>c.status==='disputed')||cases[0]||null;renderList();renderInspector();drawGraph()}
 
 async function readSource(room,initial){
   const params=new URLSearchParams({format:'json',limit:initial?'200':'80'});if(!initial&&lastSeen[room])params.set('since',String(lastSeen[room]));
@@ -75,9 +75,11 @@ function resizeCanvas(){const rect=canvas.getBoundingClientRect(),scale=Math.min
 function drawGraph(){
   const w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);if(!selected){$('#emptyGraph').style.display='block';return}$('#emptyGraph').style.display='none';$('#graphTitle').textContent=`${selected.id} · ${selected.status.toUpperCase()}`;
   const margin=Math.max(70,w*.1),xs=[margin,w*.36,w*.64,w-margin],centerY=h*.54,nodeColors=['#d7ff55','#65bfff','#ffbe5c','#67e8a5'];
+  const orbit=(phase*.008)%(Math.PI*2);ctx.strokeStyle='#131d28';ctx.lineWidth=1;for(let ring=0;ring<3;ring++){ctx.beginPath();ctx.arc(w/2,centerY,70+ring*52,orbit+ring,orbit+ring+Math.PI*1.35);ctx.stroke()}for(let particle=0;particle<8;particle++){const angle=orbit+particle*Math.PI/4,radius=92+(particle%3)*47;ctx.fillStyle=particle%2?'#65bfff':'#d7ff55';ctx.globalAlpha=.25+particle%3*.18;ctx.beginPath();ctx.arc(w/2+Math.cos(angle)*radius,centerY+Math.sin(angle)*radius,2+(particle%2),0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
   ctx.font='10px DM Mono';ctx.textAlign='center';for(let i=0;i<4;i++){ctx.fillStyle='#647184';ctx.fillText(STAGE_NAMES[i],xs[i],112)}
   for(let stage=0;stage<3;stage++){const from=selected.stages[stage],to=selected.stages[stage+1];if(!from.length||!to.length)continue;for(let a=0;a<from.length;a++)for(let b=0;b<to.length;b++){const y1=centerY+(a-(from.length-1)/2)*55,y2=centerY+(b-(to.length-1)/2)*55;ctx.strokeStyle='#2b3948';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(xs[stage]+13,y1);ctx.bezierCurveTo((xs[stage]+xs[stage+1])/2,y1,(xs[stage]+xs[stage+1])/2,y2,xs[stage+1]-13,y2);ctx.stroke();const p=(phase*.004+(a+b)*.23)%1,px=xs[stage]+(xs[stage+1]-xs[stage])*p,py=y1+(y2-y1)*p;ctx.fillStyle=nodeColors[stage+1];ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fill()}}
   selected.stages.forEach((items,stage)=>items.slice(0,7).forEach((record,index)=>{const y=centerY+(index-(Math.min(items.length,7)-1)/2)*55,r=stage===0?18:13;ctx.shadowColor=nodeColors[stage];ctx.shadowBlur=14;ctx.fillStyle='#0a0e13';ctx.strokeStyle=nodeColors[stage];ctx.lineWidth=2;ctx.beginPath();ctx.arc(xs[stage],y,r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#cbd5e1';ctx.font='9px DM Mono';ctx.fillText(record.kind,xs[stage],y+3);ctx.fillStyle='#5e6c7d';ctx.fillText(`#${record.seq}`,xs[stage],y+r+14)}));
+  const missing=STAGE_NAMES.filter((_,i)=>!selected.stages[i].length);if(missing.length){ctx.font='10px DM Mono';ctx.textAlign='center';ctx.fillStyle='#728095';ctx.fillText(`CURRENT WINDOW MISSING: ${missing.join(' · ')}`,w/2,h-46)}
 }
 function animate(){phase++;drawGraph();requestAnimationFrame(animate)}
 $('#refresh').onclick=()=>refresh(false);$('#filter').onchange=e=>{filter=e.target.value;selected=null;render()};addEventListener('resize',resizeCanvas);resizeCanvas();refresh(true);setInterval(()=>refresh(false),15000);animate();
