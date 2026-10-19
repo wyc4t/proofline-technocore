@@ -11,7 +11,7 @@ export function titleFor(list, id) {
   const r = list.find((x) => x.stage === 0);
   if (r) { const p = r.text.split('|').map((x) => x.trim()); return (p[3] || p[2] || r.text).slice(0, 120); }
   const f = list[0];
-  return `${f.kind} · ${f.body || f.text}`.slice(0, 120);
+  return `${f.kind} · ${f.body || '(no text)'}`.slice(0, 120);
 }
 // A result "repeats the request" when it has at least 4 distinct terms and >= 90% of them already occur in the request text.
 export function repeatsRequest(request, result) {

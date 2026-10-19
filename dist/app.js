@@ -5,7 +5,10 @@ const SOURCES=['credence','kibble'];
 const rooms=SOURCES.map(createRoomState);
 const STATUS_LABEL={'all-stages':'ALL 4 STAGES','partial':'PARTIAL','no-request':'REQUEST NOT SEEN'};
 const MAX_NODES=7;
-let cases=[],selected=null,filter='all',busy=false;
+let cases=[],selected=null,filter='all',busy=false,paused=false,frozenAt=0,lastInspKey=null;
+const uiSig={list:'',insp:''};
+const isNarrow=()=>matchMedia('(max-width:650px)').matches;
+const protocolTotal=()=>rooms.reduce((n,r)=>n+r.counts.protocol,0);
 const $=s=>document.querySelector(s);
 
 function el(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node}
@@ -19,21 +22,21 @@ function renderList(){
   const host=$('#caseList');host.replaceChildren();const visible=visibleCases();
   if(!visible.length){host.append(el('div','loading','No matching cases in the current observation window.'));return}
   for(const item of visible.slice(0,80)){
-    const button=el('button',`case${selected?.key===item.key?' active':''}`);button.type='button';
+    const button=el('button',`case${selected?.key===item.key?' active':''}`);button.type='button';button.dataset.key=item.key;if(selected?.key===item.key)button.setAttribute('aria-current','true');
     const top=el('div','case-top'),badges=el('span','badges');if(item.negative)badges.append(el('span','badge negative',`NEGATIVE ×${item.verdicts.not}`));badges.append(el('span',`badge ${item.status}`,STATUS_LABEL[item.status]));
     top.append(el('span','case-id',item.id),badges);
-    const title=el('div','case-title',item.title);const stages=el('div','stages');for(const stage of item.stages)stages.append(el('i',stage.length?'on':''));
-    const meta=el('div','case-meta');meta.append(el('span','',`${item.list.length} ${item.list.length===1?'record':'records'}`),el('span','',item.room));button.append(top,title,stages,meta);
-    button.onclick=()=>{selected=item;renderList();renderInspector();drawGraph()};host.append(button);
+    const title=el('div','case-title',item.title);const stages=el('div','stages');const seen=item.stages.filter(x=>x.length).length;stages.setAttribute('role','img');stages.setAttribute('aria-label',`${seen} of 4 stages seen: ${STAGE_NAMES.filter((_,i)=>item.stages[i].length).join(', ')||'none'}`);for(const stage of item.stages)stages.append(el('i',stage.length?'on':''));
+    const meta=el('div','case-meta');meta.append(el('span','',`${seen}/4 stages · ${item.list.length} ${item.list.length===1?'record':'records'}`),el('span','',item.room));button.append(top,title,stages,meta);
+    button.onclick=()=>choose(item);host.append(button);
   }
   if(visible.length>80)host.append(el('div','loading',`Showing 80 of ${visible.length} cases.`));
 }
 function finding(host,label,value,detail,tone=''){
   const box=el('div',`finding ${tone}`),head=el('div','finding-head');head.append(el('b','',label),el('span','',value));box.append(head,el('p','',detail));host.append(box);
 }
-function recordDisclosure(record,flagged){const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}${flagged?' · ⚑':''}`),p=el('p','',record.text),source=el('div','source',`${record.signed?'DID + SIGNATURE FIELDS PRESENT (NOT VERIFIED HERE)':'SELF-ASSERTED SOURCE'} · ${shortDid(record.source)} · ${record.ts}`);d.append(s,p,source);return d}
+function recordDisclosure(record,flagged){const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}${flagged?' · ⚑':''}`),p=el('p','',record.text),source=el('div','source',`${record.signed?'DID + SIGNATURE FIELDS PRESENT (NOT VERIFIED HERE)':'SELF-ASSERTED SOURCE'} · ${shortDid(record.source)} · ${record.ts}`);d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s,p,source);return d}
 function renderInspector(){
-  const host=$('#inspector');host.replaceChildren();host.append(el('div','eyebrow','EVIDENCE PROFILE'));
+  const host=$('#inspector');host.replaceChildren();const back=el('button','back','← All cases');back.type='button';back.onclick=closeDetail;host.append(back,el('div','eyebrow','EVIDENCE PROFILE'));
   if(!selected){host.append(el('h2','',`No case selected`),el('p','','Select a case to see which records were observed, what is missing, and what cannot be known from them.'));return}
   const c=selected;host.append(el('h2','',c.id),el('p','',`${c.room} · ${c.title}`));
   const present=c.stages.filter(s=>s.length).length;
@@ -49,7 +52,28 @@ function renderInspector(){
   const flagged=new Set(c.flags.flatMap(f=>f.seqs));
   host.append(el('div','eyebrow','SOURCE RECORDS'));for(const record of c.list)host.append(recordDisclosure(record,flagged.has(record.seq)));
 }
-function render(){cases=buildCases(allRecords(rooms));renderSummary();const visible=visibleCases();selected=(selected&&visible.find(c=>c.key===selected.key))||visible.find(c=>c.status==='all-stages')||visible[0]||null;renderList();renderInspector();drawGraph()}
+function snapshotUi(){const ae=document.activeElement,inList=ae&&ae.closest?.('#caseList'),inInsp=ae&&ae.closest?.('#inspector');
+  return {focusKey:inList?ae.dataset.key:null,focusSeq:inInsp?ae.dataset?.seq??null:null,list:$('#caseList').scrollTop,insp:$('#inspector').scrollTop,open:[...document.querySelectorAll('#inspector details[open]')].map(d=>d.dataset.seq)}}
+function listSignature(visible){return `${filter}|${selected?.key}|${visible.length}|`+visible.slice(0,80).map(c=>`${c.key}:${c.list.length}:${c.verdicts.not}:${c.status}`).join(',')}
+function inspectorSignature(){return selected?`${selected.key}|${selected.list.length}|${selected.list.at(-1).seq}|${selected.flags.map(f=>f.id+f.seqs.length).join()}`:'none'}
+// Re-render only what changed, and put back scroll position, open records and keyboard focus. Selecting another case starts fresh.
+function render(force=false){
+  if(!paused)cases=buildCases(allRecords(rooms));
+  renderSummary();const visible=visibleCases();
+  selected=(selected&&visible.find(c=>c.key===selected.key))||visible.find(c=>c.status==='all-stages')||visible[0]||null;
+  const ls=listSignature(visible),is=inspectorSignature();
+  if(force||ls!==uiSig.list||is!==uiSig.insp){
+    const ui=snapshotUi(),sameCase=selected?.key===lastInspKey;
+    if(force||ls!==uiSig.list){renderList();$('#caseList').scrollTop=ui.list;if(ui.focusKey)$('#caseList').querySelector(`[data-key="${CSS.escape(ui.focusKey)}"]`)?.focus({preventScroll:true})}
+    if(force||is!==uiSig.insp){renderInspector();if(!sameCase)$('#inspector').scrollTop=0;if(sameCase){for(const d of document.querySelectorAll('#inspector details'))if(ui.open.includes(d.dataset.seq))d.open=true;$('#inspector').scrollTop=ui.insp;if(ui.focusSeq)$('#inspector').querySelector(`summary[data-seq="${CSS.escape(ui.focusSeq)}"]`)?.focus({preventScroll:true})}}
+    uiSig.list=ls;uiSig.insp=is;lastInspKey=selected?.key??null;
+  }
+  drawGraph();
+}
+function choose(item){selected=item;if(isNarrow()){document.body.classList.add('detail');history.pushState({detail:1},'')}render(true);if(isNarrow())$('#inspector').scrollTop=0}
+function closeDetail(){if(history.state?.detail)history.back();else document.body.classList.remove('detail')}
+addEventListener('popstate',()=>document.body.classList.remove('detail'));
+addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('detail'))closeDetail()});
 function fmtSpan(ms){if(ms===null)return 'no data';const s=Math.round(ms/1000);if(s<90)return `${s}s`;const m=Math.round(s/60);if(m<120)return `${m}m`;const h=Math.round(m/60);return h<48?`${h}h`:`${Math.round(h/24)}d`}
 function coverageLine(c){const bits=[`${c.room} ${c.records} rec`,fmtSpan(c.spanMs)];if(c.status==='error')bits.push('delayed');if(c.gaps)bits.push(`${c.missed} missed`);if(c.resets)bits.push(`${c.resets} reset`);if(c.malformed)bits.push(`${c.malformed} unparsed`);return bits.join(' · ')}
 async function pollRoom(state){
@@ -57,20 +81,24 @@ async function pollRoom(state){
   const response=await fetch(`https://technocore.chat/r/${state.room}?${params}`,{cache:'no-store'});if(!response.ok)throw new Error(`${state.room} returned ${response.status}`);
   applyPage(state,await response.json(),{since});markOk(state,Date.now());
 }
-async function refresh(){if(busy)return;busy=true;$('#live').className='live';$('#live span').textContent='READING LIVE RECORDS';
-  const results=await Promise.allSettled(rooms.map(pollRoom));results.forEach((r,i)=>{if(r.status==='rejected')markError(rooms[i],r.reason?.message||r.reason,Date.now())});
-  try{render()}finally{busy=false}
+function updateStatus(){
   const cov=rooms.map(coverage),bad=cov.filter(c=>c.status==='error'),total=cov.reduce((n,c)=>n+c.records,0),gaps=cov.reduce((n,c)=>n+c.gaps,0);
-  $('#live').className=`live ${bad.length===cov.length?'error':bad.length||gaps?'warn':'ready'}`;
-  $('#live span').textContent=bad.length===cov.length?'LIVE READ DELAYED':bad.length?`PARTIAL · ${bad.map(c=>c.room.toUpperCase()).join(', ')} DELAYED`:`LIVE · ${total} PROTOCOL RECORDS${gaps?' · GAPS':''}`;
+  $('#live').className=`live ${bad.length===cov.length?'error':bad.length||gaps||paused?'warn':'ready'}`;
+  $('#live span').textContent=paused?`PAUSED · ${Math.max(0,protocolTotal()-frozenAt)} NEW`:bad.length===cov.length?'LIVE READ DELAYED':bad.length?`PARTIAL · ${bad.map(c=>c.room.toUpperCase()).join(', ')} DELAYED`:`LIVE · ${total} PROTOCOL RECORDS${gaps?' · GAPS':''}`;
   $('#sourceStatus').textContent=cov.map(coverageLine).join('  |  ');$('#sourceStatus').title=bad.map(c=>c.error).join('\n');
+  const b=$('#pause');b.setAttribute('aria-pressed',String(paused));b.querySelector('.ico').textContent=paused?'▶':'⏸';b.querySelector('.lbl').textContent=paused?`Resume · ${Math.max(0,protocolTotal()-frozenAt)} new`:'Pause updates';b.setAttribute('aria-label',paused?'Resume live updates':'Pause live updates');
 }
+async function refresh(){if(busy)return;busy=true;if(!paused){$('#live').className='live';$('#live span').textContent='READING LIVE RECORDS'}
+  try{const results=await Promise.allSettled(rooms.map(pollRoom));results.forEach((r,i)=>{if(r.status==='rejected')markError(rooms[i],r.reason?.message||r.reason,Date.now())});if(!paused)render()}finally{busy=false}
+  updateStatus();
+}
+function togglePause(){paused=!paused;if(paused)frozenAt=protocolTotal();else render(true);updateStatus()}
 
 const canvas=$('#graph'),ctx=canvas.getContext('2d');
 function resizeCanvas(){const rect=canvas.getBoundingClientRect(),scale=Math.min(devicePixelRatio,2);canvas.width=rect.width*scale;canvas.height=rect.height*scale;ctx.setTransform(scale,0,0,scale,0,0);drawGraph()}
 // The graph is static: it is redrawn only when the selection or data changes. Columns are stages, not relationships.
 function drawGraph(){
-  const w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);if(!selected){$('#emptyGraph').style.display='block';return}$('#emptyGraph').style.display='none';$('#graphTitle').textContent=`${selected.id} · ${STATUS_LABEL[selected.status]}`;
+  const w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);if(!selected){$('#emptyGraph').style.display='block';return}$('#emptyGraph').style.display='none';$('#graphTitle').textContent=`${selected.id} · ${STATUS_LABEL[selected.status]}`;canvas.setAttribute('aria-label',`Diagram of case ${selected.id}: ${selected.stages.map((x,i)=>`${x.length} ${STAGE_NAMES[i].toLowerCase()}`).join(', ')} records. The same records are listed in the evidence profile.`);
   const margin=Math.max(70,w*.1),xs=[margin,w*.36,w*.64,w-margin],centerY=h*.54,nodeColors=['#d7ff55','#65bfff','#ffbe5c','#67e8a5'],pos=new Map();
   ctx.textAlign='center';ctx.font='10px DM Mono';for(let i=0;i<4;i++){ctx.fillStyle='#8696a8';ctx.fillText(STAGE_NAMES[i],xs[i],112)}
   selected.stages.forEach((items,stage)=>{const shown=items.slice(0,MAX_NODES);shown.forEach((record,index)=>pos.set(record.seq,{x:xs[stage],y:centerY+(index-(shown.length-1)/2)*55,stage,record}));
@@ -83,5 +111,5 @@ function drawGraph(){
   if(missing.length)ctx.fillText(`NOT IN OBSERVED WINDOW: ${missing.join(' · ')}`,w/2,h-46);
   ctx.fillText('Solid line: record cites another by seq  ·  Dashed: same key continues  ·  Columns are stages, not relationships',w/2,h-24);
 }
-$('#refresh').onclick=()=>refresh();$('#filter').onchange=e=>{filter=e.target.value;render()};addEventListener('resize',resizeCanvas);resizeCanvas();refresh();setInterval(refresh,15000);
+$('#refresh').onclick=()=>refresh();$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};addEventListener('resize',resizeCanvas);resizeCanvas();refresh();setInterval(refresh,15000);
 if(document.modelContext?.registerTool)document.modelContext.registerTool({name:'inspect_evidence_cases',title:'Inspect evidence cases',description:'Return structural observations for live Technocore work chains already loaded in Proofline.',inputSchema:{type:'object',properties:{status:{type:'string',enum:['all','all-stages','partial','no-request','negative']}},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:({status='all'}={})=>({observed_at:new Date().toISOString(),cases:cases.filter(c=>status==='all'||(status==='negative'?c.negative:c.status===status)).slice(0,20).map(c=>({room:c.room,id:c.id,status:c.status,stages:c.stages.map(s=>s.length),verdicts:c.verdicts,flags:c.flags.map(f=>f.id),records:c.list.length}))})});
