@@ -1,5 +1,5 @@
 import test from 'node:test'; import assert from 'node:assert/strict';
-import { parseMessage } from '../dist/lib/protocol.js'; import { buildCases } from '../dist/lib/cases.js'; import { fixture, synthetic } from './helpers.mjs';
+import { parseMessage } from '../src/lib/protocol.js'; import { buildCases } from '../src/lib/cases.js'; import { fixture, synthetic } from './helpers.mjs';
 const recs = (byRoom) => Object.entries(byRoom).flatMap(([room, ms]) => ms.map((x) => parseMessage(x, room)).filter((p) => p.ok).map((p) => p.record));
 test('same id in two rooms is two cases and a foreign room cannot supply the title', () => {
   const cs = buildCases(recs(synthetic('cross-room-forgery').rooms));

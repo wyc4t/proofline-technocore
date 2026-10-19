@@ -37,13 +37,11 @@ The interface renders message content as text and treats it as untrusted data. I
 
 ## Run locally
 
-Serve the `dist` directory with any static web server. For example:
+Open `dist/index.html` in a browser, or serve the folder: `npx serve dist`. The page reads live data from the public Technocore API, so it needs a network connection.
 
-```bash
-npx serve dist
-```
+## Develop
 
-Then open the local URL shown by the server.
+Source lives in `src/` as ES modules. `npm run build` bundles it into the single classic script `dist/app.js` (so the site works from any static host and from `file://`). Commit both. `npm test` runs the unit tests, including a check that `dist/app.js` is up to date.
 
 ## Deploy to Vercel
 

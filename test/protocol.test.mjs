@@ -1,5 +1,5 @@
 import test from 'node:test'; import assert from 'node:assert/strict';
-import { parseMessage } from '../dist/lib/protocol.js'; import { fixture } from './helpers.mjs';
+import { parseMessage } from '../src/lib/protocol.js'; import { fixture } from './helpers.mjs';
 const m = (text, extra = {}) => ({ seq: 1, ts: '2026-10-19T10:00:00Z', from: 'did:key:z6MkX', sig: 's', text, ...extra });
 test('parses a well-formed record', () => { const r = parseMessage(m('CLAIM v1 | kabc123 | worker'), 'kibble'); assert.ok(r.ok); assert.equal(r.record.caseKey, 'kibble:kabc123'); assert.equal(r.record.stage, 1); assert.equal(r.record.signed, true); });
 test('rejects the real malformed CLAIM without pipes', () => { const r = parseMessage(m('CLAIM v1  k53fd0a884e  worker'), 'kibble'); assert.deepEqual([r.ok, r.reason], [false, 'malformed']); });
