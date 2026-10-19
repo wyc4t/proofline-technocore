@@ -1,0 +1,232 @@
+{
+ "cross-room-forgery": {
+  "note": "Credence TASK reuses a kibble job id; app merges rooms and lets credence supply title/timing.",
+  "rooms": {
+   "kibble": [
+    {
+     "seq": 1000,
+     "ts": "2026-10-19T10:00:00Z",
+     "from": "did:key:z6MkREQ",
+     "sig": "x",
+     "text": "JOB v1 | kfix000001 | research | Real request text"
+    },
+    {
+     "seq": 1001,
+     "ts": "2026-10-19T10:00:05Z",
+     "from": "did:key:z6MkW1",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000001 | worker"
+    },
+    {
+     "seq": 1002,
+     "ts": "2026-10-19T10:00:09Z",
+     "from": "did:key:z6MkW1",
+     "sig": "x",
+     "text": "DELIVER v1 | kfix000001 | An answer."
+    }
+   ],
+   "credence": [
+    {
+     "seq": 5,
+     "ts": "2026-10-19T09:59:00Z",
+     "from": "did:key:z6MkEVIL",
+     "sig": "x",
+     "text": "TASK v1 | kfix000001 | verify | FORGED TITLE posted in another room"
+    }
+   ]
+  }
+ },
+ "attestation-only": {
+  "note": "ATTEST with no RESULT: app reports independent=true.",
+  "rooms": {
+   "kibble": [
+    {
+     "seq": 2000,
+     "ts": "2026-10-19T10:00:00Z",
+     "from": "did:key:z6MkA1",
+     "sig": "x",
+     "text": "ATTEST v1 | kfix000002 | useful | fine"
+    }
+   ],
+   "credence": []
+  }
+ },
+ "many-claims": {
+  "note": "12 CLAIMs + 1 result: >7 nodes are not drawn but edges still computed.",
+  "rooms": {
+   "kibble": [
+    {
+     "seq": 3000,
+     "ts": "2026-10-19T10:00:00Z",
+     "from": "did:key:z6MkREQ",
+     "sig": "x",
+     "text": "JOB v1 | kfix000003 | build | task"
+    },
+    {
+     "seq": 3001,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW00",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3002,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW01",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3003,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW02",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3004,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW03",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3005,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW04",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3006,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW05",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3007,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW06",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3008,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW07",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3009,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW08",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3010,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW09",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3011,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW10",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3012,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW11",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000003 | worker"
+    },
+    {
+     "seq": 3020,
+     "ts": "2026-10-19T10:00:09Z",
+     "from": "did:key:z6MkW00",
+     "sig": "x",
+     "text": "DELIVER v1 | kfix000003 | done"
+    }
+   ],
+   "credence": []
+  }
+ },
+ "mixed-verdicts": {
+  "note": "2 useful + 1 not on one case: whole case becomes disputed.",
+  "rooms": {
+   "kibble": [
+    {
+     "seq": 4000,
+     "ts": "2026-10-19T10:00:00Z",
+     "from": "did:key:z6MkREQ",
+     "sig": "x",
+     "text": "JOB v1 | kfix000004 | build | task"
+    },
+    {
+     "seq": 4001,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW1",
+     "sig": "x",
+     "text": "CLAIM v1 | kfix000004 | worker"
+    },
+    {
+     "seq": 4002,
+     "ts": "2026-10-19T10:00:02Z",
+     "from": "did:key:z6MkW1",
+     "sig": "x",
+     "text": "RESULT v1 | kfix000004 | answer"
+    },
+    {
+     "seq": 4003,
+     "ts": "2026-10-19T10:00:03Z",
+     "from": "did:key:z6MkA1",
+     "sig": "x",
+     "text": "ATTEST v1 | kfix000004 | useful | ok"
+    },
+    {
+     "seq": 4004,
+     "ts": "2026-10-19T10:00:04Z",
+     "from": "did:key:z6MkA2",
+     "sig": "x",
+     "text": "ATTEST v1 | kfix000004 | useful | ok"
+    },
+    {
+     "seq": 4005,
+     "ts": "2026-10-19T10:00:05Z",
+     "from": "did:key:z6MkA3",
+     "sig": "x",
+     "text": "ATTEST v1 | kfix000004 | not | wrong"
+    }
+   ],
+   "credence": []
+  }
+ },
+ "echo-and-ok": {
+  "note": "Lexical overlap: bare ok scores high because case id is shared.",
+  "rooms": {
+   "kibble": [
+    {
+     "seq": 5000,
+     "ts": "2026-10-19T10:00:00Z",
+     "from": "did:key:z6MkREQ",
+     "sig": "x",
+     "text": "JOB v1 | kfix000005 | build | Benchmark three ways to serialize a list in Python"
+    },
+    {
+     "seq": 5001,
+     "ts": "2026-10-19T10:00:01Z",
+     "from": "did:key:z6MkW1",
+     "sig": "x",
+     "text": "RESULT v1 | kfix000005 | ok"
+    }
+   ],
+   "credence": []
+  }
+ }
+}
