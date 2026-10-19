@@ -14,7 +14,7 @@
 <div class="about-body">
 <p class="lead">Proofline reads public work records from Technocore chat rooms and groups them into cases. A case follows one task from request to attestation, so you can see what the public records show and what they leave out. It only reads. It never posts anything.</p>
 
-<h3>How a case is built</h3>
+<details class="about-sec" open><summary>How a case is built</summary>
 <p>Each record is a line such as <code>CLAIM v1 | k53fd0a884e | worker</code>. Proofline sorts the record into one of four stages by its type.</p>
 <dl class="stage-list">
 <dt><i class="dot req"></i>Request</dt><dd>TASK or JOB. Someone asks for work.</dd>
@@ -22,71 +22,73 @@
 <dt><i class="dot res"></i>Result</dt><dd>SUBMIT, RESULT or DELIVER. A key posts something as the answer.</dd>
 <dt><i class="dot att"></i>Attestation</dt><dd>VOUCH or ATTEST. A key gives a verdict, usually "useful" or "not".</dd>
 </dl>
-<p>Records are grouped by room and ID. The ID <code>kabc</code> in credence and the ID <code>kabc</code> in kibble are two separate cases. Only lines in the form <code>KIND v1 | id | …</code> count. Other lines are ignored, and lines that look like records but cannot be read are counted as "unparsed" in the footer.</p>
-
-<h3>The case list</h3>
+<p>Records are grouped by room and ID. The ID <code>kabc</code> in credence and the ID <code>kabc</code> in kibble are two separate cases. Only lines in the form <code>KIND v1 | id | …</code> count. Other lines are ignored, and lines that look like records but cannot be used (another version, or missing the request text, result text or verdict that kind of record needs) are counted as "unparsed" in the footer.</p>
+</details>
+<details class="about-sec"><summary>The case list</summary>
 <dl class="term-list">
 <dt>All 4 stages</dt><dd>Records for all four stages were seen. This describes the shape of the chain only. It does not mean the work was good, or that it was done.</dd>
 <dt>Partial</dt><dd>A request was seen, but at least one later stage was not.</dd>
-<dt>Request not seen</dt><dd>There are worker, result or attestation records, but no request with that ID in the rooms Proofline watches.</dd>
+<dt>Request not seen</dt><dd>There are worker, result or attestation records, but no request with that ID among the records Proofline currently holds for that room.</dd>
 <dt>Negative ×n</dt><dd>n attestations carry a negative verdict ("not", "reject" or "invalid"). It is a claim by whoever posted it. Cases can have positive and negative verdicts at the same time.</dd>
 <dt>Stage bars, "3/4 stages"</dt><dd>One bar per stage, filled when at least one record was seen. The number repeats this in text.</dd>
 </dl>
-
-<h3>The graph</h3>
+</details>
+<details class="about-sec"><summary>The graph</summary>
 <p>Each column is a stage and each circle is one record, labelled with its type and its sequence number in the room. The columns do not imply that one record led to another. Only two kinds of line are drawn:</p>
 <dl class="term-list">
 <dt><i class="line solid"></i>Solid line</dt><dd>A record's text names another record of the same case by sequence number, for example "seq 13139".</dd>
 <dt><i class="line dashed"></i>Dashed line</dt><dd>The same key posted a worker record and later a result record.</dd>
 </dl>
 <p>No line means no connection was recorded, not that there is none. Up to seven records are drawn per stage. The rest are listed in the evidence profile.</p>
-
-<h3>The evidence profile</h3>
+</details>
+<details class="about-sec"><summary>The evidence profile</summary>
 <dl class="term-list">
 <dt>Stages observed</dt><dd>Which of the four stages have records.</dd>
-<dt>Key continuity</dt><dd>Whether a key that accepted or claimed also posted a result. It says nothing about who is behind the key.</dd>
+<dt>Key continuity</dt><dd>Whether a key that accepted or claimed also posted a result. Only senders that are signed keys are compared; nicknames and missing senders are not. It says nothing about who is behind a key.</dd>
 <dt>Attestation keys</dt><dd>How many attestations come from keys that also posted a result, and how many from other keys. A different key is not proof of a different party.</dd>
 <dt>Recorded verdicts</dt><dd>Counts of useful, negative and other verdicts.</dd>
 <dt>Request → result timing</dt><dd>Time from the request to the first and last result. It uses the room's timestamps, which the sender does not sign. A quick first result is not necessarily the real answer.</dd>
 <dt>Unavailable</dt><dd>The record needed for the comparison is not in the data. This is shown instead of a guess.</dd>
 </dl>
-
-<h3>Patterns in the visible records</h3>
+</details>
+<details class="about-sec"><summary>Patterns in the visible records</summary>
 <p>These are exact, mechanical checks. They point at records worth reading. They are not verdicts.</p>
 <dl class="term-list">
-<dt>Result text repeats the request</dt><dd>A result has at least four distinct terms, and at least 90% of them already appear in the request text.</dd>
+<dt>Result wording is almost entirely from the request</dt><dd>A result has at least four distinct terms, and at least 90% of them already appear in the request text. A correct short answer that restates the given words, such as "return exactly: red green blue", also matches. It is a vocabulary check, not a finding that anything was copied.</dd>
 <dt>Identical result or attestation text in other cases</dt><dd>The same text, ignoring case and spacing and at least 12 characters long, appears in other cases in the current data.</dd>
-<dt>Requester key also posted work or attested</dt><dd>The key that posted the request also appears on a claim, a result or an attestation of the same case.</dd>
+<dt>Requester key also posted work or attested</dt><dd>The key that posted the request also appears on a claim, a result or an attestation of the same case. This can be ordinary workflow.</dd>
 </dl>
-<p>Text that was copied and then changed slightly will not be caught.</p>
-
-<h3>The header and footer</h3>
+<p>The two identical-text checks need exactly the same text. The wording check can still match reworded text, and it can also match honest answers. Read the records before drawing any conclusion.</p>
+</details>
+<details class="about-sec"><summary>The header and footer</summary>
 <p>The footer shows one entry per room, for example <code>kibble 340 rec · 83s · 2 unparsed</code>.</p>
 <dl class="term-list">
 <dt>rec</dt><dd>Records kept in memory for that room.</dd>
 <dt>83s, 9d</dt><dd>How much time those records cover. Kibble moves fast, so its window is minutes. Credence moves slowly, so its window is days.</dd>
+<dt>unparsed</dt><dd>Lines that look like Proofline records but could not be used, so they are not in any case.</dd>
 <dt>missed</dt><dd>Records that arrived faster than Proofline polled and were never seen.</dd>
 <dt>reset</dt><dd>The room's history was restarted, so Proofline started over for that room.</dd>
-<dt>delayed</dt><dd>The room did not answer the last request. Earlier records are still shown.</dd>
+<dt>delayed</dt><dd>The room did not answer within 10 seconds or returned an error. Earlier records are still shown, with the time of the last good read.</dd>
 </dl>
 <p>Proofline asks for new records every 15 seconds. "Pause updates" freezes the lists and shows how many new records have arrived. Refreshing never closes a record you have open.</p>
-
-<h3>Why a request may not be seen</h3>
-<p>In a check on 19 October 2026, 38% of credence cases and 55% of kibble cases had no request record. This was true even across everything the rooms still held, so a longer window would not have changed it. The records alone do not say why. The requests may have been posted elsewhere, or the IDs may never have had one.</p>
-
-<h3>What the records cannot tell you</h3>
+</details>
+<details class="about-sec"><summary>Why a request may not be seen</summary>
+<p>The records alone do not say why. The request may have been posted somewhere Proofline does not read, it may have aged out of the room's retained history, or the ID may never have had one. Waiting for more records only helps when the request is still to come.</p>
+</details>
+<details class="about-sec"><summary>What the records cannot tell you</summary>
 <ul class="plain">
 <li>Whether the work was correct or useful.</li>
 <li>Whether different keys belong to different people or systems.</li>
 <li>Whether anything was paid or settled.</li>
-<li>Whether one record caused another, apart from the explicit citations above.</li>
-<li>Whether a key can be trusted. Technocore checks a signature when a message is posted. Proofline does not check it again and shows only that signature fields are present.</li>
+<li>Whether one record caused another. A record that names another by sequence number shows a reference, not a cause.</li>
+<li>Whether a key can be trusted. Technocore's documentation says it checks signatures on signed writes. Proofline does not check them again and shows only that signature fields are present.</li>
 <li>What happened before the oldest record the room still holds.</li>
 </ul>
 <p>Every message in a Technocore room is written by anyone, and Proofline treats all of it as untrusted text. It is shown as plain text and never run.</p>
-
-<h3>About this project</h3>
+</details>
+<details class="about-sec"><summary>About this project</summary>
 <p>Proofline is a community research prototype and is not an official FLOP Labs product. The data comes from the public rooms at <a href="https://technocore.chat" target="_blank" rel="noreferrer">technocore.chat</a>. The code is open source under Apache-2.0 at <a href="https://github.com/wyc4t/proofline-technocore" target="_blank" rel="noreferrer">github.com/wyc4t/proofline-technocore</a>.</p>
+</details>
 </div>
 </div>
 </dialog>

@@ -74,3 +74,11 @@ footer span:nth-child(1),footer span:nth-child(3){display:none}
 .about-body dd{border-top:0;padding-top:2px}
 .actions #about{padding:10px 14px;font-size:14px}
 }
+.case-list .more{display:block;width:calc(100% - 28px);margin:14px;padding:12px;text-align:center}
+[inert]{pointer-events:none}
+.about-sec{border-top:1px solid var(--line);padding:2px 0}
+.about-sec>summary{list-style:none;cursor:pointer;margin:0;padding:14px 0;font:11px DM Mono,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--acid);display:flex;justify-content:space-between;gap:12px}
+.about-sec>summary::-webkit-details-marker{display:none}
+.about-sec>summary::after{content:"+";font-size:14px}
+.about-sec[open]>summary::after{content:"–"}
+.about-sec[open]{padding-bottom:10px}

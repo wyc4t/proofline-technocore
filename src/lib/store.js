@@ -19,7 +19,11 @@ export function applyPage(state, page, { since = null, cap = ROOM_CAP } = {}) {
   const gen = page?.generation;
   const regressed = since !== null && Number.isFinite(Number(page?.last_seq)) && Number(page.last_seq) < since;
   if ((state.generation !== null && gen !== undefined && gen !== state.generation) || regressed) reset(state);
-  else if (since === null) state.needsFullReload = false;
+  else if (since === null) {
+    // A full read is authoritative: start the room's view from scratch so overlapping reads cannot double-count anything.
+    state.needsFullReload = false; state.records.clear(); state.lastSeq = 0; state.firstTsAll = null; state.lastTsAll = null;
+    state.evicted = 0; state.gaps = []; state.counts = { protocol: 0, malformed: 0, unsupported: 0, ignored: 0 };
+  }
   if (gen !== undefined) state.generation = gen;
   const wasReload = state.needsFullReload; // true right after a reset: this page is a partial view of the new epoch
   if (!wasReload && since !== null && seqs.length) {

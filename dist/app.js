@@ -21,20 +21,23 @@ function parseMessage(message, room) {
   const id = parts[1];
   const seq = Number(message.seq);
   if (!id || !ID.test(id) || !Number.isFinite(seq)) return { ok: false, reason: 'malformed', kind };
-  const from = String(message.from || 'anonymous');
+  const from = typeof message.from === 'string' ? message.from : '';
   const stage = STAGE[kind];
+  const signed = from.startsWith('did:key:') && typeof message.sig === 'string' && message.sig.length > 0;
   // body: free text after the structured fields. Workers' ACCEPT/CLAIM carry none; attestations put a verdict before it.
   const verdict = stage === 3 ? String(parts[2] || '').toLowerCase() : '';
   const body = stage === 1 ? '' : parts.slice(stage === 3 ? 3 : 2).join(' | ');
+  // Envelope is not enough: each kind must carry the field it is about (request text, result text, verdict).
+  if ((stage === 0 && !String(parts[2] || '')) || (stage === 2 && !body) || (stage === 3 && !verdict)) return { ok: false, reason: 'malformed', kind };
   return {
     ok: true,
     record: {
       kind, id, room, seq, text,
       caseKey: `${room}:${id}`,
       ts: String(message.ts || ''),
-      source: from,
-      signed: from.startsWith('did:key:') && typeof message.sig === 'string' && message.sig.length > 0,
-      stage, verdict, body,
+      source: from,                 // whatever the sender called itself; '' when absent
+      keyId: signed ? from : null,  // only a did:key with signature fields present counts as a key; nicknames are never compared as keys
+      signed, stage, verdict, body,
     },
   };
 }
@@ -42,12 +45,16 @@ function parseMessage(message, room) {
 /* src/lib/cases.js */
 // Groups protocol records into cases and derives STRUCTURAL observations. Nothing here judges quality, identity or truth.
 // A case is scoped to ONE room: the same id in two rooms is two cases.
+// "Key" comparisons use only senders that are did:key identities with signature fields present (record.keyId).
+// Nicknames and missing senders are never compared as keys.
 const STOP = new Set('the a an and or to of in for on with is are was were be by from this that it as at into must should can will about after before'.split(' '));
 const words = (text) => new Set(String(text).toLowerCase().match(/[a-z0-9][a-z0-9_-]{2,}/g)?.filter((w) => !STOP.has(w)) || []);
 const norm = (s) => String(s).toLowerCase().replace(/\s+/g, ' ').trim();
 const NEGATIVE = new Set(['not', 'reject', 'invalid']);
 const MIN_REUSE_LEN = 12;
 const label = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const hash = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+const keySet = (list) => new Set(list.map((r) => r.keyId).filter(Boolean));
 
 function titleFor(list, id) {
   const r = list.find((x) => x.stage === 0);
@@ -55,8 +62,9 @@ function titleFor(list, id) {
   const f = list[0];
   return `${f.kind} · ${f.body || '(no text)'}`.slice(0, 120);
 }
-// A result "repeats the request" when it has at least 4 distinct terms and >= 90% of them already occur in the request text.
-function repeatsRequest(request, result) {
+// Vocabulary test, not a judgement: at least 4 distinct terms in the result and >= 90% of them already occur in the request text.
+// A short answer to "return exactly: a b c d" passes it legitimately, so the flag is worded as vocabulary, never as copying.
+function wordingFromRequest(request, result) {
   if (!request) return false;
   const rt = words(result.body); if (rt.size < 4) return false;
   const qt = words(request.body); let n = 0; for (const w of rt) if (qt.has(w)) n++;
@@ -65,8 +73,8 @@ function repeatsRequest(request, result) {
 function extractLinks(list, stages) {
   const bySeq = new Map(list.map((r) => [r.seq, r])), links = [], seen = new Set();
   const add = (from, to, type) => { const k = `${from}>${to}>${type}`; if (!seen.has(k)) { seen.add(k); links.push({ from, to, type }); } };
-  for (const r of list) for (const m of r.text.matchAll(/\bseq\s+(\d{3,})/gi)) { const to = Number(m[1]); if (to !== r.seq && bySeq.has(to)) add(r.seq, to, 'cites'); }
-  for (const w of stages[1]) for (const res of stages[2]) if (w.source === res.source && w.seq < res.seq) add(w.seq, res.seq, 'same-key');
+  for (const r of list) for (const m of r.text.matchAll(/\bseq\s*#?(\d+)/gi)) { const to = Number(m[1]); if (to !== r.seq && bySeq.has(to)) add(r.seq, to, 'cites'); }
+  for (const w of stages[1]) for (const res of stages[2]) if (w.keyId && w.keyId === res.keyId && w.seq < res.seq) add(w.seq, res.seq, 'same-key');
   return links;
 }
 function reuseIndex(records, stage) {
@@ -87,25 +95,37 @@ function buildCases(records) {
     const status = stages.every((s) => s.length) ? 'all-stages' : request ? 'partial' : 'no-request';
     const verdicts = { useful: 0, not: 0, other: 0 };
     for (const a of attests) { if (NEGATIVE.has(a.verdict)) verdicts.not++; else if (a.verdict === 'useful') verdicts.useful++; else verdicts.other++; }
-    const requestKeys = new Set(requests.map((r) => r.source)), workerKeys = new Set(workers.map((r) => r.source)), resultKeys = new Set(results.map((r) => r.source));
-    const self = attests.filter((a) => resultKeys.has(a.source)).length;
-    const attestation = { state: !attests.length ? 'no-attestation' : !results.length ? 'no-result' : 'ok', self, other: attests.length - self };
-    const continuity = !workers.length ? 'no-worker' : !results.length ? 'no-result' : results.some((r) => workerKeys.has(r.source)) ? 'observed' : 'not-observed';
+    const requestKeys = keySet(requests), workerKeys = keySet(workers), resultKeys = keySet(results);
+    let attestation;
+    if (!attests.length) attestation = { state: 'no-attestation', self: 0, other: 0, unknown: 0 };
+    else if (!results.length) attestation = { state: 'no-result', self: 0, other: 0, unknown: 0 };
+    else if (!resultKeys.size) attestation = { state: 'no-key', self: 0, other: 0, unknown: attests.length };
+    else {
+      const self = attests.filter((a) => a.keyId && resultKeys.has(a.keyId)).length, unknown = attests.filter((a) => !a.keyId).length;
+      attestation = { state: 'ok', self, other: attests.length - self - unknown, unknown };
+    }
+    const continuity = !workers.length ? 'no-worker' : !results.length ? 'no-result' : !workerKeys.size || !resultKeys.size ? 'no-key'
+      : results.some((r) => r.keyId && workerKeys.has(r.keyId)) ? 'observed' : 'not-observed';
     const t = (r) => new Date(r.ts).getTime(), first = results[0], last = results.at(-1);
     const elapsedFirst = request && first ? t(first) - t(request) : null, elapsedLast = request && last ? t(last) - t(request) : null;
     const flags = [];
-    const echoes = results.filter((r) => repeatsRequest(request, r));
-    if (echoes.length) flags.push({ id: 'repeats-request', label: 'Result text repeats the request', detail: `Nearly all distinct terms in ${label(echoes.length, 'result', 'results')} already appear in the request text.`, seqs: echoes.map((r) => r.seq) });
+    const echoes = results.filter((r) => wordingFromRequest(request, r));
+    if (echoes.length) flags.push({ id: 'wording-from-request', label: 'Result wording is almost entirely from the request', detail: `Nearly all distinct terms in ${label(echoes.length, 'result', 'results')} already appear in the request text. A short answer that restates the given words can look like this.`, seqs: echoes.map((r) => r.seq) });
     const rr = results.map((r) => [r, others(resultReuse, r, key)]).filter(([, n]) => n > 0);
     if (rr.length) flags.push({ id: 'reused-result', label: 'Identical result text in other cases', detail: `Exact same text also appears in ${label(Math.max(...rr.map(([, n]) => n)), 'other case', 'other cases')} in this window.`, seqs: rr.map(([r]) => r.seq) });
     const ra = attests.map((r) => [r, others(attestReuse, r, key)]).filter(([, n]) => n > 0);
     if (ra.length) flags.push({ id: 'reused-attestation', label: 'Identical attestation text in other cases', detail: `Exact same text also appears in ${label(Math.max(...ra.map(([, n]) => n)), 'other case', 'other cases')} in this window.`, seqs: ra.map(([r]) => r.seq) });
-    const rw = [...workers, ...results].filter((r) => requestKeys.has(r.source));
+    const rw = [...workers, ...results].filter((r) => r.keyId && requestKeys.has(r.keyId));
     if (rw.length) flags.push({ id: 'requester-posted-work', label: 'Requester key also posted as worker or result', detail: 'The key that posted the request also appears on a claim, accept or result.', seqs: rw.map((r) => r.seq) });
-    const ra2 = attests.filter((r) => requestKeys.has(r.source));
-    if (ra2.length) flags.push({ id: 'requester-attested', label: 'Requester key also attested', detail: 'The key that posted the request also appears on an attestation.', seqs: ra2.map((r) => r.seq) });
+    const ra2 = attests.filter((r) => r.keyId && requestKeys.has(r.keyId));
+    if (ra2.length) flags.push({ id: 'requester-attested', label: 'Requester key also attested', detail: 'The key that posted the request also appears on an attestation. This can be ordinary workflow.', seqs: ra2.map((r) => r.seq) });
+    const links = extractLinks(list, stages);
+    // Everything the interface displays for this case, so the view can tell when anything shown has changed (not only the record count).
+    const fingerprint = [status, JSON.stringify(verdicts), JSON.stringify(attestation), continuity, elapsedFirst, elapsedLast,
+      flags.map((f) => `${f.id}:${f.detail}:${f.seqs.join('.')}`).join(';'), links.map((l) => `${l.from}${l.type[0]}${l.to}`).join(','),
+      list.map((r) => `${r.seq}:${r.ts}:${r.source}:${r.signed ? 1 : 0}:${hash(r.text)}`).join(',')].join('|');
     return { key, id, room, list, stages, status, title: titleFor(list, id), verdicts, negative: verdicts.not > 0, attestation, continuity,
-      elapsedFirst, elapsedLast, flags, links: extractLinks(list, stages), workers: workerKeys, resultActors: resultKeys, latest: list.at(-1)?.ts || '' };
+      elapsedFirst, elapsedLast, flags, links, fingerprint, latest: list.at(-1)?.ts || '' };
   }).sort((a, b) => new Date(b.latest) - new Date(a.latest));
 }
 
@@ -131,7 +151,11 @@ function applyPage(state, page, { since = null, cap = ROOM_CAP } = {}) {
   const gen = page?.generation;
   const regressed = since !== null && Number.isFinite(Number(page?.last_seq)) && Number(page.last_seq) < since;
   if ((state.generation !== null && gen !== undefined && gen !== state.generation) || regressed) reset(state);
-  else if (since === null) state.needsFullReload = false;
+  else if (since === null) {
+    // A full read is authoritative: start the room's view from scratch so overlapping reads cannot double-count anything.
+    state.needsFullReload = false; state.records.clear(); state.lastSeq = 0; state.firstTsAll = null; state.lastTsAll = null;
+    state.evicted = 0; state.gaps = []; state.counts = { protocol: 0, malformed: 0, unsupported: 0, ignored: 0 };
+  }
   if (gen !== undefined) state.generation = gen;
   const wasReload = state.needsFullReload; // true right after a reset: this page is a partial view of the new epoch
   if (!wasReload && since !== null && seqs.length) {
@@ -177,8 +201,8 @@ function allRecords(states) { return states.flatMap((s) => [...s.records.values(
 const SOURCES=['credence','kibble'];
 const rooms=SOURCES.map(createRoomState);
 const STATUS_LABEL={'all-stages':'ALL 4 STAGES','partial':'PARTIAL','no-request':'REQUEST NOT SEEN'};
-const MAX_NODES=7;
-let cases=[],selected=null,filter='all',busy=false,paused=false,frozenAt=0,lastInspKey=null;
+const MAX_NODES=7,FETCH_TIMEOUT_MS=10000,LIST_STEP=80;
+let cases=[],selected=null,filter='all',busy=false,paused=false,frozenAt=0,lastInspKey=null,listLimit=LIST_STEP,detailOpener=null;
 const uiSig={list:'',insp:''};
 const isNarrow=()=>matchMedia('(max-width:650px)').matches;
 const protocolTotal=()=>rooms.reduce((n,r)=>n+r.counts.protocol,0);
@@ -186,7 +210,8 @@ const $=s=>document.querySelector(s);
 
 function el(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node}
 function formatDuration(ms){if(ms===null||!Number.isFinite(ms))return 'Unavailable';if(ms<0)return 'Invalid ordering';const s=Math.round(ms/1000);if(s<60)return `${s}s`;const m=Math.floor(s/60);if(m<60)return `${m}m ${s%60}s`;return `${Math.floor(m/60)}h ${m%60}m`}
-function shortDid(did){return did.startsWith('did:key:')?`${did.slice(8,18)}…${did.slice(-5)}`:did.slice(0,24)}
+function shortDid(did){if(!did)return 'unknown sender';return did.startsWith('did:key:')?`${did.slice(8,18)}…${did.slice(-5)}`:did.slice(0,24)}
+const clock=ms=>ms?new Date(ms).toLocaleTimeString([],{hour12:false}):'never';
 function visibleCases(){return cases.filter(c=>filter==='all'||(filter==='negative'?c.negative:c.status===filter))}
 function renderSummary(){
   $('#caseCount').textContent=cases.length;$('#completeCount').textContent=cases.filter(c=>c.status==='all-stages').length;$('#disputedCount').textContent=cases.filter(c=>c.negative).length;$('#orphanCount').textContent=cases.filter(c=>c.status==='no-request').length;
@@ -194,7 +219,7 @@ function renderSummary(){
 function renderList(){
   const host=$('#caseList');host.replaceChildren();const visible=visibleCases();
   if(!visible.length){host.append(el('div','loading','No matching cases in the current observation window.'));return}
-  for(const item of visible.slice(0,80)){
+  for(const item of visible.slice(0,listLimit)){
     const button=el('button',`case${selected?.key===item.key?' active':''}`);button.type='button';button.dataset.key=item.key;if(selected?.key===item.key)button.setAttribute('aria-current','true');
     const top=el('div','case-top'),badges=el('span','badges');if(item.negative)badges.append(el('span','badge negative',`NEGATIVE ×${item.verdicts.not}`));badges.append(el('span',`badge ${item.status}`,STATUS_LABEL[item.status]));
     top.append(el('span','case-id',item.id),badges);
@@ -202,21 +227,21 @@ function renderList(){
     const meta=el('div','case-meta');meta.append(el('span','',`${seen}/4 stages · ${item.list.length} ${item.list.length===1?'record':'records'}`),el('span','',item.room));button.append(top,title,stages,meta);
     button.onclick=()=>choose(item);host.append(button);
   }
-  if(visible.length>80)host.append(el('div','loading',`Showing 80 of ${visible.length} cases.`));
+  if(visible.length>listLimit){const more=el('button','more',`Showing ${listLimit} of ${visible.length} cases · show ${Math.min(LIST_STEP,visible.length-listLimit)} more`);more.type='button';more.onclick=()=>{listLimit+=LIST_STEP;render(true)};host.append(more)}
 }
 function finding(host,label,value,detail,tone=''){
   const box=el('div',`finding ${tone}`),head=el('div','finding-head');head.append(el('b','',label),el('span','',value));box.append(head,el('p','',detail));host.append(box);
 }
-function recordDisclosure(record,flagged){const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}${flagged?' · ⚑':''}`),p=el('p','',record.text),source=el('div','source',`${record.signed?'DID + SIGNATURE FIELDS PRESENT (NOT VERIFIED HERE)':'SELF-ASSERTED SOURCE'} · ${shortDid(record.source)} · ${record.ts}`);d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s,p,source);return d}
+function recordDisclosure(record,flagged){const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}${flagged?' · ⚑':''}`),p=el('p','',record.text),source=el('div','source',`${record.signed?'DID + SIGNATURE FIELDS PRESENT (NOT VERIFIED HERE)':'NOT A SIGNED KEY · SELF-ASSERTED NAME'} · ${shortDid(record.source)} · ${record.ts}`);d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s,p,source);return d}
 function renderInspector(){
   const host=$('#inspector');host.replaceChildren();const back=el('button','back','← All cases');back.type='button';back.onclick=closeDetail;host.append(back,el('div','eyebrow','EVIDENCE PROFILE'));
   if(!selected){host.append(el('h2','',`No case selected`),el('p','','Select a case to see which records were observed, what is missing, and what cannot be known from them.'));return}
   const c=selected;host.append(el('h2','',c.id),el('p','',`${c.room} · ${c.title}`));
   const present=c.stages.filter(s=>s.length).length;
   finding(host,'Stages observed',`${present} of 4`,STAGE_NAMES.map((name,i)=>`${c.stages[i].length?'✓':'—'} ${name}`).join('  ·  ')+(present<4?'\nA missing stage may simply be outside the observation window.':''));
-  const cont={'observed':['Observed','A key that accepted or claimed also posted a result.'],'not-observed':['Not observed','No result was posted by a key that accepted or claimed.'],'no-worker':['Unavailable','No accept or claim in the window.'],'no-result':['Unavailable','No result in the window.']}[c.continuity];
+  const cont={'observed':['Observed','A key that accepted or claimed also posted a result.'],'not-observed':['Not observed','No result was posted by a key that accepted or claimed.'],'no-worker':['Unavailable','No accept or claim in the window.'],'no-result':['Unavailable','No result in the window.'],'no-key':['Unavailable','The worker or result records do not come from signed keys, so keys cannot be compared.']}[c.continuity];
   finding(host,'Key continuity (worker → result)',cont[0],`${cont[1]} Keys are not people; this says nothing about real-world identity.`);
-  const a=c.attestation,av={'no-attestation':['None observed','No attestation in the window.'],'no-result':['Unavailable','Attestations are present, but no result is in the window to compare keys against.'],'ok':[`${a.other} other-key · ${a.self} result-key`,'Counts attestations by whether their key also posted a result. Different keys are not proof of independent parties.']}[a.state];
+  const a=c.attestation,av={'no-attestation':['None observed','No attestation in the window.'],'no-result':['Unavailable','Attestations are present, but no result is in the window to compare keys against.'],'no-key':['Unavailable','The result records do not come from signed keys, so attestation keys cannot be compared.'],'ok':[`${a.other} other-key · ${a.self} result-key${a.unknown?` · ${a.unknown} unsigned`:''}`,'Counts attestations by whether their key also posted a result. Unsigned senders are not compared. Different keys are not proof of independent parties.']}[a.state];
   finding(host,'Attestation keys',av[0],av[1]);
   const v=c.verdicts;if(c.attestation.state!=='no-attestation')finding(host,'Recorded verdicts',`useful ${v.useful} · negative ${v.not}${v.other?` · other ${v.other}`:''}`,v.not?'At least one attestation carries an explicit negative verdict. Read its text below; it is a claim by that key, not a finding.':'Verdicts are claims made by the posting keys.',v.not?'alert':'');
   finding(host,'Request → result timing',c.elapsedFirst===null?'Unavailable':`first ${formatDuration(c.elapsedFirst)}${c.elapsedLast!==c.elapsedFirst?` · last ${formatDuration(c.elapsedLast)}`:''}`,'From venue timestamps, which are not signed by the sender. The first result is not necessarily the substantive one.');
@@ -227,8 +252,8 @@ function renderInspector(){
 }
 function snapshotUi(){const ae=document.activeElement,inList=ae&&ae.closest?.('#caseList'),inInsp=ae&&ae.closest?.('#inspector');
   return {focusKey:inList?ae.dataset.key:null,focusSeq:inInsp?ae.dataset?.seq??null:null,list:$('#caseList').scrollTop,insp:$('#inspector').scrollTop,open:[...document.querySelectorAll('#inspector details[open]')].map(d=>d.dataset.seq)}}
-function listSignature(visible){return `${filter}|${selected?.key}|${visible.length}|`+visible.slice(0,80).map(c=>`${c.key}:${c.list.length}:${c.verdicts.not}:${c.status}`).join(',')}
-function inspectorSignature(){return selected?`${selected.key}|${selected.list.length}|${selected.list.at(-1).seq}|${selected.flags.map(f=>f.id+f.seqs.length).join()}`:'none'}
+function listSignature(visible){return `${filter}|${selected?.key}|${listLimit}|${visible.length}|`+visible.slice(0,listLimit).map(c=>`${c.key}:${c.fingerprint}`).join('\n')}
+function inspectorSignature(){return selected?`${selected.key}|${selected.fingerprint}`:'none'}
 // Re-render only what changed, and put back scroll position, open records and keyboard focus. Selecting another case starts fresh.
 function render(force=false){
   if(!paused)cases=buildCases(allRecords(rooms));
@@ -243,26 +268,33 @@ function render(force=false){
   }
   drawGraph();
 }
-function choose(item){selected=item;if(isNarrow()){document.body.classList.add('detail');history.pushState({detail:1},'')}render(true);if(isNarrow())$('#inspector').scrollTop=0}
-function closeDetail(){if(history.state?.detail)history.back();else document.body.classList.remove('detail')}
-addEventListener('popstate',()=>document.body.classList.remove('detail'));
+function choose(item){selected=item;if(isNarrow()){detailOpener=document.activeElement;document.body.classList.add('detail');history.pushState({detail:1},'');setDetailInert(true)}render(true);if(isNarrow()){$('#inspector').scrollTop=0;$('#inspector .back')?.focus({preventScroll:true})}}
+function setDetailInert(on){for(const sel of ['.cases','header','.summary','footer'])document.querySelector(sel)?.toggleAttribute('inert',on);const i=$('#inspector');if(on){i.setAttribute('role','region');i.setAttribute('aria-label','Case detail')}else{i.removeAttribute('role');i.removeAttribute('aria-label')}}
+function exitDetail(){if(!document.body.classList.contains('detail'))return;document.body.classList.remove('detail');setDetailInert(false);const k=selected?.key,target=(k&&$('#caseList').querySelector(`[data-key="${CSS.escape(k)}"]`))||detailOpener;target?.focus?.({preventScroll:true})}
+function closeDetail(){if(history.state?.detail)history.back();else exitDetail()}
+addEventListener('popstate',exitDetail);
 addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('detail')&&!document.querySelector('dialog[open]'))closeDetail()});
 function fmtSpan(ms){if(ms===null)return 'no data';const s=Math.round(ms/1000);if(s<90)return `${s}s`;const m=Math.round(s/60);if(m<120)return `${m}m`;const h=Math.round(m/60);return h<48?`${h}h`:`${Math.round(h/24)}d`}
-function coverageLine(c){const bits=[`${c.room} ${c.records} rec`,fmtSpan(c.spanMs)];if(c.status==='error')bits.push('delayed');if(c.gaps)bits.push(`${c.missed} missed`);if(c.resets)bits.push(`${c.resets} reset`);if(c.malformed)bits.push(`${c.malformed} unparsed`);return bits.join(' · ')}
+function coverageLine(c){const bits=[`${c.room} ${c.records} rec`,fmtSpan(c.spanMs)];if(c.status==='error')bits.push(`delayed · last ok ${clock(c.lastOkAt)}`);if(c.gaps)bits.push(`${c.missed} missed`);if(c.resets)bits.push(`${c.resets} reset`);if(c.malformed+c.unsupported)bits.push(`${c.malformed+c.unsupported} unparsed`);return bits.join(' · ')}
 async function pollRoom(state){
   const params=new URLSearchParams({format:'json',limit:String(PAGE_LIMIT)});const since=querySince(state);if(since!==null)params.set('since',String(since));
-  const response=await fetch(`https://technocore.chat/r/${state.room}?${params}`,{cache:'no-store'});if(!response.ok)throw new Error(`${state.room} returned ${response.status}`);
-  applyPage(state,await response.json(),{since});markOk(state,Date.now());
+  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),FETCH_TIMEOUT_MS);
+  try{
+    const response=await fetch(`https://technocore.chat/r/${state.room}?${params}`,{cache:'no-store',signal:ctl.signal});if(!response.ok)throw new Error(`${state.room} returned ${response.status}`);
+    applyPage(state,await response.json(),{since});markOk(state,Date.now());
+  }catch(error){throw ctl.signal.aborted?new Error(`${state.room} did not answer within ${FETCH_TIMEOUT_MS/1000}s`):error}
+  finally{clearTimeout(timer)}
 }
 function updateStatus(){
   const cov=rooms.map(coverage),bad=cov.filter(c=>c.status==='error'),total=cov.reduce((n,c)=>n+c.records,0),gaps=cov.reduce((n,c)=>n+c.gaps,0);
   $('#live').className=`live ${bad.length===cov.length?'error':bad.length||gaps||paused?'warn':'ready'}`;
-  $('#live span').textContent=paused?`PAUSED · ${Math.max(0,protocolTotal()-frozenAt)} NEW`:bad.length===cov.length?'LIVE READ DELAYED':bad.length?`PARTIAL · ${bad.map(c=>c.room.toUpperCase()).join(', ')} DELAYED`:`LIVE · ${total} PROTOCOL RECORDS${gaps?' · GAPS':''}`;
+  $('#live span').textContent=paused?`PAUSED · ${Math.max(0,protocolTotal()-frozenAt)} NEW`:bad.length===cov.length?'LIVE READ DELAYED':bad.length?`PARTIAL · ${bad.map(c=>c.room.toUpperCase()).join(', ')} DELAYED`:`LIVE · ${total} PROTOCOL RECORDS${gaps?' · GAPS':''} · ${clock(Math.max(...cov.map(c=>c.lastOkAt||0)))}`;
   $('#sourceStatus').textContent=cov.map(coverageLine).join('  |  ');$('#sourceStatus').title=bad.map(c=>c.error).join('\n');
   const b=$('#pause');b.setAttribute('aria-pressed',String(paused));b.querySelector('.ico').textContent=paused?'▶':'⏸';b.querySelector('.lbl').textContent=paused?`Resume · ${Math.max(0,protocolTotal()-frozenAt)} new`:'Pause updates';b.setAttribute('aria-label',paused?'Resume live updates':'Pause live updates');
 }
 async function refresh(){if(busy)return;busy=true;if(!paused){$('#live').className='live';$('#live span').textContent='READING LIVE RECORDS'}
-  try{const results=await Promise.allSettled(rooms.map(pollRoom));results.forEach((r,i)=>{if(r.status==='rejected')markError(rooms[i],r.reason?.message||r.reason,Date.now())});if(!paused)render()}finally{busy=false}
+  // Each room settles on its own (bounded by the timeout) and is shown as soon as it answers; one stalled room cannot hold back the other.
+  try{await Promise.all(rooms.map(async state=>{try{await pollRoom(state)}catch(error){markError(state,error?.message||error,Date.now())}if(!paused)render();updateStatus()}))}finally{busy=false}
   updateStatus();
 }
 function togglePause(){paused=!paused;if(paused)frozenAt=protocolTotal();else render(true);updateStatus()}
@@ -276,13 +308,18 @@ function drawGraph(){
   ctx.textAlign='center';ctx.font='10px DM Mono';for(let i=0;i<4;i++){ctx.fillStyle='#8696a8';ctx.fillText(STAGE_NAMES[i],xs[i],112)}
   selected.stages.forEach((items,stage)=>{const shown=items.slice(0,MAX_NODES);shown.forEach((record,index)=>pos.set(record.seq,{x:xs[stage],y:centerY+(index-(shown.length-1)/2)*55,stage,record}));
     if(items.length>MAX_NODES){ctx.fillStyle='#8696a8';ctx.font='10px DM Mono';ctx.fillText(`+${items.length-MAX_NODES} more · see records`,xs[stage],centerY+(MAX_NODES/2+.4)*55)}});
-  for(const link of selected.links){let a=pos.get(link.from),b=pos.get(link.to);if(!a||!b||a.x===b.x)continue;if(a.x>b.x)[a,b]=[b,a];
-    ctx.strokeStyle=link.type==='cites'?'#9fb2c8':'#4b5d72';ctx.lineWidth=link.type==='cites'?1.6:1;ctx.setLineDash(link.type==='cites'?[]:[4,4]);ctx.beginPath();ctx.moveTo(a.x+14,a.y);ctx.bezierCurveTo((a.x+b.x)/2,a.y,(a.x+b.x)/2,b.y,b.x-14,b.y);ctx.stroke();ctx.setLineDash([])}
+  let hidden=0;
+  for(const link of selected.links){const a0=pos.get(link.from),b0=pos.get(link.to);if(!a0||!b0){hidden++;continue}
+    ctx.strokeStyle=link.type==='cites'?'#9fb2c8':'#4b5d72';ctx.lineWidth=link.type==='cites'?1.6:1;ctx.setLineDash(link.type==='cites'?[]:[4,4]);ctx.beginPath();
+    if(a0.x===b0.x){const bulge=a0.x+16+Math.min(46,Math.abs(a0.y-b0.y)*.35+14);ctx.moveTo(a0.x+13,a0.y);ctx.bezierCurveTo(bulge,a0.y,bulge,b0.y,b0.x+13,b0.y)}
+    else{let a=a0,b=b0;if(a.x>b.x)[a,b]=[b,a];ctx.moveTo(a.x+14,a.y);ctx.bezierCurveTo((a.x+b.x)/2,a.y,(a.x+b.x)/2,b.y,b.x-14,b.y)}
+    ctx.stroke();ctx.setLineDash([])}
   for(const {x,y,stage,record} of pos.values()){ctx.fillStyle='#0a0e13';ctx.strokeStyle=nodeColors[stage];ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,stage===0?16:13,0,Math.PI*2);ctx.fill();ctx.stroke();
     const r=stage===0?16:13;ctx.font='9px DM Mono';ctx.fillStyle='#cbd5e1';ctx.fillText(record.kind,x,y+r+11);ctx.fillStyle='#8696a8';ctx.fillText(`#${record.seq}`,x,y+r+21)}
   const missing=STAGE_NAMES.filter((_,i)=>!selected.stages[i].length);ctx.font='10px DM Mono';ctx.fillStyle='#8696a8';
   if(missing.length)ctx.fillText(`NOT IN OBSERVED WINDOW: ${missing.join(' · ')}`,w/2,h-46);
-  ctx.fillText('Solid line: record cites another by seq  ·  Dashed: same key continues  ·  Columns are stages, not relationships',w/2,h-24);
+  ctx.fillText('Solid line: record names another by seq  ·  Dashed: same key continues  ·  Columns are stages, not relationships',w/2,h-24);
+  if(hidden)ctx.fillText(`${hidden} ${hidden===1?'connection involves a record':'connections involve records'} not drawn (see the records list)`,w/2,h-8);
 }
 const about=$('#aboutDialog');
 function openAbout(){if(typeof about.showModal==='function'&&!about.open)about.showModal()}

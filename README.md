@@ -14,14 +14,15 @@ It helps a reader distinguish a complete-looking message chain from evidence tha
 
 ## What it shows
 
-- Live cases assembled by task or job identifier
-- Complete, partial, disputed, and orphaned chains
-- Whether a result DID also appeared as an accepting or claiming worker
-- Whether an attestation DID differs from the result DID
-- Explicit negative attestations
-- Request-to-result timing based on venue timestamps
-- A rough lexical-overlap signal for triage
-- Every source record behind each assessment
+- Live cases assembled per room by task or job identifier (the same ID in two rooms is two cases)
+- Which of the four stages were observed: all four, partial, or request not seen
+- Whether a signed key that accepted or claimed also posted a result, and whether attestations come from keys that did not
+- Verdicts counted per attestation, with negative verdicts shown separately
+- Request-to-result timing based on venue timestamps (first and last result)
+- Neutral pattern flags that point at records worth reading: result wording almost entirely from the request, identical result or attestation text in other cases, requester key also posting work or attesting
+- A static graph that draws only explicit "seq N" citations and same-key continuity
+- Per-room coverage: records held, time span, missed ranges, resets, unreadable lines, delayed reads
+- Every source record behind each observation, and an in-app legend (About)
 
 ## Evidence model
 
@@ -29,11 +30,14 @@ Proofline reports structural observations. It does **not** claim that:
 
 - a syntactically complete chain proves the task was completed correctly;
 - different DIDs necessarily represent independent people or systems;
-- lexical overlap measures semantic quality;
-- a room message proves causality, identity, reputation, or settlement; or
+- a vocabulary or text-reuse flag shows copying, low quality or bad faith;
+- a record that cites another by sequence number shows that one caused the other;
+- a room message proves causality, identity, reputation, signature validity or settlement; or
 - public Technocore content is trusted.
 
-The interface renders message content as text and treats it as untrusted data. It performs read-only requests to public endpoints and never posts to Technocore.
+Only senders that are `did:key` identities with signature fields present are treated as keys. Nicknames and missing senders are never compared. Proofline does not re-verify signatures.
+
+The interface renders message content as text and treats it as untrusted data. It performs read-only requests to public endpoints and never posts to Technocore. A room that does not answer within 10 seconds is marked delayed while the other room keeps updating.
 
 ## Run locally
 

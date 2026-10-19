@@ -17,10 +17,10 @@ test('real credence chain keeps 4 stages in its own room', () => { const f = fix
 const one = (n) => buildCases(recs(synthetic(n).rooms))[0];
 test('attestation without a result is "no-result", not independent', () => { const c = one('attestation-only'); assert.equal(c.attestation.state, 'no-result'); assert.equal(c.continuity, 'no-worker'); assert.equal(c.status, 'no-request'); });
 test('mixed verdicts are counted, and only the negative flag is set', () => { const c = one('mixed-verdicts'); assert.deepEqual(c.verdicts, { useful: 2, not: 1, other: 0 }); assert.equal(c.negative, true); assert.equal(c.status, 'all-stages'); });
-test('there is no lexical similarity score any more', () => { const c = one('echo-and-ok'); assert.equal('semantic' in c, false); assert.equal(c.flags.some((f) => f.id === 'repeats-request'), false); });
+test('there is no lexical similarity score any more', () => { const c = one('echo-and-ok'); assert.equal('semantic' in c, false); assert.equal(c.flags.some((f) => f.id === 'wording-from-request'), false); });
 test('real echo case: first RESULT repeats the request, the later answers do not', () => {
   const f = fixture('echo-result-k53fd0a884e'); const [c] = buildCases(recs({ kibble: f.messages }));
-  const flag = c.flags.find((x) => x.id === 'repeats-request'); assert.deepEqual(flag.seqs, [19719293]);
+  const flag = c.flags.find((x) => x.id === 'wording-from-request'); assert.deepEqual(flag.seqs, [19719293]);
   assert.ok(c.elapsedFirst <= 5000 && c.elapsedLast > 60000);
 });
 test('attestations are split into same-key and other-key', () => { const c = one('mixed-verdicts'); assert.deepEqual([c.attestation.self, c.attestation.other], [0, 3]); });

@@ -18,20 +18,23 @@ export function parseMessage(message, room) {
   const id = parts[1];
   const seq = Number(message.seq);
   if (!id || !ID.test(id) || !Number.isFinite(seq)) return { ok: false, reason: 'malformed', kind };
-  const from = String(message.from || 'anonymous');
+  const from = typeof message.from === 'string' ? message.from : '';
   const stage = STAGE[kind];
+  const signed = from.startsWith('did:key:') && typeof message.sig === 'string' && message.sig.length > 0;
   // body: free text after the structured fields. Workers' ACCEPT/CLAIM carry none; attestations put a verdict before it.
   const verdict = stage === 3 ? String(parts[2] || '').toLowerCase() : '';
   const body = stage === 1 ? '' : parts.slice(stage === 3 ? 3 : 2).join(' | ');
+  // Envelope is not enough: each kind must carry the field it is about (request text, result text, verdict).
+  if ((stage === 0 && !String(parts[2] || '')) || (stage === 2 && !body) || (stage === 3 && !verdict)) return { ok: false, reason: 'malformed', kind };
   return {
     ok: true,
     record: {
       kind, id, room, seq, text,
       caseKey: `${room}:${id}`,
       ts: String(message.ts || ''),
-      source: from,
-      signed: from.startsWith('did:key:') && typeof message.sig === 'string' && message.sig.length > 0,
-      stage, verdict, body,
+      source: from,                 // whatever the sender called itself; '' when absent
+      keyId: signed ? from : null,  // only a did:key with signature fields present counts as a key; nicknames are never compared as keys
+      signed, stage, verdict, body,
     },
   };
 }
