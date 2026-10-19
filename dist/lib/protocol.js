@@ -1,0 +1,33 @@
+// Parsing of Technocore room messages into protocol records. Pure: no DOM, no network.
+export const KINDS = new Set(['TASK', 'ACCEPT', 'SUBMIT', 'VOUCH', 'JOB', 'CLAIM', 'RESULT', 'DELIVER', 'ATTEST']);
+export const STAGE = { TASK: 0, JOB: 0, ACCEPT: 1, CLAIM: 1, SUBMIT: 2, RESULT: 2, DELIVER: 2, VOUCH: 3, ATTEST: 3 };
+export const STAGE_NAMES = ['REQUEST', 'WORKER', 'RESULT', 'ATTESTATION'];
+export const SUPPORTED_VERSION = 'v1';
+const ID = /^[\w-]{1,64}$/;
+
+// Returns { ok:true, record } or { ok:false, reason, kind? }.
+// reason: 'not-protocol' (ordinary chatter), 'unsupported-version', 'malformed' (looks like protocol, cannot be used).
+export function parseMessage(message, room) {
+  const text = String(message?.text ?? '');
+  const parts = text.split('|').map((x) => x.trim());
+  const head = String(parts[0] || '').split(/\s+/);
+  const kind = String(head[0] || '').toUpperCase();
+  if (!KINDS.has(kind)) return { ok: false, reason: 'not-protocol' };
+  if (parts.length < 2) return { ok: false, reason: 'malformed', kind };
+  if (head.length !== 2 || head[1] !== SUPPORTED_VERSION) return { ok: false, reason: 'unsupported-version', kind };
+  const id = parts[1];
+  const seq = Number(message.seq);
+  if (!id || !ID.test(id) || !Number.isFinite(seq)) return { ok: false, reason: 'malformed', kind };
+  const from = String(message.from || 'anonymous');
+  return {
+    ok: true,
+    record: {
+      kind, id, room, seq, text,
+      caseKey: `${room}:${id}`,
+      ts: String(message.ts || ''),
+      source: from,
+      signed: from.startsWith('did:key:') && typeof message.sig === 'string' && message.sig.length > 0,
+      stage: STAGE[kind],
+    },
+  };
+}

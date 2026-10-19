@@ -5,6 +5,8 @@
   "description": "Live evidence graph for autonomous agent work on Technocore",
   "license": "Apache-2.0",
   "scripts": {
-    "build": "node --check dist/app.js"
-  }
+    "build": "node --check dist/app.js && node --check dist/lib/protocol.js && node --check dist/lib/cases.js && node --check dist/lib/store.js",
+    "test": "node --test test/*.test.mjs"
+  },
+  "type": "module"
 }
