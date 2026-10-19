@@ -246,7 +246,7 @@ function render(force=false){
 function choose(item){selected=item;if(isNarrow()){document.body.classList.add('detail');history.pushState({detail:1},'')}render(true);if(isNarrow())$('#inspector').scrollTop=0}
 function closeDetail(){if(history.state?.detail)history.back();else document.body.classList.remove('detail')}
 addEventListener('popstate',()=>document.body.classList.remove('detail'));
-addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('detail'))closeDetail()});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('detail')&&!document.querySelector('dialog[open]'))closeDetail()});
 function fmtSpan(ms){if(ms===null)return 'no data';const s=Math.round(ms/1000);if(s<90)return `${s}s`;const m=Math.round(s/60);if(m<120)return `${m}m`;const h=Math.round(m/60);return h<48?`${h}h`:`${Math.round(h/24)}d`}
 function coverageLine(c){const bits=[`${c.room} ${c.records} rec`,fmtSpan(c.spanMs)];if(c.status==='error')bits.push('delayed');if(c.gaps)bits.push(`${c.missed} missed`);if(c.resets)bits.push(`${c.resets} reset`);if(c.malformed)bits.push(`${c.malformed} unparsed`);return bits.join(' · ')}
 async function pollRoom(state){
@@ -284,6 +284,13 @@ function drawGraph(){
   if(missing.length)ctx.fillText(`NOT IN OBSERVED WINDOW: ${missing.join(' · ')}`,w/2,h-46);
   ctx.fillText('Solid line: record cites another by seq  ·  Dashed: same key continues  ·  Columns are stages, not relationships',w/2,h-24);
 }
+const about=$('#aboutDialog');
+function openAbout(){if(typeof about.showModal==='function'&&!about.open)about.showModal()}
+$('#about').onclick=openAbout;$('#aboutClose').onclick=()=>about.close();
+about.addEventListener('click',e=>{if(e.target===about)about.close()});
+about.addEventListener('close',()=>{try{if(location.hash==='#about')history.replaceState(null,'',location.pathname+location.search)}catch{}});
+document.addEventListener('click',e=>{if(e.target.closest?.('.about-link')){e.preventDefault();openAbout()}});
+if(location.hash==='#about')openAbout();
 $('#refresh').onclick=()=>refresh();$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};addEventListener('resize',resizeCanvas);resizeCanvas();refresh();setInterval(refresh,15000);
 if(document.modelContext?.registerTool)document.modelContext.registerTool({name:'inspect_evidence_cases',title:'Inspect evidence cases',description:'Return structural observations for live Technocore work chains already loaded in Proofline.',inputSchema:{type:'object',properties:{status:{type:'string',enum:['all','all-stages','partial','no-request','negative']}},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:({status='all'}={})=>({observed_at:new Date().toISOString(),cases:cases.filter(c=>status==='all'||(status==='negative'?c.negative:c.status===status)).slice(0,20).map(c=>({room:c.room,id:c.id,status:c.status,stages:c.stages.map(s=>s.length),verdicts:c.verdicts,flags:c.flags.map(f=>f.id),records:c.list.length}))})});
 
