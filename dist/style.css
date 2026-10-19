@@ -3,3 +3,7 @@
 
 .brand b em{font-style:normal;color:var(--acid);font-size:10px}
 .live.warn i{background:var(--amber);box-shadow:0 0 12px var(--amber)}
+.badges{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.badge.all-stages,.badge.partial,.badge.no-request{color:#aeb9c7}
+.badge.negative{color:var(--red)}
+.finding p{white-space:pre-line}

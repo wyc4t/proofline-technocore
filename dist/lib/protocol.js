@@ -19,6 +19,10 @@ export function parseMessage(message, room) {
   const seq = Number(message.seq);
   if (!id || !ID.test(id) || !Number.isFinite(seq)) return { ok: false, reason: 'malformed', kind };
   const from = String(message.from || 'anonymous');
+  const stage = STAGE[kind];
+  // body: free text after the structured fields. Workers' ACCEPT/CLAIM carry none; attestations put a verdict before it.
+  const verdict = stage === 3 ? String(parts[2] || '').toLowerCase() : '';
+  const body = stage === 1 ? '' : parts.slice(stage === 3 ? 3 : 2).join(' | ');
   return {
     ok: true,
     record: {
@@ -27,7 +31,7 @@ export function parseMessage(message, room) {
       ts: String(message.ts || ''),
       source: from,
       signed: from.startsWith('did:key:') && typeof message.sig === 'string' && message.sig.length > 0,
-      stage: STAGE[kind],
+      stage, verdict, body,
     },
   };
 }
