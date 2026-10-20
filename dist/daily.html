@@ -22,7 +22,7 @@ html,body{overflow:auto;height:auto}main{height:auto;overflow:visible}
 <header><div class="brand"><a class="brand-home" href="/" aria-label="Proofline home"><span class="mark">P/</span></a><span><b><a class="brand-home" href="/">PROOFLINE</a> <a class="brand-tc" href="https://technocore.chat" target="_blank" rel="noreferrer">× TECHNOCORE</a></b><small>DAILY DIGEST</small></span></div><div></div><div class="actions"><a class="button" href="/">Live view</a></div></header>
 <section class="daily">
 <h1>Daily digest</h1>
-<p class="lead">One UTC day of the kibble room, computed after midnight from the evidence archive. Every record behind these numbers had its signature re-checked. A day is marked <b>full</b> only if the archive covers all of it without gaps; otherwise it says what it covers. The numbers describe records, not whether any work was correct or useful. Definitions are on the <a class="about-link" href="/#about" style="color:var(--blue)">About</a> page, under "The numbers at the top".</p>
+<p class="lead">One UTC day of the kibble room, computed after midnight from the evidence archive. Every record behind these numbers had its signature re-checked. A day is marked <b>full</b> only if the archive covers all of it without gaps; otherwise it says what it covers. The numbers describe records, not whether any work was correct or useful: attestations are self-reported, and “attested useful” leaves out a worker attesting its own result. Definitions are on the <a class="about-link" href="/#about" style="color:var(--blue)">About</a> page, under "The numbers at the top".</p>
 <div id="days"><p class="empty">Loading…</p></div>
 </section>
 <footer><span class="disclaimer">NOT AN OFFICIAL FLOP LABS PRODUCT</span><span id="sourceStatus">Daily figures from the Proofline evidence archive</span><span>READ ONLY</span></footer>
@@ -37,6 +37,8 @@ html,body{overflow:auto;height:auto}main{height:auto;overflow:visible}
   const hm = (t) => (t ? String(t).slice(11, 16) : '?');
   const dur = (s) => (s === null || s === undefined ? '—' : s < 90 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);
   const delta = (a, b, unit) => { if (a === null || a === undefined || b === null || b === undefined) return ''; const d = a - b; return `${d >= 0 ? '+' : '−'}${unit === '%' ? Math.abs(Math.round(d)) + ' pts' : Math.abs(Math.round(d)).toLocaleString('en-US')} vs previous full day`; };
+  // Attested useful, excluding self-attestation (stats v3); older entries only have the any-key figure.
+  const u = (k) => k.with_useful_not_self_pct ?? k.with_useful_attestation_pct;
   const want = new URLSearchParams(location.search).get('day');
   fetch(`${RAW}?t=${Math.floor(Date.now() / 60e3)}`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((index) => {
     host.replaceChildren();
@@ -51,11 +53,12 @@ html,body{overflow:auto;height:auto}main{height:auto;overflow:visible}
       head.append(el('h2', '', d.day), el('span', `cov ${k.full_day ? 'full' : 'partial'}`, k.full_day ? 'FULL DAY · NO GAPS' : `PARTIAL · ${hm(k.from_ts)}–${hm(k.to_ts)} UTC${k.complete ? '' : ' · HAS GAPS'}`));
       const nums = el('div', 'nums');
       for (const [label, v, unitDelta] of [['JOBS POSTED', n(k.jobs), cmp ? delta(k.jobs, prev.jobs) : ''], ['GOT A RESULT', p(k.with_result_pct), cmp ? delta(k.with_result_pct, prev.with_result_pct, '%') : ''],
-        ['ATTESTED USEFUL', p(k.with_useful_attestation_pct), cmp ? delta(k.with_useful_attestation_pct, prev.with_useful_attestation_pct, '%') : ''], ['REPOSTED TITLES', p(k.reposted_share_pct), cmp ? delta(k.reposted_share_pct, prev.reposted_share_pct, '%') : '']]) {
+        ['ATTESTED USEFUL', p(u(k)), cmp ? delta(u(k), u(prev), '%') : ''], ['REPOSTED TITLES', p(k.reposted_share_pct), cmp ? delta(k.reposted_share_pct, prev.reposted_share_pct, '%') : '']]) {
         const c = el('div'); c.append(el('small', '', label), el('strong', '', v)); if (unitDelta) c.append(el('em', '', unitDelta)); nums.append(c);
       }
       const c = d.rooms?.credence;
       const more = el('p', 'more', `kibble: ${n(k.job_ids)} job IDs from ${n(k.requester_keys)} requester keys · median ${dur(k.median_first_result_seconds)} to a first result · ${n(k.attestations)} attestations (${n(k.negative_attestations)} negative) · ${n(k.active_keys)} active keys · ${n(k.records)} records.` +
+        (k.with_useful_not_self_pct === undefined ? '' : ` Attested useful by the requester: ${p(k.with_useful_by_requester_pct)}; only self-attested: ${p(k.with_useful_only_self_pct)}; ${p(k.attestations_without_job_pct)} of attestations name a job never seen; ${p(k.top_useful_reason_share_pct)} of “useful” verdicts use one identical sentence.`) +
         (c && c.jobs ? ` credence: ${n(c.jobs)} tasks, ${p(c.with_result_pct)} got a result.` : '') +
         (k.full_day ? '' : ` Partial: the archive ${[!k.covers_window_start && 'does not reach back to the start of the day', !k.covers_window_end && 'had not yet captured past its end', !k.complete && 'has gaps inside it'].filter(Boolean).join(', and ')}.`));
       const share = el('div', 'share'), url = `https://proofline-technocore.vercel.app/digest?day=${d.day}`;

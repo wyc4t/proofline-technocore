@@ -67,12 +67,15 @@ export function buildCases(records) {
     for (const a of attests) { if (NEGATIVE.has(a.verdict)) verdicts.not++; else if (a.verdict === 'useful') verdicts.useful++; else verdicts.other++; }
     const requestKeys = keySet(requests), workerKeys = keySet(workers), resultKeys = keySet(results);
     let attestation;
-    if (!attests.length) attestation = { state: 'no-attestation', self: 0, other: 0, unknown: 0 };
-    else if (!results.length) attestation = { state: 'no-result', self: 0, other: 0, unknown: 0 };
-    else if (!resultKeys.size) attestation = { state: 'no-key', self: 0, other: 0, unknown: attests.length };
+    // Who attested, relative to this case: the key that posted a result (self), the key that posted the request
+    // (requester), any other verified key (other), or a sender whose signature did not verify (unknown).
+    if (!attests.length) attestation = { state: 'no-attestation', self: 0, requester: 0, other: 0, unknown: 0 };
+    else if (!results.length) attestation = { state: 'no-result', self: 0, requester: 0, other: 0, unknown: 0 };
+    else if (!resultKeys.size) attestation = { state: 'no-key', self: 0, requester: 0, other: 0, unknown: attests.length };
     else {
       const self = attests.filter((a) => a.keyId && resultKeys.has(a.keyId)).length, unknown = attests.filter((a) => !a.keyId).length;
-      attestation = { state: 'ok', self, other: attests.length - self - unknown, unknown };
+      const requester = attests.filter((a) => a.keyId && !resultKeys.has(a.keyId) && requestKeys.has(a.keyId)).length;
+      attestation = { state: 'ok', self, requester, other: attests.length - self - requester - unknown, unknown };
     }
     const continuity = !workers.length ? 'no-worker' : !results.length ? 'no-result' : !workerKeys.size || !resultKeys.size ? 'no-key'
       : results.some((r) => r.keyId && workerKeys.has(r.keyId)) ? 'observed' : 'not-observed';
@@ -87,8 +90,10 @@ export function buildCases(records) {
     if (ra.length) flags.push({ id: 'reused-attestation', label: 'Identical attestation text in other cases', detail: `Exact same text also appears in ${label(Math.max(...ra.map(([, n]) => n)), 'other case', 'other cases')} in this window.`, seqs: ra.map(([r]) => r.seq) });
     const rw = [...workers, ...results].filter((r) => r.keyId && requestKeys.has(r.keyId));
     if (rw.length) flags.push({ id: 'requester-posted-work', label: 'Requester key also posted as worker or result', detail: 'The key that posted the request also appears on a claim, accept or result.', seqs: rw.map((r) => r.seq) });
-    const ra2 = attests.filter((r) => r.keyId && requestKeys.has(r.keyId));
-    if (ra2.length) flags.push({ id: 'requester-attested', label: 'Requester key also attested', detail: 'The key that posted the request also appears on an attestation. This can be ordinary workflow.', seqs: ra2.map((r) => r.seq) });
+    // A requester attesting its own job is not a pattern to flag: it is the verdict closest to "this met my need",
+    // and is counted under "Who attested". A self-attestation is flagged when no other key attested.
+    const sa = attests.filter((r) => r.keyId && resultKeys.has(r.keyId));
+    if (sa.length && sa.length === attests.filter((r) => r.keyId).length) flags.push({ id: 'self-attested-only', label: 'Only self-attested', detail: 'Every verified attestation in this case comes from a key that posted a result here: the work judged by its own author.', seqs: sa.map((r) => r.seq) });
     if (disputes.length) flags.unshift({ id: 'disputed', label: 'Disputed', detail: `A DISPUTE record challenges this job (${[...new Set(disputes.map((d) => d.reason))].join(', ')}).${resolutions.length ? ` Resolution recorded: ${resolutions.map((r) => r.outcome).join(', ')}.` : ' No resolution is recorded.'} Both are claims by their keys.`, seqs: [...disputes, ...resolutions].map((d) => d.seq) });
     const links = extractLinks(list, stages, targets);
     // Everything the interface displays for this case, so the view can tell when anything shown has changed (not only the record count).

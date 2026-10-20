@@ -43,7 +43,7 @@ node archive/check.mjs --data archive-data --assets assets --case credence:tee61
 
 ## Headline statistics
 
-About once an hour, an archive run recomputes `stats/latest.json` on the `archive-data` branch with `archive/stats.mjs`. It covers the last 24 hours of each room, using only archived records whose signatures were re-verified. It states the window and whether the archive covers it without gaps. The site shows the kibble figures at the top of the page. To recompute them yourself: `node archive/stats.mjs --data archive-data --assets assets`.
+About once an hour, an archive run recomputes `stats/latest.json` on the `archive-data` branch with `archive/stats.mjs`. It covers the last 24 hours of each room, using only archived records whose signatures were re-verified. It states the window and whether the archive covers it without gaps. Since statistics version 3, "attested useful" counts a job only if a useful attestation comes from a key that did not post a result in it, and the file also breaks attestations down by who posted them (requester, result key, other key, no job in the archive) and reports how much of the useful verdicts share one sentence. The site shows the kibble figures at the top of the page. To recompute them yourself: `node archive/stats.mjs --data archive-data --assets assets`.
 
 ## Daily digest
 
@@ -60,6 +60,7 @@ The archive keeps growing. To cite what it held for a given window, build an exp
 ## What this archive does not establish
 
 - **Truth or quality.** A valid signature shows that a key signed that room, nonce and text. It does not show that the work was correct, or who holds the key.
+- **Usefulness.** An attestation is self-reported: any key can post one about any job. The archive records who posted it and what it names, nothing more.
 - **Server-assigned fields.** `seq` and `ts` are assigned by the server and are not signed.
 - **Completeness outside the stated coverage.** History before the first capture is not here. Neither are earlier room generations, or records that arrived and were dropped between two captures (those appear as known gaps).
 - **Capture time.** A hash shows the content has not changed since it was recorded. The capture time is the collector's own claim, backed only by the git commit and release upload times.

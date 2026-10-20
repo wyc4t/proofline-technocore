@@ -19,6 +19,9 @@ const pick = (r) => r && ({
   from_ts: r.from_ts, to_ts: r.to_ts, records: r.records,
   jobs: r.jobs.records, job_ids: r.jobs.ids, requester_keys: r.jobs.requester_keys, reposted_share_pct: r.jobs.reposted_share_pct,
   with_result_pct: r.outcomes.with_result_pct, with_useful_attestation_pct: r.outcomes.with_useful_attestation_pct,
+  with_useful_not_self_pct: r.outcomes.with_useful_not_self_pct, with_useful_by_requester_pct: r.outcomes.with_useful_by_requester_pct,
+  with_useful_only_self_pct: r.outcomes.with_useful_only_self_pct, attestations_without_job_pct: r.attestations.without_job_in_archive_pct,
+  top_useful_reason_share_pct: r.attestations.top_useful_reason_share_pct,
   median_first_result_seconds: r.outcomes.median_first_result_seconds,
   attestations: r.attestations.records, negative_attestations: r.attestations.negative, active_keys: r.active_keys,
 });
@@ -51,6 +54,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const s = computeDay({ data: v.data, assets: v.assets, day: v.day });
   for (const [room, r] of Object.entries(s.rooms)) {
     const p = pick(r);
-    console.log(`${v.day} ${room}: ${p.full_day ? 'full day' : `partial (start ${p.covers_window_start ? 'covered' : 'not covered'}, end ${p.covers_window_end ? 'covered' : 'not covered'}, ${p.complete ? 'no gaps' : 'gaps'})`} · jobs ${p.jobs} · result ${p.with_result_pct}% · useful ${p.with_useful_attestation_pct}% · reposted ${p.reposted_share_pct}%`);
+    console.log(`${v.day} ${room}: ${p.full_day ? 'full day' : `partial (start ${p.covers_window_start ? 'covered' : 'not covered'}, end ${p.covers_window_end ? 'covered' : 'not covered'}, ${p.complete ? 'no gaps' : 'gaps'})`} · jobs ${p.jobs} · result ${p.with_result_pct}% · useful (not self) ${p.with_useful_not_self_pct}% · reposted ${p.reposted_share_pct}%`);
   }
 }

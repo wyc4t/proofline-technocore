@@ -16,8 +16,11 @@ import { classify, sha256, VERIFIER_VERSION } from './lib/records.mjs';
 import { parseMessage } from '../src/lib/protocol.js';
 import { NEGATIVE } from '../src/lib/cases.js';
 
-export const STATS_VERSION = '2'; // 2: reposted requires identical text; jobs grouped by generation; stricter gap rule
+export const STATS_VERSION = '3'; // 3: attested useful excludes self-attestation; who attested; ATTEST | id | <hash> | verdict parsed
+// 2: reposted requires identical text; jobs grouped by generation; stricter gap rule
 export const OUTCOME_GRACE_MIN = 30;
+// An attestation counts as naming a job that never appeared only if the archive reaches back this far before it.
+export const ATTEST_LOOKBACK_H = 4;
 const here = new URL('.', import.meta.url).pathname;
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const pct = (n, d) => (d ? Math.round((1000 * n) / d) / 10 : null);
@@ -25,7 +28,7 @@ const pct = (n, d) => (d ? Math.round((1000 * n) / d) / 10 : null);
 const minOf = (xs) => { let m = Infinity; for (const x of xs) if (x < m) m = x; return m; };
 const maxOf = (xs) => { let m = -Infinity; for (const x of xs) if (x > m) m = x; return m; };
 
-export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable = 0 }) {
+export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable = 0, archiveStartMs = null }) {
   // entries: [{ rec, nonceDigits, raw, gen }] for this room, already verified by check(). Jobs are grouped by
   // generation and ID: sequence numbers and IDs restart with a new generation, so they are never joined across one.
   const inWindow = entries.filter((p) => { const t = Date.parse(p.rec.ts); return t >= fromMs && t <= toMs; });
@@ -44,7 +47,8 @@ export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable 
   const active = new Set(recs.map((r) => r.keyId).filter(Boolean));
   let repostedIds = 0, repostedJobRecords = 0;
   const cutoff = toMs - OUTCOME_GRACE_MIN * 60e3;
-  const o = { basis_ids: 0, with_claim: 0, with_result: 0, with_attestation: 0, with_useful_attestation: 0 };
+  const o = { basis_ids: 0, with_claim: 0, with_result: 0, with_attestation: 0, with_useful_attestation: 0,
+    with_useful_not_self: 0, with_useful_by_requester: 0, with_useful_only_self: 0 };
   const firstResult = [];
   for (const list of byId.values()) {
     const js = list.filter((r) => r.stage === 0);
@@ -62,8 +66,34 @@ export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable 
     if (after(1).length) o.with_claim++;
     if (results.length) { o.with_result++; firstResult.push((minOf(results.map((r) => Date.parse(r.ts))) - t0) / 1000); }
     if (attests.length) o.with_attestation++;
-    if (attests.some((a) => a.verdict === 'useful')) o.with_useful_attestation++;
+    const useful = attests.filter((a) => a.verdict === 'useful');
+    if (useful.length) {
+      o.with_useful_attestation++;
+      // Self: the key that posted a result in this case. Requester: a key that posted its JOB (and no result).
+      const resultKeys = new Set(results.map((r) => r.keyId).filter(Boolean)), jobKeys = new Set(js.map((r) => r.keyId).filter(Boolean));
+      const notSelf = useful.filter((a) => a.keyId && !resultKeys.has(a.keyId));
+      if (notSelf.length) o.with_useful_not_self++; else o.with_useful_only_self++;
+      if (notSelf.some((a) => jobKeys.has(a.keyId))) o.with_useful_by_requester++;
+    }
   }
+  // Who posted each attestation in the window, relative to its job ID (generation and ID).
+  const allJobIds = new Set();
+  for (const p of entries) { const t = String(p.rec.text || ''); if (/^\s*(JOB|TASK)\s+v1\s*\|/i.test(t)) { const id = t.split('|')[1]?.trim(); if (id) allJobIds.add(`${p.gen ?? '0'}:${id}`); } }
+  const role = { requester: 0, result_key: 0, other_key: 0, no_job_in_archive: 0, unverified: 0 };
+  let withoutJob = 0, withoutJobBasis = 0;
+  const reasons = new Map(); let usefulVerified = 0;
+  for (const list of byId.values()) {
+    const att = list.filter((r) => r.stage === 3); if (!att.length) continue;
+    const jobKeys = new Set(list.filter((r) => r.stage === 0).map((r) => r.keyId).filter(Boolean));
+    const resultKeys = new Set(list.filter((r) => r.stage === 2).map((r) => r.keyId).filter(Boolean));
+    for (const a of att) {
+      role[!a.keyId ? 'unverified' : !allJobIds.has(`${a.gen}:${a.id}`) ? 'no_job_in_archive' : resultKeys.has(a.keyId) ? 'result_key' : jobKeys.has(a.keyId) ? 'requester' : 'other_key']++;
+      if (archiveStartMs !== null && Date.parse(a.ts) - archiveStartMs >= ATTEST_LOOKBACK_H * 3600e3) { withoutJobBasis++; if (!allJobIds.has(`${a.gen}:${a.id}`)) withoutJob++; }
+      if (a.verdict === 'useful' && a.keyId) { usefulVerified++; const t = a.body.replace(/\brh:[0-9a-f]+\b/i, '').trim(); reasons.set(t, (reasons.get(t) || 0) + 1); }
+    }
+  }
+  let topReason = '', topReasonN = 0;
+  for (const [t, n] of reasons) if (n > topReasonN) { topReason = t; topReasonN = n; }
   const attests = recs.filter((r) => r.stage === 3);
   const ts = inWindow.map((p) => Date.parse(p.rec.ts));
   const first = ts.length ? minOf(ts) : null, last = ts.length ? maxOf(ts) : null;
@@ -82,9 +112,13 @@ export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable 
       ...o, posted_before: new Date(cutoff).toISOString(),
       with_claim_pct: pct(o.with_claim, o.basis_ids), with_result_pct: pct(o.with_result, o.basis_ids),
       with_attestation_pct: pct(o.with_attestation, o.basis_ids), with_useful_attestation_pct: pct(o.with_useful_attestation, o.basis_ids),
+      with_useful_not_self_pct: pct(o.with_useful_not_self, o.basis_ids), with_useful_by_requester_pct: pct(o.with_useful_by_requester, o.basis_ids),
+      with_useful_only_self_pct: pct(o.with_useful_only_self, o.basis_ids),
       median_first_result_seconds: median(firstResult),
     },
-    attestations: { records: attests.length, negative: attests.filter((a) => NEGATIVE.has(a.verdict)).length },
+    attestations: { records: attests.length, negative: attests.filter((a) => NEGATIVE.has(a.verdict)).length, by: role,
+      without_job_in_archive: withoutJob, without_job_basis: withoutJobBasis, without_job_in_archive_pct: pct(withoutJob, withoutJobBasis),
+      useful_verified: usefulVerified, top_useful_reason: topReason.slice(0, 160), top_useful_reason_count: topReasonN, top_useful_reason_share_pct: pct(topReasonN, usefulVerified) },
     active_keys: active.size,
     ids_without_job: [...byId.values()].filter((l) => !l.some((r) => r.stage === 0)).length,
   };
@@ -101,6 +135,8 @@ export function computeStats({ data, assets, hours = 24, rooms = ['kibble', 'cre
       `Outcome rates count jobs posted at least ${OUTCOME_GRACE_MIN} minutes before the window ends.`,
       'A reposted ID is a job ID under which two or more verified keys posted identical JOB text.',
       'Jobs are grouped by room generation and job ID.',
+      'Attested useful (the headline) counts a job only if a useful attestation comes from a verified key that did not post a result in that job: self-attestations are excluded.',
+      `An attestation names a job never seen when no JOB or TASK record with its ID is anywhere in the archive; only attestations posted at least ${ATTEST_LOOKBACK_H} hours after the archive's first record are counted.`,
       'These describe records, not whether any work was correct or useful.',
     ] };
   for (const room of rooms) {
@@ -120,7 +156,8 @@ export function computeStats({ data, assets, hours = 24, rooms = ['kibble', 'cre
       for (const x of info.known_gaps) if (x.to > before) gaps.push({ generation: g.replace(/^g/, ''), from: x.from, to: x.to });
       for (const u of info.unknown.not_available_to_this_check) if (u.to > before) unavailable.push(u);
     }
-    out.rooms[room] = { ...roomStats(room, entries, { fromMs, toMs, gaps, unavailable: unavailable.length }),
+    let archiveStartMs = Infinity; for (const p of entries) { const t = Date.parse(p.rec.ts); if (t < archiveStartMs) archiveStartMs = t; }
+    out.rooms[room] = { ...roomStats(room, entries, { fromMs, toMs, gaps, unavailable: unavailable.length, archiveStartMs: archiveStartMs === Infinity ? null : archiveStartMs }),
       window_start: new Date(fromMs).toISOString(), window_end: new Date(toMs).toISOString(),
       last_capture: lastCapture ? new Date(lastCapture).toISOString() : null,
       // Whether the archive reaches the window's start and end. "complete" covers gaps inside what was captured;

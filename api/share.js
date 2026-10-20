@@ -13,14 +13,14 @@ export async function describe(query) {
     const p = (x) => (x === null || x === undefined ? '?' : `${Math.round(x)}%`);
     if (!k) return { cache: 300, url: `${SITE}/digest`, image: `${SITE}/api/card`, title: 'Proofline · Daily digest', description: 'One UTC day of public agent work on Technocore, from the verified evidence archive.' };
     return { cache: day === 'latest' ? 1800 : 86400, url: `${SITE}/digest?day=${d.day}`, image: `${SITE}/api/card?day=${d.day}`, title: `Proofline daily digest · ${d.day}`,
-      description: `kibble, ${k.full_day ? 'full day' : 'partial day'}: ${Number(k.jobs).toLocaleString('en-US')} jobs posted, ${p(k.with_result_pct)} got a result, ${p(k.with_useful_attestation_pct)} attested useful, ${p(k.reposted_share_pct)} reposted titles. From the verified archive.` };
+      description: `kibble, ${k.full_day ? 'full day' : 'partial day'}: ${Number(k.jobs).toLocaleString('en-US')} jobs posted, ${p(k.with_result_pct)} got a result, ${p(k.with_useful_not_self_pct ?? k.with_useful_attestation_pct)} attested useful by another key, ${p(k.reposted_share_pct)} reposted titles. From the verified archive.` };
   }
   const link = parseLink(query);
   if (!link) {
     const k = (await loadStats())?.rooms?.kibble;
     const p = (x) => (x === null || x === undefined ? '?' : `${Math.round(x)}%`);
     return { cache: 1800, url: `${SITE}/`, image: `${SITE}/api/card`, title: 'Proofline: what agent-work records prove',
-      description: k ? `kibble, verified archive: ${Number(k.jobs.records).toLocaleString('en-US')} jobs posted, ${p(k.outcomes.with_result_pct)} got a result, ${p(k.outcomes.with_useful_attestation_pct)} attested useful, ${p(k.jobs.reposted_share_pct)} reposted titles. Every signature re-checked.`
+      description: k ? `kibble, verified archive: ${Number(k.jobs.records).toLocaleString('en-US')} jobs posted, ${p(k.outcomes.with_result_pct)} got a result, ${p(k.outcomes.with_useful_not_self_pct ?? k.outcomes.with_useful_attestation_pct)} attested useful${k.outcomes.with_useful_not_self_pct === undefined ? '' : ' by another key'}, ${p(k.jobs.reposted_share_pct)} reposted titles. Every signature re-checked.`
         : 'What public agent-work records on Technocore prove, and what they do not. Every signature re-checked.' };
   }
   const base = { url: `${SITE}/?${q(link)}`, image: `${SITE}/api/card?${q(link)}` };

@@ -243,11 +243,15 @@ function parseMessage(message, room) {
   const sigStatus = !isDid ? 'unsigned' : typeof message.sigStatus === 'string' ? message.sigStatus : 'unchecked';
   const signed = sigStatus === 'valid';
   // body: free text after the structured fields. Workers' ACCEPT/CLAIM carry none; attestations put a verdict before it.
-  const verdict = stage === 3 ? String(parts[2] || '').toLowerCase() : '';
+  // An attestation may name the exact result it judges by its hash (sha256 of the result text, 16 or 64 hex),
+  // either as rh:<hash> in its text or as a bare hash field before the verdict: ATTEST v1 | id | <hash> | useful | ...
+  const HASH = /^(?:rh:)?([0-9a-f]{64}|[0-9a-f]{16})$/i;
+  const hashField = stage === 3 && parts.length > 3 ? HASH.exec(String(parts[2] || '').trim()) : null;
+  const vAt = hashField ? 3 : 2;
+  const verdict = stage === 3 ? String(parts[vAt] || '').toLowerCase() : '';
   const arg = stage === null ? String(parts[2] || '') : '';
-  const body = stage === 1 ? '' : parts.slice(stage === 3 ? 3 : 2).join(' | ');
-  // An attestation may name the exact result it judges: rh:<sha256 of the result text>, 16 or 64 hex.
-  const rh = stage === 3 ? ((/\brh:([0-9a-f]{64}|[0-9a-f]{16})\b/i.exec(body) || [])[1] || '').toLowerCase() || null : null;
+  const body = stage === 1 ? '' : parts.slice(stage === 3 ? vAt + 1 : 2).join(' | ');
+  const rh = stage === 3 ? (hashField ? hashField[1] : ((/\brh:([0-9a-f]{64}|[0-9a-f]{16})\b/i.exec(body) || [])[1] || '')).toLowerCase() || null : null;
   // Envelope is not enough: each kind must carry the field it is about (request text, result text, verdict).
   if ((stage === 0 && !String(parts[2] || '')) || (stage === 2 && !body) || (stage === 3 && !verdict) || (stage === null && !arg)) return { ok: false, reason: 'malformed', kind };
   return {
@@ -336,12 +340,15 @@ function buildCases(records) {
     for (const a of attests) { if (NEGATIVE.has(a.verdict)) verdicts.not++; else if (a.verdict === 'useful') verdicts.useful++; else verdicts.other++; }
     const requestKeys = keySet(requests), workerKeys = keySet(workers), resultKeys = keySet(results);
     let attestation;
-    if (!attests.length) attestation = { state: 'no-attestation', self: 0, other: 0, unknown: 0 };
-    else if (!results.length) attestation = { state: 'no-result', self: 0, other: 0, unknown: 0 };
-    else if (!resultKeys.size) attestation = { state: 'no-key', self: 0, other: 0, unknown: attests.length };
+    // Who attested, relative to this case: the key that posted a result (self), the key that posted the request
+    // (requester), any other verified key (other), or a sender whose signature did not verify (unknown).
+    if (!attests.length) attestation = { state: 'no-attestation', self: 0, requester: 0, other: 0, unknown: 0 };
+    else if (!results.length) attestation = { state: 'no-result', self: 0, requester: 0, other: 0, unknown: 0 };
+    else if (!resultKeys.size) attestation = { state: 'no-key', self: 0, requester: 0, other: 0, unknown: attests.length };
     else {
       const self = attests.filter((a) => a.keyId && resultKeys.has(a.keyId)).length, unknown = attests.filter((a) => !a.keyId).length;
-      attestation = { state: 'ok', self, other: attests.length - self - unknown, unknown };
+      const requester = attests.filter((a) => a.keyId && !resultKeys.has(a.keyId) && requestKeys.has(a.keyId)).length;
+      attestation = { state: 'ok', self, requester, other: attests.length - self - requester - unknown, unknown };
     }
     const continuity = !workers.length ? 'no-worker' : !results.length ? 'no-result' : !workerKeys.size || !resultKeys.size ? 'no-key'
       : results.some((r) => r.keyId && workerKeys.has(r.keyId)) ? 'observed' : 'not-observed';
@@ -356,8 +363,10 @@ function buildCases(records) {
     if (ra.length) flags.push({ id: 'reused-attestation', label: 'Identical attestation text in other cases', detail: `Exact same text also appears in ${label(Math.max(...ra.map(([, n]) => n)), 'other case', 'other cases')} in this window.`, seqs: ra.map(([r]) => r.seq) });
     const rw = [...workers, ...results].filter((r) => r.keyId && requestKeys.has(r.keyId));
     if (rw.length) flags.push({ id: 'requester-posted-work', label: 'Requester key also posted as worker or result', detail: 'The key that posted the request also appears on a claim, accept or result.', seqs: rw.map((r) => r.seq) });
-    const ra2 = attests.filter((r) => r.keyId && requestKeys.has(r.keyId));
-    if (ra2.length) flags.push({ id: 'requester-attested', label: 'Requester key also attested', detail: 'The key that posted the request also appears on an attestation. This can be ordinary workflow.', seqs: ra2.map((r) => r.seq) });
+    // A requester attesting its own job is not a pattern to flag: it is the verdict closest to "this met my need",
+    // and is counted under "Who attested". A self-attestation is flagged when no other key attested.
+    const sa = attests.filter((r) => r.keyId && resultKeys.has(r.keyId));
+    if (sa.length && sa.length === attests.filter((r) => r.keyId).length) flags.push({ id: 'self-attested-only', label: 'Only self-attested', detail: 'Every verified attestation in this case comes from a key that posted a result here: the work judged by its own author.', seqs: sa.map((r) => r.seq) });
     if (disputes.length) flags.unshift({ id: 'disputed', label: 'Disputed', detail: `A DISPUTE record challenges this job (${[...new Set(disputes.map((d) => d.reason))].join(', ')}).${resolutions.length ? ` Resolution recorded: ${resolutions.map((r) => r.outcome).join(', ')}.` : ' No resolution is recorded.'} Both are claims by their keys.`, seqs: [...disputes, ...resolutions].map((d) => d.seq) });
     const links = extractLinks(list, stages, targets);
     // Everything the interface displays for this case, so the view can tell when anything shown has changed (not only the record count).
@@ -486,10 +495,11 @@ async function refreshStats(){try{const r=await fetch(`${ARCHIVE_RAW}stats/lates
 function renderStats(){
   const k=stats?.rooms?.kibble;if(!k)return;
   const n=x=>x===null||x===undefined?'—':Number(x).toLocaleString('en-US'),p=x=>x===null||x===undefined?'—':`${Math.round(x)}%`,hm=t=>t?String(t).slice(11,16):'?';
-  $('#sJobs').textContent=n(k.jobs.records);$('#sResult').textContent=p(k.outcomes.with_result_pct);$('#sUseful').textContent=p(k.outcomes.with_useful_attestation_pct);$('#sReposted').textContent=p(k.jobs.reposted_share_pct);
+  $('#sJobs').textContent=n(k.jobs.records);$('#sResult').textContent=p(k.outcomes.with_result_pct);$('#sUseful').textContent=p(k.outcomes.with_useful_not_self_pct??k.outcomes.with_useful_attestation_pct);$('#sReposted').textContent=p(k.jobs.reposted_share_pct);
   const span=k.span_minutes||0,full=span>=stats.window_hours*60-30;
   $('#sScope').textContent=`kibble · ${full?'last 24 h':`last ${Math.floor(span/60)} h ${span%60} min`} · verified archive`;
-  $('#sDetail').textContent=`${hm(k.from_ts)}–${hm(k.to_ts)} UTC${full?'':' (archive younger than 24 h)'} · ${k.complete?'no gaps':'has gaps: partial'} · ${n(k.jobs.requester_keys)} requester keys · ${n(k.signatures.valid)} signatures re-checked`;
+  const o=k.outcomes,at=k.attestations||{},who=o.with_useful_not_self_pct===undefined?'':` · attested useful by the requester: ${p(o.with_useful_by_requester_pct)}, only self-attested: ${p(o.with_useful_only_self_pct)}${at.without_job_in_archive_pct!=null?` · ${p(at.without_job_in_archive_pct)} of attestations name a job never seen`:''}`;
+  $('#sDetail').textContent=`${hm(k.from_ts)}–${hm(k.to_ts)} UTC${full?'':' (archive younger than 24 h)'} · ${k.complete?'no gaps':'has gaps: partial'} · ${n(k.jobs.requester_keys)} requester keys · ${n(k.signatures.valid)} signatures re-checked${who}`;
   $('.summary p').title=`Computed from the evidence archive at ${hm(stats.generated_at)} UTC. Hover a number for its definition.`;
 }
 
@@ -534,8 +544,8 @@ function renderInspector(){
   if(c.disputes.length)finding(host,'Disputed',c.resolutions.length?c.resolutions.map(r=>r.outcome).join(', '):'no resolution',`${c.disputes.length} ${c.disputes.length===1?'DISPUTE':'DISPUTE records'}: ${[...new Set(c.disputes.map(d=>d.reason))].join(', ')}. A dispute and a resolution are claims by their keys, not findings.`,'alert');
   const cont={'observed':['Observed','A key that accepted or claimed also posted a result.'],'not-observed':['Not observed','No result was posted by a key that accepted or claimed.'],'no-worker':['Unavailable','No accept or claim in the window.'],'no-result':['Unavailable','No result in the window.'],'no-key':['Unavailable','The worker or result records do not come from keys with a verified signature, so keys cannot be compared.']}[c.continuity];
   finding(host,'Key continuity (worker → result)',cont[0],`${cont[1]} Keys are not people; this says nothing about real-world identity.`);
-  const a=c.attestation,av={'no-attestation':['None observed','No attestation in the window.'],'no-result':['Unavailable','Attestations are present, but no result is in the window to compare keys against.'],'no-key':['Unavailable','The result records do not come from keys with a verified signature, so attestation keys cannot be compared.'],'ok':[`${a.other} other-key · ${a.self} result-key${a.unknown?` · ${a.unknown} unsigned`:''}`,'Counts attestations by whether their key also posted a result. Unsigned senders are not compared. Different keys are not proof of independent parties.']}[a.state];
-  finding(host,'Attestation keys',av[0],av[1]);
+  const a=c.attestation,av={'no-attestation':['None observed','No attestation in the window.'],'no-result':['Unavailable','Attestations are present, but no result is in the window to compare keys against.'],'no-key':['Unavailable','The result records do not come from keys with a verified signature, so attestation keys cannot be compared.'],'ok':[[`${a.other} by another key`,a.requester&&`${a.requester} by the requester`,a.self&&`${a.self} by the result's own key`,a.unknown&&`${a.unknown} unsigned`].filter(Boolean).join(' · '),`Attestations are self-reported: any key can post one. Here they are counted by who posted them. The result's own key judging its own result adds nothing; the requester's verdict is the one closest to "this met my need"; another key is a third opinion, but different keys are not proof of different parties.${a.self&&!a.other&&!a.requester?' Every attestation here comes from the key that posted the result.':''}`]}[a.state];
+  finding(host,'Who attested',av[0],av[1],a.state==='ok'&&a.self&&!a.other&&!a.requester?'alert':'');
   const v=c.verdicts;if(c.attestation.state!=='no-attestation')finding(host,'Recorded verdicts',`useful ${v.useful} · negative ${v.not}${v.other?` · other ${v.other}`:''}`,v.not?'At least one attestation carries an explicit negative verdict. Read its text below; it is a claim by that key, not a finding.':'Verdicts are claims made by the posting keys.',v.not?'alert':'');
   finding(host,'Request → result timing',c.elapsedFirst===null?'Unavailable':`first ${formatDuration(c.elapsedFirst)}${c.elapsedLast!==c.elapsedFirst?` · last ${formatDuration(c.elapsedLast)}`:''}`,'From venue timestamps, which are not signed by the sender. The first result is not necessarily the substantive one.');
   if(c.flags.length){host.append(el('div','eyebrow','PATTERNS IN THE VISIBLE RECORDS'));for(const f of c.flags)finding(host,f.label,`${f.seqs.length} ${f.seqs.length===1?'record':'records'}`,`${f.detail} Seq ${f.seqs.slice(0,6).map(s=>'#'+s).join(', ')}${f.seqs.length>6?'…':''}. A pattern, not a verdict.`)}

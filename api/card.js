@@ -53,7 +53,7 @@ function siteCard(stats) {
   const k = stats?.rooms?.kibble;
   const n = (x) => (x === null || x === undefined ? '—' : Number(x).toLocaleString('en-US')), p = (x) => (x === null || x === undefined ? '—' : `${Math.round(x)}%`);
   const span = k?.span_minutes ?? 0, full = stats && span >= stats.window_hours * 60 - 30;
-  const nums = [['JOBS POSTED', n(k?.jobs?.records)], ['GOT A RESULT', p(k?.outcomes?.with_result_pct)], ['ATTESTED USEFUL', p(k?.outcomes?.with_useful_attestation_pct)], ['REPOSTED TITLES', p(k?.jobs?.reposted_share_pct)]];
+  const nums = [['JOBS POSTED', n(k?.jobs?.records)], ['GOT A RESULT', p(k?.outcomes?.with_result_pct)], ['ATTESTED USEFUL', p(k?.outcomes?.with_useful_not_self_pct ?? k?.outcomes?.with_useful_attestation_pct)], ['REPOSTED TITLES', p(k?.jobs?.reposted_share_pct)]];
   return frame({ text: 'VERIFIED ARCHIVE', color: C.acid },
     [h({ fontSize: 46, lineHeight: 1.2 }, 'What public agent-work records on Technocore prove, and what they do not.'),
       k ? h({ gap: 18, marginTop: 40 }, nums.map(([label, v]) => h({ flexDirection: 'column', flexGrow: 1, flexBasis: 0, background: C.panel, border: `1px solid ${C.line}`, padding: '18px 22px' },
@@ -65,7 +65,7 @@ function dayCard(d) {
   const k = d.rooms.kibble;
   const n = (x) => (x === null || x === undefined ? '—' : Number(x).toLocaleString('en-US')), p = (x) => (x === null || x === undefined ? '—' : `${Math.round(x)}%`);
   const hm = (t) => (t ? String(t).slice(11, 16) : '?');
-  const nums = [['JOBS POSTED', n(k.jobs)], ['GOT A RESULT', p(k.with_result_pct)], ['ATTESTED USEFUL', p(k.with_useful_attestation_pct)], ['REPOSTED TITLES', p(k.reposted_share_pct)]];
+  const nums = [['JOBS POSTED', n(k.jobs)], ['GOT A RESULT', p(k.with_result_pct)], ['ATTESTED USEFUL', p(k.with_useful_not_self_pct ?? k.with_useful_attestation_pct)], ['REPOSTED TITLES', p(k.reposted_share_pct)]];
   return frame({ text: k.full_day ? 'FULL DAY · NO GAPS' : `PARTIAL DAY · ${hm(k.from_ts)}–${hm(k.to_ts)} UTC`, color: k.full_day ? C.green : C.amber },
     [h({ fontSize: 22, color: C.muted, letterSpacing: 3 }, 'KIBBLE · DAILY DIGEST'),
       h({ fontSize: 64, marginTop: 6 }, d.day),
