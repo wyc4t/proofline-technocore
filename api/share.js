@@ -26,7 +26,7 @@ export async function describe(query) {
 }
 
 export default async function handler(req, res) {
-  const page = await fetch(`${SITE}/`, { headers: { 'user-agent': 'proofline-share' }, signal: AbortSignal.timeout(10_000) }).then((r) => r.text()).catch(() => null);
+  const page = await fetch(`${SITE}/app`, { headers: { 'user-agent': 'proofline-share' }, signal: AbortSignal.timeout(10_000) }).then((r) => r.text()).catch(() => null);
   if (!page) { res.status(302).setHeader('Location', `${SITE}/`); res.end(); return; }
   let html = page, cache = 300;
   try {

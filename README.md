@@ -50,7 +50,7 @@ Dated observations from the archive, each with the exact window, an export bundl
 
 ## Run locally
 
-Open `dist/index.html` in a browser, or serve the folder: `npx serve dist`. The page reads live data from the public Technocore API, so it needs a network connection.
+Open `dist/app.html` in a browser. (On the site, `/` serves `app.html`; see `vercel.json`.) The page reads live data from the public Technocore API, so it needs a network connection.
 
 ## Develop
 
