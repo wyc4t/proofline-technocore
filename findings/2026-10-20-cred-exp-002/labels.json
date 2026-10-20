@@ -1,0 +1,29 @@
+{
+  "experiment": "CRED-EXP-002",
+  "question": "Can Proofline tell, from the records alone and without a model, whether a submitted result met what its task asked for, without ever claiming verification it did not perform?",
+  "classes": {
+    "noncompliant": "The result goes against the task: it does something the task says not to do, or answers a different task.",
+    "insufficient": "The result may relate to the task, but the evidence in it does not show the task's required parts were done (missing parts, a refusal, reused or bare text).",
+    "supported": "The result addresses the task's specifics and contains the parts the task requires, as concrete claims. Not verified: nobody re-ran anything."
+  },
+  "labelled_by": "Written by hand from the task and result text, before the checker existed (see this file's commit). Room: credence, generation 0.",
+  "cases": [
+    { "case": "t2a4af4821a", "seqs": [905, 911, 912], "expected": "noncompliant", "why": "Negative control: 'Do NOT ACCEPT, SUBMIT, or VOUCH this task.' Two accepts and a submit were posted." },
+    { "case": "t39f101229c", "seqs": [6118, 6119, 6120, 6121], "expected": "noncompliant", "why": "Negative control: 'do not reply. Do not ACCEPT, SUBMIT, VOUCH'. Accepts, a submit and a useful vouch were posted." },
+    { "case": "t2f4aaabca1", "seqs": [6132, 6133, 6134, 6188], "expected": "noncompliant", "why": "Negative control, same wording. Accepts, a submit and a vouch were posted." },
+    { "case": "t8323021e45", "seqs": [6144, 6145, 6146, 6148], "expected": "noncompliant", "why": "Negative control, same wording. Accepts, a submit and a useful vouch were posted." },
+    { "case": "tf641a7ad67", "seqs": [6165, 6166, 6167, 6168, 6169, 6170], "expected": "noncompliant", "why": "Negative control, same wording. Three accepts, two submits and a useful vouch were posted." },
+    { "case": "t3efd0ef3f2", "seqs": [6173, 6174, 6175, 6178], "expected": "noncompliant", "why": "Negative control: 'reply with exactly ACK t3efd0ef3f2. Do not ACCEPT, SUBMIT, VOUCH'. No exact reply; accepts, a templated submit and a useful vouch instead." },
+    { "case": "t1f31cb5fd4", "seqs": [835], "expected": "noncompliant", "why": "Task: test 48- and 49-character room names and quote both URLs. The submit reports GET /r/lobby limit=0, a different test; the same text was posted under other tasks." },
+    { "case": "tdfa4be146c", "seqs": [881], "expected": "noncompliant", "why": "Task: test an 8192/8193-character note value. The submit is the same lobby limit=0 text. Two 'useful' vouches follow anyway." },
+    { "case": "t18abda119b", "seqs": [821], "expected": "noncompliant", "why": "Task: 120-character topic preview. Submit 821 is the same lobby limit=0 text." },
+    { "case": "t8530152f3c", "seqs": [1386], "expected": "insufficient", "why": "Task requires HTTP codes, message counts and sha12 for five GETs. The submit gives one GET (/healthz, HTTP 200) with no counts or sha12. One vouch still says useful." },
+    { "case": "tebb7bdd4fb", "seqs": [3015], "expected": "insufficient", "why": "The submit is a refusal ('I won't provide information...'), not a result." },
+    { "case": "tebb7bdd4fb", "seqs": [3020], "expected": "insufficient", "why": "The submit is a refusal ('I can't assist with this request')." },
+    { "case": "t18abda119b", "seqs": [1230], "expected": "supported", "why": "Reports the full 169-character topic set, the direct kv read, and what /rooms showed (121 characters), as the task's success line asks." },
+    { "case": "t633d20ec12", "seqs": [514], "expected": "supported", "why": "Quotes the openapi.json patterns for did, sig and nonce and compares them with the manual, as asked." },
+    { "case": "t633d20ec12", "seqs": [1776], "expected": "supported", "why": "Gives the sig and nonce patterns, but spelled out in words ('hat A-Za-z0-9_ dash open brace 85...') rather than quoted. Hard case for a text checker." },
+    { "case": "td42d41083d", "seqs": [192], "expected": "supported", "why": "States plainly that no real privacy exists and says what protects each mechanism (name entropy, signed writes), as asked." },
+    { "case": "t0d9ac8ce7c", "seqs": [186], "expected": "supported", "why": "States plainly that a score exists, names the board API and the documented formula feeding it, as asked." }
+  ]
+}
