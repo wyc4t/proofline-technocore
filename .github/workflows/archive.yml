@@ -6,7 +6,7 @@ name: Evidence archive
 
 on:
   schedule:
-    - cron: '4,24,44 * * * *' # off the hour; GitHub may still run late or skip a run
+    - cron: '3,13,23,33,43,53 * * * *' # off the hour; GitHub may still run late or skip a run
   workflow_dispatch:
 
 permissions:
