@@ -45,3 +45,15 @@ test('locating through the index gives the same captures as the full log', async
     assert.equal(await locateViaIndex({ room: 'nothing', gen: '0', from: 1, to: 2, fetchText, rawBase: 'raw/' }), null, 'no index: the caller falls back to the full log');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('a pinned window counts every sequence number it did not load, including gaps inside a capture', async () => {
+  const { loadPinned } = await import('../src/lib/snapshot.js');
+  const { createHash } = await import('node:crypto');
+  const lines = [10, 12].map((s) => `{"seq":${s},"ts":"2026-10-20T08:00:00Z","from":"n","text":"x"}`).join('\n') + '\n';
+  const c = { ok: true, room: 'credence', generation: '0', new_records: 2, new_first_seq: 10, new_last_seq: 12, captured_at: 'T',
+    new_sha256: createHash('sha256').update(lines).digest('hex'), storage: { kind: 'git', files: ['f.jsonl'] } };
+  const files = { 'raw/captures.jsonl': JSON.stringify(c) + '\n', 'raw/f.jsonl': lines };
+  const r = await loadPinned({ room: 'credence', gen: '0', from: 10, to: 12, rawBase: 'raw/', fetchText: async (u) => { if (!(u in files)) throw new Error('404'); return files[u]; }, fetchBytes: async (u) => new Uint8Array(Buffer.from(files[u])), assetUrl: () => '' });
+  assert.equal(r.lines.length, 2);
+  assert.equal(r.missing, 1, 'seq 11 is reported as missing');
+});

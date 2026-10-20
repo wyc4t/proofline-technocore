@@ -52,4 +52,15 @@ node archive/export.mjs --data ../archive-data --assets ../assets --room kibble 
 node findings/2026-10-20-kibble-reused-job-ids/reproduce.mjs ../bundle
 ```
 
-The export prints the bundle ID above if your archive copy and the code match this finding. `reproduce.mjs` reads only the bundle, checks its files against its manifest, and prints every number on this page. If the code has changed since, check out the commit that added this finding.
+`reproduce.mjs` reads only the bundle, checks its files against its manifest, and prints every number on this page.
+
+The bundle pins the code that built it, so the bundle ID above is reproduced by the code as it was when this finding was published. Later changes to the parser give a different ID for the same records. To get exactly `7f62172…`, run the export from that commit:
+
+```sh
+git checkout 82c414a
+node archive/export.mjs --data ../archive-data --assets ../assets --room kibble \
+  --from-seq 19898626 --to-seq 19923217 --out ../bundle
+git checkout main
+```
+
+On current `main`, the same commands produce a different bundle ID and the same numbers.

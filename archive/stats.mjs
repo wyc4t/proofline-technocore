@@ -16,14 +16,18 @@ import { classify, sha256, VERIFIER_VERSION } from './lib/records.mjs';
 import { parseMessage } from '../src/lib/protocol.js';
 import { NEGATIVE } from '../src/lib/cases.js';
 
-export const STATS_VERSION = '1';
+export const STATS_VERSION = '2'; // 2: reposted requires identical text; jobs grouped by generation; stricter gap rule
 export const OUTCOME_GRACE_MIN = 30;
 const here = new URL('.', import.meta.url).pathname;
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const pct = (n, d) => (d ? Math.round((1000 * n) / d) / 10 : null);
+// Loops, not Math.min(...array): a day of records is far past the engine's argument limit.
+const minOf = (xs) => { let m = Infinity; for (const x of xs) if (x < m) m = x; return m; };
+const maxOf = (xs) => { let m = -Infinity; for (const x of xs) if (x > m) m = x; return m; };
 
 export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable = 0 }) {
-  // entries: [{ rec, nonceDigits, raw }] for this room, any generation, already verified by check()
+  // entries: [{ rec, nonceDigits, raw, gen }] for this room, already verified by check(). Jobs are grouped by
+  // generation and ID: sequence numbers and IDs restart with a new generation, so they are never joined across one.
   const inWindow = entries.filter((p) => { const t = Date.parse(p.rec.ts); return t >= fromMs && t <= toMs; });
   const sig = { valid: 0, invalid: 0, no_sig: 0, unsigned: 0 };
   const recs = [];
@@ -31,10 +35,10 @@ export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable 
     const st = classify(room, p);
     sig[st]++;
     const r = parseMessage({ ...p.rec, sigStatus: st }, room);
-    if (r.ok) recs.push(r.record);
+    if (r.ok) recs.push({ ...r.record, gen: String(p.gen ?? '0') });
   }
   const byId = new Map();
-  for (const r of recs) (byId.get(r.id) || byId.set(r.id, []).get(r.id)).push(r);
+  for (const r of recs) { const k = `${r.gen}:${r.id}`; (byId.get(k) || byId.set(k, []).get(k)).push(r); }
   const jobs = recs.filter((r) => r.stage === 0);
   const requesters = new Set(jobs.map((r) => r.keyId).filter(Boolean));
   const active = new Set(recs.map((r) => r.keyId).filter(Boolean));
@@ -45,21 +49,24 @@ export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable 
   for (const list of byId.values()) {
     const js = list.filter((r) => r.stage === 0);
     if (!js.length) continue;
-    const keys = new Set(js.map((r) => r.keyId).filter(Boolean));
-    if (keys.size >= 2) { repostedIds++; repostedJobRecords += js.length; }
-    const t0 = Math.min(...js.map((r) => Date.parse(r.ts)));
+    // Reposted: identical JOB text under one ID from two or more verified keys.
+    const byText = new Map();
+    for (const r of js) (byText.get(r.text) || byText.set(r.text, []).get(r.text)).push(r);
+    const reposted = [...byText.values()].filter((g) => new Set(g.map((r) => r.keyId).filter(Boolean)).size >= 2);
+    if (reposted.length) { repostedIds++; repostedJobRecords += reposted.reduce((n, g) => n + g.length, 0); }
+    const t0 = minOf(js.map((r) => Date.parse(r.ts)));
     if (t0 > cutoff) continue;
     o.basis_ids++;
     const after = (stage) => list.filter((r) => r.stage === stage && Date.parse(r.ts) >= t0);
     const results = after(2), attests = after(3);
     if (after(1).length) o.with_claim++;
-    if (results.length) { o.with_result++; firstResult.push((Math.min(...results.map((r) => Date.parse(r.ts))) - t0) / 1000); }
+    if (results.length) { o.with_result++; firstResult.push((minOf(results.map((r) => Date.parse(r.ts))) - t0) / 1000); }
     if (attests.length) o.with_attestation++;
     if (attests.some((a) => a.verdict === 'useful')) o.with_useful_attestation++;
   }
   const attests = recs.filter((r) => r.stage === 3);
   const ts = inWindow.map((p) => Date.parse(p.rec.ts));
-  const first = ts.length ? Math.min(...ts) : null, last = ts.length ? Math.max(...ts) : null;
+  const first = ts.length ? minOf(ts) : null, last = ts.length ? maxOf(ts) : null;
   return {
     from_ts: first ? new Date(first).toISOString() : null,
     to_ts: last ? new Date(last).toISOString() : null,
@@ -91,19 +98,26 @@ export function computeStats({ data, assets, hours = 24, rooms = ['kibble', 'cre
     notes: [
       'Counts are per room and job ID, over archived records whose signatures were re-verified.',
       `Outcome rates count jobs posted at least ${OUTCOME_GRACE_MIN} minutes before the window ends.`,
-      'A reposted ID is a job ID whose JOB records come from two or more verified keys.',
+      'A reposted ID is a job ID under which two or more verified keys posted identical JOB text.',
+      'Jobs are grouped by room generation and job ID.',
       'These describe records, not whether any work was correct or useful.',
     ] };
   for (const room of rooms) {
     const gens = report.records[room] || {};
     const lastCapture = Object.values(report.rooms[room] || {}).map((g) => Date.parse(g.unknown.after_last_successful_capture || 0)).reduce((a, b) => Math.max(a, b), 0);
     const toMs = lastCapture || now, fromMs = toMs - hours * 3600e3;
-    const entries = Object.values(gens).flatMap((m) => [...m.values()]);
-    const inWin = entries.filter((p) => Date.parse(p.rec.ts) >= fromMs);
-    const lo = inWin.length ? Math.min(...inWin.map((p) => p.rec.seq)) : Infinity;
-    const gaps = Object.values(report.rooms[room] || {}).flatMap((g) => g.known_gaps).filter((g) => g.to >= lo).map(({ from, to }) => ({ from, to }));
-    const unavailable = Object.values(report.rooms[room] || {}).flatMap((g) => g.unknown.not_available_to_this_check).filter((u) => u.to >= lo).length;
-    out.rooms[room] = { ...roomStats(room, entries, { fromMs, toMs, gaps, unavailable }), window_start: new Date(fromMs).toISOString(), last_capture: lastCapture ? new Date(lastCapture).toISOString() : null };
+    const entries = Object.entries(gens).flatMap(([g, m]) => [...m.values()].map((p) => ({ ...p, gen: g.replace(/^g/, '') })));
+    // A known gap can only be ruled out of the window if it lies entirely before an archived record dated before
+    // the window: seq and ts both increase, so everything below that record is older. Any later gap may hold
+    // records from inside the window, and makes the window incomplete.
+    const gaps = [], unavailable = [];
+    for (const [g, info] of Object.entries(report.rooms[room] || {})) {
+      let before = -Infinity;
+      for (const p of (gens[g] || new Map()).values()) if (Date.parse(p.rec.ts) < fromMs && p.rec.seq > before) before = p.rec.seq;
+      for (const x of info.known_gaps) if (x.to > before) gaps.push({ generation: g.replace(/^g/, ''), from: x.from, to: x.to });
+      for (const u of info.unknown.not_available_to_this_check) if (u.to > before) unavailable.push(u);
+    }
+    out.rooms[room] = { ...roomStats(room, entries, { fromMs, toMs, gaps, unavailable: unavailable.length }), window_start: new Date(fromMs).toISOString(), last_capture: lastCapture ? new Date(lastCapture).toISOString() : null };
   }
   return out;
 }

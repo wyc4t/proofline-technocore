@@ -37,7 +37,8 @@ function pinnedCard(link, loaded) {
       h({ fontSize: 68, marginTop: 6 }, link.id),
       h({ fontSize: 30, color: '#aeb9c7', marginTop: 10, lineHeight: 1.3 }, clip(c.title, 110)),
       stageRow,
-      h({ fontSize: 24, color: s.sig.invalid ? '#ff6678' : '#c3cdd9', marginTop: 28 }, s.text)],
+      h({ fontSize: 24, color: s.sig.invalid ? '#ff6678' : '#c3cdd9', marginTop: 28 }, s.text),
+      loaded.missing ? h({ fontSize: 22, color: C.amber, marginTop: 12 }, `Partial: ${loaded.missing} ${loaded.missing === 1 ? 'record' : 'records'} in this window ${loaded.missing === 1 ? 'is' : 'are'} not in the archive`) : null],
     `records #${Math.min(...seqs)}–#${Math.max(...seqs)} · checked against the archive`);
 }
 
@@ -66,7 +67,9 @@ export default async function handler(req, res) {
   try {
     if (link?.pin) {
       const loaded = await loadPinnedCase(link);
-      if (loaded) { element = pinnedCard(link, loaded); maxAge = 31536000; } // the archived window never changes
+      // A complete archived window never changes, so its card can be cached for good; a partial one may
+      // still be filled by a later capture, so it is looked at again soon.
+      if (loaded) { element = pinnedCard(link, loaded); maxAge = loaded.missing ? 300 : 31536000; }
       else { element = liveCard(link); maxAge = 300; }                        // not archived yet: look again soon
     } else if (link) element = liveCard(link);
     else element = siteCard(await loadStats());

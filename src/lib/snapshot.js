@@ -94,5 +94,8 @@ export async function loadPinned({ room, gen, from, to, fetchText, fetchBytes, a
     used.push({ captured_at: c.captured_at, range, integrity });
   }
   lines.sort((a, b) => seqOf(a) - seqOf(b));
-  return { lines, captures: used, missing };
+  // Missing = every seq in the window not actually loaded: not captured, in a gap between captures, or
+  // inside one capture (an export that skipped numbers). Technocore numbers every record, so none is optional.
+  const loaded = new Set(lines.map(seqOf));
+  return { lines, captures: used, missing: (to - from + 1) - loaded.size };
 }

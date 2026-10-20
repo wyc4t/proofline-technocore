@@ -202,7 +202,10 @@ async function loadPinned({ room, gen, from, to, fetchText, fetchBytes, assetUrl
     used.push({ captured_at: c.captured_at, range, integrity });
   }
   lines.sort((a, b) => seqOf(a) - seqOf(b));
-  return { lines, captures: used, missing };
+  // Missing = every seq in the window not actually loaded: not captured, in a gap between captures, or
+  // inside one capture (an export that skipped numbers). Technocore numbers every record, so none is optional.
+  const loaded = new Set(lines.map(seqOf));
+  return { lines, captures: used, missing: (to - from + 1) - loaded.size };
 }
 
 /* src/lib/protocol.js */
@@ -475,7 +478,7 @@ function renderSummary(){
   const win=rooms.map(coverage).map(c=>`${c.room} last ${c.spanMs===null?'…':fmtSpan(c.spanMs)}`).join(' · ');
   const hidden=filter==='seen'?cases.filter(c=>c.status==='no-request').length:0,note=$('#casesNote');
   note.replaceChildren(el('b','',`Live view: ${win}.`),document.createTextNode(' '));
-  if(hidden){note.append(document.createTextNode(`${hidden} ${hidden===1?'case':'cases'} whose request is older than this are hidden. `));const b=el('button','','Show them');b.type='button';b.onclick=()=>{filter='all';$('#filter').value='all';render(true)};note.append(b)}
+  if(hidden){note.append(document.createTextNode(`${hidden} ${hidden===1?'case has':'cases have'} no request in view and ${hidden===1?'is':'are'} hidden. Their request may be older than the view, posted elsewhere, or missing. `));const b=el('button','','Show them');b.type='button';b.onclick=()=>{filter='all';$('#filter').value='all';render(true)};note.append(b)}
   else note.append(document.createTextNode('Older cases stay reachable through pinned links to the archive.'));
 }
 // Headline numbers: kibble over the last 24 hours, computed hourly from the verified archive.
