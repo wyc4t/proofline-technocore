@@ -88,6 +88,23 @@ async function annotateSignatures(room, messages, subtle) {
 
 const signatureSupport = () => supported;
 
+// Content hashes kibble uses to refer to records: WITNESS binds sha256(full JOB line); an attestation's rh: is
+// sha256 of a result's text after `RESULT v1 | <job_id> |`, trimmed. Both are compared by hex prefix.
+const hexOf = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+async function annotateContentHashes(messages, subtle = globalThis.crypto?.subtle) {
+  if (!subtle) return messages;
+  const enc = new TextEncoder();
+  await Promise.all((messages || []).map(async (m) => {
+    const t = typeof m?.text === 'string' ? m.text : '';
+    if (/^JOB v1 \|/.test(t)) m.textHash = hexOf(await subtle.digest('SHA-256', enc.encode(t)));
+    else if (/^(RESULT|DELIVER) v1 \|/.test(t)) {
+      const second = t.indexOf('|', t.indexOf('|') + 1);
+      if (second > 0) m.resultHash = hexOf(await subtle.digest('SHA-256', enc.encode(t.slice(second + 1).trim())));
+    }
+  }));
+  return messages;
+}
+
 /* src/lib/snapshot.js */
 // Pinned snapshots: load a fixed window of one room from the evidence archive, check it
 // against the archive's own manifest, and hand back the records. Runs in the browser and
@@ -184,7 +201,13 @@ async function loadPinned({ room, gen, from, to, fetchText, fetchBytes, assetUrl
 
 /* src/lib/protocol.js */
 // Parsing of Technocore room messages into protocol records. Pure: no DOM, no network.
-const KINDS = new Set(['TASK', 'ACCEPT', 'SUBMIT', 'VOUCH', 'JOB', 'CLAIM', 'RESULT', 'DELIVER', 'ATTEST']);
+const KINDS = new Set(['TASK', 'ACCEPT', 'SUBMIT', 'VOUCH', 'JOB', 'CLAIM', 'RESULT', 'DELIVER', 'ATTEST', 'WITNESS', 'DISPUTE', 'RESOLVE']);
+// Records about a job that are not one of its four stages (kibble-v1): a host countersign of the job text,
+// a challenge, and the challenge's resolution. Their third field is the one they are about.
+//   WITNESS v1 | <job_id> | <sha256 of the full JOB line, 16 hex>
+//   DISPUTE v1 | <job_id> | fake_result|wrong_hash|spam|not_done|policy | <evidence_hash>
+//   RESOLVE v1 | <job_id> | upheld|rejected | <reason>
+const EXTRA_KINDS = new Set(['WITNESS', 'DISPUTE', 'RESOLVE']);
 const STAGE = { TASK: 0, JOB: 0, ACCEPT: 1, CLAIM: 1, SUBMIT: 2, RESULT: 2, DELIVER: 2, VOUCH: 3, ATTEST: 3 };
 const STAGE_NAMES = ['REQUEST', 'WORKER', 'RESULT', 'ATTESTATION'];
 const SUPPORTED_VERSION = 'v1';
@@ -204,7 +227,7 @@ function parseMessage(message, room) {
   const seq = Number(message.seq);
   if (!id || !ID.test(id) || !Number.isFinite(seq)) return { ok: false, reason: 'malformed', kind };
   const from = typeof message.from === 'string' ? message.from : '';
-  const stage = STAGE[kind];
+  const stage = STAGE[kind] ?? null;
   // sigStatus is set by checkSignature() before parsing (see signature.js). Only a did:key whose signature
   // verifies counts as a key; anything else (nickname, no signature, failed or unchecked) is never compared as one.
   const isDid = from.startsWith('did:key:');
@@ -212,9 +235,12 @@ function parseMessage(message, room) {
   const signed = sigStatus === 'valid';
   // body: free text after the structured fields. Workers' ACCEPT/CLAIM carry none; attestations put a verdict before it.
   const verdict = stage === 3 ? String(parts[2] || '').toLowerCase() : '';
+  const arg = stage === null ? String(parts[2] || '') : '';
   const body = stage === 1 ? '' : parts.slice(stage === 3 ? 3 : 2).join(' | ');
+  // An attestation may name the exact result it judges: rh:<sha256 of the result text>, 16 or 64 hex.
+  const rh = stage === 3 ? ((/\brh:([0-9a-f]{64}|[0-9a-f]{16})\b/i.exec(body) || [])[1] || '').toLowerCase() || null : null;
   // Envelope is not enough: each kind must carry the field it is about (request text, result text, verdict).
-  if ((stage === 0 && !String(parts[2] || '')) || (stage === 2 && !body) || (stage === 3 && !verdict)) return { ok: false, reason: 'malformed', kind };
+  if ((stage === 0 && !String(parts[2] || '')) || (stage === 2 && !body) || (stage === 3 && !verdict) || (stage === null && !arg)) return { ok: false, reason: 'malformed', kind };
   return {
     ok: true,
     record: {
@@ -223,7 +249,10 @@ function parseMessage(message, room) {
       ts: String(message.ts || ''),
       source: from,                 // whatever the sender called itself; '' when absent
       keyId: signed ? from : null,  // only a did:key whose signature verified counts as a key
-      signed, sigStatus, stage, verdict, body,
+      signed, sigStatus, stage, verdict, body, arg, rh,
+      // Set by annotateContentHashes() (signature.js) when available: sha256 of the full line (jobs, for WITNESS)
+      // and of the result text after the job ID (results, for rh:).
+      textHash: message.textHash || null, resultHash: message.resultHash || null,
     },
   };
 }
@@ -256,10 +285,17 @@ function wordingFromRequest(request, result) {
   const qt = words(request.body); let n = 0; for (const w of rt) if (qt.has(w)) n++;
   return n / rt.size >= 0.9;
 }
-function extractLinks(list, stages) {
+// An attestation's rh: names a result by content hash. It matches results of the same case posted before it.
+// Identical result text has an identical hash, so one rh: can match several results; all are kept and counted.
+function attestationTargets(attests, results) {
+  return attests.filter((a) => a.rh).map((a) => ({ seq: a.seq, rh: a.rh,
+    matches: results.filter((r) => r.resultHash && r.resultHash.startsWith(a.rh) && r.seq < a.seq).map((r) => r.seq) }));
+}
+function extractLinks(list, stages, targets) {
   const bySeq = new Map(list.map((r) => [r.seq, r])), links = [], seen = new Set();
   const add = (from, to, type) => { const k = `${from}>${to}>${type}`; if (!seen.has(k)) { seen.add(k); links.push({ from, to, type }); } };
   for (const r of list) for (const m of r.text.matchAll(/\bseq\s*#?(\d+)/gi)) { const to = Number(m[1]); if (to !== r.seq && bySeq.has(to)) add(r.seq, to, 'cites'); }
+  for (const t of targets) for (const to of t.matches) add(t.seq, to, 'hash');
   for (const w of stages[1]) for (const res of stages[2]) if (w.keyId && w.keyId === res.keyId && w.seq < res.seq) add(w.seq, res.seq, 'same-key');
   return links;
 }
@@ -278,6 +314,14 @@ function buildCases(records) {
     const room = list[0].room, id = list[0].id;
     const stages = [0, 1, 2, 3].map((s) => list.filter((r) => r.stage === s));
     const [requests, workers, results, attests] = stages, request = requests[0];
+    const extras = list.filter((r) => r.stage === null);
+    const targets = attestationTargets(attests, results);
+    // A WITNESS binds the exact job text by hash; it matches when a JOB of this case has that hash.
+    const witnesses = extras.filter((r) => r.kind === 'WITNESS').map((w) => ({ seq: w.seq, key: w.keyId, source: w.source,
+      matches: requests.some((j) => j.textHash && /^[0-9a-f]{16,64}$/i.test(w.arg) && j.textHash.startsWith(w.arg.toLowerCase())),
+      checkable: requests.some((j) => j.textHash) }));
+    const disputes = extras.filter((r) => r.kind === 'DISPUTE').map((d) => ({ seq: d.seq, reason: d.arg }));
+    const resolutions = extras.filter((r) => r.kind === 'RESOLVE').map((r) => ({ seq: r.seq, outcome: r.arg.toLowerCase() }));
     const status = stages.every((s) => s.length) ? 'all-stages' : request ? 'partial' : 'no-request';
     const verdicts = { useful: 0, not: 0, other: 0 };
     for (const a of attests) { if (NEGATIVE.has(a.verdict)) verdicts.not++; else if (a.verdict === 'useful') verdicts.useful++; else verdicts.other++; }
@@ -305,13 +349,15 @@ function buildCases(records) {
     if (rw.length) flags.push({ id: 'requester-posted-work', label: 'Requester key also posted as worker or result', detail: 'The key that posted the request also appears on a claim, accept or result.', seqs: rw.map((r) => r.seq) });
     const ra2 = attests.filter((r) => r.keyId && requestKeys.has(r.keyId));
     if (ra2.length) flags.push({ id: 'requester-attested', label: 'Requester key also attested', detail: 'The key that posted the request also appears on an attestation. This can be ordinary workflow.', seqs: ra2.map((r) => r.seq) });
-    const links = extractLinks(list, stages);
+    if (disputes.length) flags.unshift({ id: 'disputed', label: 'Disputed', detail: `A DISPUTE record challenges this job (${[...new Set(disputes.map((d) => d.reason))].join(', ')}).${resolutions.length ? ` Resolution recorded: ${resolutions.map((r) => r.outcome).join(', ')}.` : ' No resolution is recorded.'} Both are claims by their keys.`, seqs: [...disputes, ...resolutions].map((d) => d.seq) });
+    const links = extractLinks(list, stages, targets);
     // Everything the interface displays for this case, so the view can tell when anything shown has changed (not only the record count).
     const fingerprint = [status, JSON.stringify(verdicts), JSON.stringify(attestation), continuity, elapsedFirst, elapsedLast,
       flags.map((f) => `${f.id}:${f.detail}:${f.seqs.join('.')}`).join(';'), links.map((l) => `${l.from}${l.type[0]}${l.to}`).join(','),
-      list.map((r) => `${r.seq}:${r.ts}:${r.source}:${r.sigStatus}:${hash(r.text)}`).join(',')].join('|');
+      list.map((r) => `${r.seq}:${r.ts}:${r.source}:${r.sigStatus}:${hash(r.text)}`).join(','),
+      JSON.stringify([targets, witnesses, disputes, resolutions])].join('|');
     return { key, id, room, list, stages, status, title: titleFor(list, id), verdicts, negative: verdicts.not > 0, attestation, continuity,
-      elapsedFirst, elapsedLast, flags, links, fingerprint, latest: list.at(-1)?.ts || '' };
+      elapsedFirst, elapsedLast, flags, links, targets, witnesses, disputes, resolutions, disputed: disputes.length > 0, fingerprint, latest: list.at(-1)?.ts || '' };
   }).sort((a, b) => new Date(b.latest) - new Date(a.latest));
 }
 
@@ -411,9 +457,12 @@ function el(tag,className,text){const node=document.createElement(tag);if(classN
 function formatDuration(ms){if(ms===null||!Number.isFinite(ms))return 'Unavailable';if(ms<0)return 'Invalid ordering';const s=Math.round(ms/1000);if(s<60)return `${s}s`;const m=Math.floor(s/60);if(m<60)return `${m}m ${s%60}s`;return `${Math.floor(m/60)}h ${m%60}m`}
 function shortDid(did){if(!did)return 'unknown sender';return did.startsWith('did:key:')?`${did.slice(8,18)}…${did.slice(-5)}`:did.slice(0,24)}
 const clock=ms=>ms?new Date(ms).toLocaleTimeString([],{hour12:false}):'never';
-const FILTER_LABEL={seen:'Request in view','all-stages':'All 4 stages',partial:'Partial',negative:'Negative verdict','no-request':'Request not seen',all:'All cases'};
-const matches=(c,f)=>f==='all'||(f==='seen'?c.status!=='no-request':f==='negative'?c.negative:c.status===f);
-function visibleCases(){return cases.filter(c=>matches(c,filter))}
+const FILTER_LABEL={seen:'Request in view','all-stages':'All 4 stages',partial:'Partial',negative:'Negative verdict',disputed:'Disputed','no-request':'Request not seen',all:'All cases'};
+const matches=(c,f)=>f==='all'||(f==='seen'?c.status!=='no-request':f==='negative'?c.negative:f==='disputed'?c.disputed:c.status===f);
+// Search: job ID, sender key (any part of it) or text, over the live view.
+let query='';
+const hits=(c,q)=>!q||c.id.toLowerCase().includes(q)||c.title.toLowerCase().includes(q)||c.list.some(r=>(r.source||'').toLowerCase().includes(q)||r.text.toLowerCase().includes(q));
+function visibleCases(){return cases.filter(c=>matches(c,filter)&&hits(c,query))}
 function renderSummary(){
   for(const o of $('#filter').options)o.textContent=`${FILTER_LABEL[o.value]} (${cases.filter(c=>matches(c,o.value)).length})`;
   // The live view is only the newest records of each room; say how much, and what the filter hides.
@@ -437,7 +486,7 @@ function renderStats(){
 
 function renderList(){
   const host=$('#caseList');host.replaceChildren();const visible=visibleCases();
-  if(!visible.length){host.append(el('div','loading','No matching cases in the current observation window.'));return}
+  if(!visible.length){host.append(el('div','loading',query?`No case in the live view matches \u201c${query}\u201d. Search covers only the live view; for an older case, use its pinned link.`:'No matching cases in the current observation window.'));return}
   for(const item of visible.slice(0,listLimit)){
     const button=el('button',`case${selected?.key===item.key?' active':''}`);button.type='button';button.dataset.key=item.key;if(selected?.key===item.key)button.setAttribute('aria-current','true');
     const top=el('div','case-top'),badges=el('span','badges');if(item.negative)badges.append(el('span','badge negative',`NEGATIVE ×${item.verdicts.not}`));badges.append(el('span',`badge ${item.status}`,STATUS_LABEL[item.status]));
@@ -470,6 +519,10 @@ function renderInspector(){
   const sc=c.list.reduce((m,r)=>(m[r.sigStatus]=(m[r.sigStatus]||0)+1,m),{});
   finding(host,'Signatures',['valid','invalid','no_sig','unsigned','unchecked'].filter(k=>sc[k]).map(k=>`${sc[k]} ${{valid:'verified',invalid:'fail',no_sig:'no signature',unsigned:'nickname',unchecked:'not checked'}[k]}`).join(' · '),
     sc.invalid?'At least one record names a key but its signature does not verify. That record is not treated as coming from that key.':sc.unchecked&&!sc.valid?'Your browser cannot check these signatures, so no record here is compared as coming from a key.':'A verified signature shows that the key signed this room, nonce and text. It does not show who holds the key or that the work is correct. Sequence numbers and times are added by Technocore and are not signed.',sc.invalid?'alert':'');
+  if(c.targets.length){const m=c.targets.filter(t=>t.matches.length).length,multi=c.targets.filter(t=>t.matches.length>1).length;
+    finding(host,'Attestations that name a result',`${m} of ${c.targets.length} matched`,`An attestation can name the exact result it judges by hash (rh:). Matched means a result of this case, posted earlier, has that hash; the graph draws it in green.${m<c.targets.length?' The others name a result that is not in view.':''}${multi?` ${multi} name text that was posted more than once, so they match several results.`:''}`)}
+  for(const w of c.witnesses)finding(host,'Job countersign (WITNESS)',w.matches?'matches the job text':w.checkable?'does not match':'job not in view',`A WITNESS record by ${shortDid(w.source)} binds the exact job text by hash. ${w.matches?'Its hash matches the JOB record of this case.':w.checkable?'Its hash does not match the JOB record shown here.':'The JOB record it refers to is not in view.'} It shows that key saw this text; it says nothing about the work.`,w.checkable&&!w.matches?'alert':'');
+  if(c.disputes.length)finding(host,'Disputed',c.resolutions.length?c.resolutions.map(r=>r.outcome).join(', '):'no resolution',`${c.disputes.length} ${c.disputes.length===1?'DISPUTE':'DISPUTE records'}: ${[...new Set(c.disputes.map(d=>d.reason))].join(', ')}. A dispute and a resolution are claims by their keys, not findings.`,'alert');
   const cont={'observed':['Observed','A key that accepted or claimed also posted a result.'],'not-observed':['Not observed','No result was posted by a key that accepted or claimed.'],'no-worker':['Unavailable','No accept or claim in the window.'],'no-result':['Unavailable','No result in the window.'],'no-key':['Unavailable','The worker or result records do not come from keys with a verified signature, so keys cannot be compared.']}[c.continuity];
   finding(host,'Key continuity (worker → result)',cont[0],`${cont[1]} Keys are not people; this says nothing about real-world identity.`);
   const a=c.attestation,av={'no-attestation':['None observed','No attestation in the window.'],'no-result':['Unavailable','Attestations are present, but no result is in the window to compare keys against.'],'no-key':['Unavailable','The result records do not come from keys with a verified signature, so attestation keys cannot be compared.'],'ok':[`${a.other} other-key · ${a.self} result-key${a.unknown?` · ${a.unknown} unsigned`:''}`,'Counts attestations by whether their key also posted a result. Unsigned senders are not compared. Different keys are not proof of independent parties.']}[a.state];
@@ -506,7 +559,7 @@ async function openSnapshot(key,pinText){
     const fetchText=async u=>{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(`the archive index returned ${r.status}`);return r.text()};
     const fetchBytes=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(`an archive file returned ${r.status}`);return new Uint8Array(await r.arrayBuffer())};
     const res=await loadPinned({room,gen:pin.gen,from:pin.from,to:pin.to,fetchText,fetchBytes,assetUrl:(t,a)=>`${assetBase}/api/asset?tag=${encodeURIComponent(t)}&asset=${encodeURIComponent(a)}`});
-    const dec=new TextDecoder(),msgs=res.lines.map(l=>parseRoomPage(dec.decode(l)));await annotateSignatures(room,msgs);
+    const dec=new TextDecoder(),msgs=res.lines.map(l=>parseRoomPage(dec.decode(l)));await annotateSignatures(room,msgs);await annotateContentHashes(msgs);
     const recs=msgs.map(m=>parseMessage(m,room)).filter(p=>p.ok).map(p=>p.record).filter(r=>r.id===id);
     const c=buildCases(recs)[0]||null;
     snapshot={key,room,id,pin:pinText,gen:pin.gen,from:pin.from,to:pin.to,loading:false,case:c,captures:res.captures,missing:res.missing,records:res.lines.length,
@@ -560,7 +613,7 @@ async function pollRoom(state){
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),FETCH_TIMEOUT_MS);
   try{
     const response=await fetch(`https://technocore.chat/r/${state.room}?${params}`,{cache:'no-store',signal:ctl.signal});if(!response.ok)throw new Error(`${state.room} returned ${response.status}`);
-    const page=parseRoomPage(await response.text());await annotateSignatures(state.room,page?.messages);
+    const page=parseRoomPage(await response.text());await annotateSignatures(state.room,page?.messages);await annotateContentHashes(page?.messages);
     applyPage(state,page,{since});markOk(state,Date.now());
   }catch(error){throw ctl.signal.aborted?new Error(`${state.room} did not answer within ${FETCH_TIMEOUT_MS/1000}s`):error}
   finally{clearTimeout(timer)}
@@ -590,7 +643,7 @@ function drawGraph(){
     if(items.length>MAX_NODES){ctx.fillStyle='#8696a8';ctx.font='10px DM Mono';ctx.fillText(`+${items.length-MAX_NODES} more · see records`,xs[stage],centerY+(MAX_NODES/2+.4)*55)}});
   let hidden=0;
   for(const link of selected.links){const a0=pos.get(link.from),b0=pos.get(link.to);if(!a0||!b0){hidden++;continue}
-    ctx.strokeStyle=link.type==='cites'?'#9fb2c8':'#4b5d72';ctx.lineWidth=link.type==='cites'?1.6:1;ctx.setLineDash(link.type==='cites'?[]:[4,4]);ctx.beginPath();
+    const solid=link.type!=='same-key';ctx.strokeStyle=link.type==='hash'?'#67e8a5':link.type==='cites'?'#9fb2c8':'#4b5d72';ctx.lineWidth=solid?1.6:1;ctx.setLineDash(solid?[]:[4,4]);ctx.beginPath();
     if(a0.x===b0.x){const bulge=a0.x+16+Math.min(46,Math.abs(a0.y-b0.y)*.35+14);ctx.moveTo(a0.x+13,a0.y);ctx.bezierCurveTo(bulge,a0.y,bulge,b0.y,b0.x+13,b0.y)}
     else{let a=a0,b=b0;if(a.x>b.x)[a,b]=[b,a];ctx.moveTo(a.x+14,a.y);ctx.bezierCurveTo((a.x+b.x)/2,a.y,(a.x+b.x)/2,b.y,b.x-14,b.y)}
     ctx.stroke();ctx.setLineDash([])}
@@ -598,7 +651,7 @@ function drawGraph(){
     const r=stage===0?16:13;ctx.font='9px DM Mono';ctx.fillStyle='#cbd5e1';ctx.fillText(record.kind,x,y+r+11);ctx.fillStyle='#8696a8';ctx.fillText(`#${record.seq}`,x,y+r+21)}
   const missing=STAGE_NAMES.filter((_,i)=>!selected.stages[i].length);ctx.font='10px DM Mono';ctx.fillStyle='#8696a8';
   if(missing.length)ctx.fillText(`NOT IN OBSERVED WINDOW: ${missing.join(' · ')}`,w/2,h-46);
-  ctx.fillText('Solid line: record names another by seq  ·  Dashed: same key continues  ·  Columns are stages, not relationships',w/2,h-24);
+  ctx.fillText('Solid: names another record (grey: by seq, green: attestation names a result by hash)  ·  Dashed: same key continues',w/2,h-24);
   if(hidden)ctx.fillText(`${hidden} ${hidden===1?'connection involves a record':'connections involve records'} not drawn (see the records list)`,w/2,h-8);
 }
 // The maintainer's key is fixed here, so a statement signed by any other key can never pass as the maintainer's.
@@ -627,7 +680,7 @@ document.addEventListener('click',e=>{if(e.target.closest?.('.about-link')){e.pr
 if(location.hash==='#about')openAbout();
 if(wantedKey&&linkParams.get('at')){openSnapshot(wantedKey,linkParams.get('at'));wantedKey=null}
 refreshArchiveState();setInterval(refreshArchiveState,120000);refreshStats();setInterval(refreshStats,600000);
-$('#refresh').onclick=()=>refresh();$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};addEventListener('resize',resizeCanvas);resizeCanvas();refresh();setInterval(refresh,15000);
+$('#refresh').onclick=()=>refresh();$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};$('#search').oninput=e=>{query=e.target.value.trim().toLowerCase();listLimit=LIST_STEP;render(true)};addEventListener('resize',resizeCanvas);resizeCanvas();refresh();setInterval(refresh,15000);
 if(document.modelContext?.registerTool)document.modelContext.registerTool({name:'inspect_evidence_cases',title:'Inspect evidence cases',description:'Return structural observations for live Technocore work chains already loaded in Proofline.',inputSchema:{type:'object',properties:{status:{type:'string',enum:['all','all-stages','partial','no-request','negative']}},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:({status='all'}={})=>({observed_at:new Date().toISOString(),cases:cases.filter(c=>status==='all'||(status==='negative'?c.negative:c.status===status)).slice(0,20).map(c=>({room:c.room,id:c.id,status:c.status,stages:c.stages.map(s=>s.length),verdicts:c.verdicts,flags:c.flags.map(f=>f.id),records:c.list.length}))})});
 
 })();
