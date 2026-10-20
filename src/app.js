@@ -1,4 +1,5 @@
-import {STAGE_NAMES} from './lib/protocol.js';
+import {STAGE_NAMES,parseMessage} from './lib/protocol.js';
+import {ARCHIVE_RAW,parsePin,formatPin,loadPinned} from './lib/snapshot.js';
 import {buildCases} from './lib/cases.js';
 import {parseRoomPage,annotateSignatures,signatureSupport,checkSignature} from './lib/signature.js';
 import {createRoomState,applyPage,querySince,markOk,markError,coverage,allRecords,PAGE_LIMIT} from './lib/store.js';
@@ -12,6 +13,16 @@ const uiSig={list:'',insp:''};
 const isNarrow=()=>matchMedia('(max-width:650px)').matches;
 const protocolTotal=()=>rooms.reduce((n,r)=>n+r.counts.protocol,0);
 const $=s=>document.querySelector(s);
+// Case links: ?case=<room>:<id> selects a live case; adding &at=g<gen>:<from>-<to> loads exactly that
+// window from the evidence archive instead, checked against the archive's manifest.
+const SITE='https://proofline-technocore.vercel.app';
+const linkParams=new URLSearchParams(location.search);
+let wantedKey=linkParams.get('case'),wantedMissing=false,snapshot=null,archiveState=null;
+const assetBase=location.protocol==='file:'?SITE:'';
+// Colons are kept readable in links: room:id and g0:from-to.
+const q=(key,pin)=>`?case=${encodeURIComponent(key).replace(/%3A/gi,':')}${pin?`&at=${encodeURIComponent(pin).replace(/%3A/gi,':')}`:''}`;
+function caseUrl(key,pin){return (location.protocol==='file:'?`${SITE}/`:location.origin+location.pathname)+q(key,pin)}
+function setUrl(key,pin){try{history.replaceState(history.state,'',location.pathname+(key?q(key,pin):'')+location.hash)}catch{}}
 
 function el(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node}
 function formatDuration(ms){if(ms===null||!Number.isFinite(ms))return 'Unavailable';if(ms<0)return 'Invalid ordering';const s=Math.round(ms/1000);if(s<60)return `${s}s`;const m=Math.floor(s/60);if(m<60)return `${m}m ${s%60}s`;return `${Math.floor(m/60)}h ${m%60}m`}
@@ -40,6 +51,15 @@ function finding(host,label,value,detail,tone=''){
 function recordDisclosure(record,flagged){const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}${flagged?' · ⚑':''}`),p=el('p','',record.text),source=el('div',`source sig-${record.sigStatus}`,`${SIG_LABEL[record.sigStatus]} · ${shortDid(record.source)} · ${record.ts}`);d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s,p,source);return d}
 function renderInspector(){
   const host=$('#inspector');host.replaceChildren();const back=el('button','back','← All cases');back.type='button';back.onclick=closeDetail;host.append(back,el('div','eyebrow','EVIDENCE PROFILE'));
+  if(snapshot){
+    const exit=el('button','snap-exit','Back to live cases');exit.type='button';exit.onclick=()=>{snapshot=null;setUrl(null);render(true)};
+    if(snapshot.loading){host.append(el('h2','',snapshot.id||'Pinned case'),el('p','','Loading the pinned records from the evidence archive and checking them…'));return}
+    if(snapshot.error){host.append(el('h2','',snapshot.id||'Pinned case'),el('p','',snapshot.error),exit);return}
+    const b=el('div','snapshot-banner');b.append(el('b','',`ARCHIVED SNAPSHOT · ${snapshot.room} · seq ${snapshot.from}–${snapshot.to}`),
+      el('p','',`The archive holds ${snapshot.records} ${snapshot.room} records in this window, from ${snapshot.captures.length} ${snapshot.captures.length===1?'capture':'captures'}, each checked against the archive's manifest${snapshot.missing?`. ${snapshot.missing} sequence numbers in the window are not in the archive`:''}. Signatures were re-checked in your browser. Later records of this case are not included.`),exit);
+    host.append(b);
+  }
+  if(!snapshot&&wantedMissing){host.append(el('h2','',wantedKey),el('p','','This case is not in the live window. Proofline keeps only the newest records of each room in view, and kibble moves on within minutes. A pinned link (one with "at=" in it) loads a case from the evidence archive instead.'));return}
   if(!selected){host.append(el('h2','',`No case selected`),el('p','','Select a case to see which records were observed, what is missing, and what cannot be known from them.'));return}
   const c=selected;host.append(el('h2','',c.id),el('p','',`${c.room} · ${c.title}`));
   const present=c.stages.filter(s=>s.length).length;
@@ -55,18 +75,68 @@ function renderInspector(){
   finding(host,'Request → result timing',c.elapsedFirst===null?'Unavailable':`first ${formatDuration(c.elapsedFirst)}${c.elapsedLast!==c.elapsedFirst?` · last ${formatDuration(c.elapsedLast)}`:''}`,'From venue timestamps, which are not signed by the sender. The first result is not necessarily the substantive one.');
   if(c.flags.length){host.append(el('div','eyebrow','PATTERNS IN THE VISIBLE RECORDS'));for(const f of c.flags)finding(host,f.label,`${f.seqs.length} ${f.seqs.length===1?'record':'records'}`,`${f.detail} Seq ${f.seqs.slice(0,6).map(s=>'#'+s).join(', ')}${f.seqs.length>6?'…':''}. A pattern, not a verdict.`)}
   finding(host,'Cannot be known from these records','','Whether the work was correct or useful, who holds a key, whether different keys are different parties, what caused what, or whether anything was paid.');
+  host.append(citeBlock(c));
   const flagged=new Set(c.flags.flatMap(f=>f.seqs));
   host.append(el('div','eyebrow','SOURCE RECORDS'));for(const record of c.list)host.append(recordDisclosure(record,flagged.has(record.seq)));
 }
+function citeBlock(c){
+  const box=el('div','finding cite'),head=el('div','finding-head');head.append(el('b','','Link to this case'));box.append(head);
+  const seqs=c.list.map(r=>r.seq),from=Math.min(...seqs),to=Math.max(...seqs);
+  const gen=snapshot?snapshot.gen:String(rooms.find(r=>r.room===c.room)?.generation??0);
+  const pin=snapshot?snapshot.pin:formatPin(gen,from,to),st=archiveState?.rooms?.[c.room];
+  const archived=!!snapshot||(st&&String(st.generation)===gen&&st.last_seq>=to);
+  const rows=[];
+  if(!snapshot)rows.push(['Live link',caseUrl(c.key),'Opens this case as it is in the live view. Live views keep only recent records, so this link can stop showing it.']);
+  rows.push(['Pinned link',caseUrl(c.key,pin),archived?`Loads exactly records #${from}–#${to} from the evidence archive and checks them. Use this one to cite.`:st?'Not in the evidence archive yet. The archive captures every 10 minutes; this link works after the next capture.':'The archive could not be reached to say whether these records are in it yet.']);
+  for(const [label,url,note] of rows){
+    const row=el('div','cite-row'),a=el('a','',label);a.href=url;
+    const copy=el('button','copy','Copy');copy.type='button';copy.setAttribute('aria-label',`Copy ${label.toLowerCase()}`);
+    copy.onclick=async()=>{try{await navigator.clipboard.writeText(url);copy.textContent='Copied'}catch{copy.textContent='Copy failed'}setTimeout(()=>{copy.textContent='Copy'},1600)};
+    row.append(a,copy);box.append(row,el('p','',note));
+  }
+  return box;
+}
+function openDetailIfNarrow(){if(isNarrow()&&!document.body.classList.contains('detail')){detailOpener=null;document.body.classList.add('detail');setDetailInert(true)}}
+async function openSnapshot(key,pinText){
+  const pin=parsePin(pinText),[room,id]=String(key).split(':');
+  snapshot={key,room,id,pin:pinText,loading:true};render(true);openDetailIfNarrow();
+  if(!pin||!room||!id){snapshot={...snapshot,loading:false,error:'This is not a valid pinned case link.'};render(true);return}
+  try{
+    const fetchText=async u=>{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(`the archive index returned ${r.status}`);return r.text()};
+    const fetchBytes=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(`an archive file returned ${r.status}`);return new Uint8Array(await r.arrayBuffer())};
+    const res=await loadPinned({room,gen:pin.gen,from:pin.from,to:pin.to,fetchText,fetchBytes,assetUrl:(t,a)=>`${assetBase}/api/asset?tag=${encodeURIComponent(t)}&asset=${encodeURIComponent(a)}`});
+    const dec=new TextDecoder(),msgs=res.lines.map(l=>parseRoomPage(dec.decode(l)));await annotateSignatures(room,msgs);
+    const recs=msgs.map(m=>parseMessage(m,room)).filter(p=>p.ok).map(p=>p.record).filter(r=>r.id===id);
+    const c=buildCases(recs)[0]||null;
+    snapshot={key,room,id,pin:pinText,gen:pin.gen,from:pin.from,to:pin.to,loading:false,case:c,captures:res.captures,missing:res.missing,records:res.lines.length,
+      error:c?null:res.lines.length?'The evidence archive has records in that window, but none of this case.':'That window is not in the evidence archive yet.'};
+  }catch(e){snapshot={...snapshot,loading:false,error:`The archive could not be loaded or checked: ${e?.message||e}.`}}
+  render(true);
+}
+async function refreshArchiveState(){try{const r=await fetch(`${ARCHIVE_RAW}state.json`,{cache:'no-store'});if(r.ok){archiveState=await r.json();render()}}catch{}}
 function snapshotUi(){const ae=document.activeElement,inList=ae&&ae.closest?.('#caseList'),inInsp=ae&&ae.closest?.('#inspector');
   return {focusKey:inList?ae.dataset.key:null,focusSeq:inInsp?ae.dataset?.seq??null:null,list:$('#caseList').scrollTop,insp:$('#inspector').scrollTop,open:[...document.querySelectorAll('#inspector details[open]')].map(d=>d.dataset.seq)}}
 function listSignature(visible){return `${filter}|${selected?.key}|${listLimit}|${visible.length}|`+visible.slice(0,listLimit).map(c=>`${c.key}:${c.fingerprint}`).join('\n')}
-function inspectorSignature(){return selected?`${selected.key}|${selected.fingerprint}`:'none'}
+function inspectorSignature(){
+  if(snapshot)return `snap|${snapshot.loading}|${snapshot.error||''}|${selected?.fingerprint||''}`;
+  if(wantedMissing)return `missing|${wantedKey}`;
+  if(!selected)return 'none';
+  const to=Math.max(...selected.list.map(r=>r.seq)),st=archiveState?.rooms?.[selected.room];
+  return `${selected.key}|${selected.fingerprint}|${st?(st.last_seq>=to?'archived':'pending'):'unknown'}`;
+}
 // Re-render only what changed, and put back scroll position, open records and keyboard focus. Selecting another case starts fresh.
 function render(force=false){
   if(!paused)cases=buildCases(allRecords(rooms));
-  renderSummary();const visible=visibleCases();
-  selected=(selected&&visible.find(c=>c.key===selected.key))||visible.find(c=>c.status==='all-stages')||visible[0]||null;
+  renderSummary();
+  if(!snapshot&&wantedKey){
+    const hit=cases.find(c=>c.key===wantedKey);
+    if(hit){if(!visibleCases().includes(hit)){filter='all';$('#filter').value='all'}selected=hit;wantedKey=null;wantedMissing=false;openDetailIfNarrow()}
+    else if(rooms.every(r=>r.lastOkAt||r.status==='error'))wantedMissing=true;
+  }
+  const visible=visibleCases();
+  if(snapshot)selected=snapshot.case||null;
+  else if(wantedMissing)selected=null;
+  else selected=(selected&&visible.find(c=>c.key===selected.key))||visible.find(c=>c.status==='all-stages')||visible[0]||null;
   const ls=listSignature(visible),is=inspectorSignature();
   if(force||ls!==uiSig.list||is!==uiSig.insp){
     const ui=snapshotUi(),sameCase=selected?.key===lastInspKey;
@@ -76,7 +146,7 @@ function render(force=false){
   }
   drawGraph();
 }
-function choose(item){selected=item;if(isNarrow()){detailOpener=document.activeElement;document.body.classList.add('detail');history.pushState({detail:1},'');setDetailInert(true)}render(true);if(isNarrow()){$('#inspector').scrollTop=0;$('#inspector .back')?.focus({preventScroll:true})}}
+function choose(item){selected=item;snapshot=null;wantedKey=null;wantedMissing=false;if(isNarrow()){detailOpener=document.activeElement;document.body.classList.add('detail');history.pushState({detail:1},'');setDetailInert(true)}setUrl(item.key);render(true);if(isNarrow()){$('#inspector').scrollTop=0;$('#inspector .back')?.focus({preventScroll:true})}}
 function setDetailInert(on){for(const sel of ['.cases','header','.summary','footer'])document.querySelector(sel)?.toggleAttribute('inert',on);const i=$('#inspector');if(on){i.setAttribute('role','region');i.setAttribute('aria-label','Case detail')}else{i.removeAttribute('role');i.removeAttribute('aria-label')}}
 function exitDetail(){if(!document.body.classList.contains('detail'))return;document.body.classList.remove('detail');setDetailInert(false);const k=selected?.key,target=(k&&$('#caseList').querySelector(`[data-key="${CSS.escape(k)}"]`))||detailOpener;target?.focus?.({preventScroll:true})}
 function closeDetail(){if(history.state?.detail)history.back();else exitDetail()}
@@ -154,5 +224,7 @@ about.addEventListener('click',e=>{if(e.target===about)about.close()});
 about.addEventListener('close',()=>{try{if(location.hash==='#about')history.replaceState(null,'',location.pathname+location.search)}catch{}});
 document.addEventListener('click',e=>{if(e.target.closest?.('.about-link')){e.preventDefault();openAbout()}});
 if(location.hash==='#about')openAbout();
+if(wantedKey&&linkParams.get('at')){openSnapshot(wantedKey,linkParams.get('at'));wantedKey=null}
+refreshArchiveState();setInterval(refreshArchiveState,120000);
 $('#refresh').onclick=()=>refresh();$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};addEventListener('resize',resizeCanvas);resizeCanvas();refresh();setInterval(refresh,15000);
 if(document.modelContext?.registerTool)document.modelContext.registerTool({name:'inspect_evidence_cases',title:'Inspect evidence cases',description:'Return structural observations for live Technocore work chains already loaded in Proofline.',inputSchema:{type:'object',properties:{status:{type:'string',enum:['all','all-stages','partial','no-request','negative']}},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:({status='all'}={})=>({observed_at:new Date().toISOString(),cases:cases.filter(c=>status==='all'||(status==='negative'?c.negative:c.status===status)).slice(0,20).map(c=>({room:c.room,id:c.id,status:c.status,stages:c.stages.map(s=>s.length),verdicts:c.verdicts,flags:c.flags.map(f=>f.id),records:c.list.length}))})});
