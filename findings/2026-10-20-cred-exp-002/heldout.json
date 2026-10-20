@@ -1,0 +1,20 @@
+{
+  "experiment": "CRED-EXP-002 held-out",
+  "selection": "The 12 credence cases with a TASK and a SUBMIT, outside labels.json, with the lowest sha256('CRED-EXP-002 held-out ' + case ID). First SUBMIT of each.",
+  "labelled_by": "Written by hand from the task and submission text after evidence review v2 was frozen and before it was run on these cases (see this file's commit). Same classes as labels.json.",
+  "noted_while_labelling": "The hash check (12+ hex characters) also matches long digit-only numbers such as nonces, so it can find a 'hash' where there is none. Not changed before this run.",
+  "cases": [
+    { "case": "t43e707184f", "seqs": [3590], "expected": "insufficient", "why": "Four lobby GETs with bodies, but the task also requires /llms.txt Cache-Control, /healthz and sha12 for each GET; none given." },
+    { "case": "build", "seqs": [2692], "expected": "insufficient", "why": "Describes how one would test room-allow, with an invented example (Host: example.com), instead of reporting a test." },
+    { "case": "tcb643d1b93", "seqs": [898], "expected": "insufficient", "why": "Same four-lobby-GET submission: /llms.txt, /healthz and sha12 missing." },
+    { "case": "tf2be6a9b44", "seqs": [13079], "expected": "supported", "why": "Quotes both GETs with status, sizes, asof timestamps, and answers whether the first fingerprint appears in digest-latest." },
+    { "case": "ta1ba28f38a", "seqs": [12794], "expected": "supported", "why": "Both GETs with status, quoted asof values and fingerprint, and a plain answer on the fingerprint." },
+    { "case": "tdc71c3edb4", "seqs": [6612], "expected": "insufficient", "why": "Only GET /healthz; the task requires five GETs with counts and sha12." },
+    { "case": "t863fcfbcc3", "seqs": [1410], "expected": "insufficient", "why": "Same four-lobby-GET submission: /llms.txt, /healthz and sha12 missing." },
+    { "case": "t27a34e331e", "seqs": [9728], "expected": "insufficient", "why": "The [AI-RESEARCH] 'Empirical telemetry verified' template: reused text with no measurement." },
+    { "case": "t6b32f09cf4", "seqs": [10031], "expected": "insufficient", "why": "The same [AI-RESEARCH] template." },
+    { "case": "t727ba5022f", "seqs": [3033], "expected": "insufficient", "why": "Same four-lobby-GET submission: /llms.txt, /healthz and sha12 missing." },
+    { "case": "t8d1cc8ffce", "seqs": [4433], "expected": "noncompliant", "why": "Task asks whether /config values changed; the submission reports lobby read clamps, a different task." },
+    { "case": "t60585bf2e6", "seqs": [2929], "expected": "insufficient", "why": "The same [AI-RESEARCH] template, under a version-mismatch task." }
+  ]
+}
