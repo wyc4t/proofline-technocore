@@ -384,7 +384,9 @@ function buildCases(records) {
 //
 //   const index = buildReuseIndex(allRecords);           // once per set of records
 //   const review = reviewCase(caseRecords, { index });   // per case
-const EVIDENCE_VERSION = '2'; // 2: off-task by word overlap; no plain-answer check; evidence quality kept out of the class
+const EVIDENCE_VERSION = '4'; // 4: named items looked for by name; stricter 'status' and 'pattern' (from KIBBLE-EXP-001 held-out 1)
+// 3: 3: stricter reading of required parts (items, SQL, hashes), from KIBBLE-EXP-001 development cases
+// 2: 2: off-task by word overlap; no plain-answer check; evidence quality kept out of the class
 
 const RESPONSE_KINDS = ['ACCEPT', 'CLAIM', 'SUBMIT', 'RESULT', 'DELIVER', 'VOUCH', 'ATTEST'];
 
@@ -419,22 +421,35 @@ function successClause(taskText) {
 // the review shows only what it can actually look for.
 const DELIVERABLES = [
   { id: 'url', label: 'URLs', ask: /\burls?\b|\blinks?\b/i, has: (t) => /https?:\/\/\S+|(^|[\s(])\/[a-z][\w./?=&%-]*/i.test(t) },
-  { id: 'status', label: 'HTTP status', ask: /\bhttp (codes?|status(es)?)\b|\bstatus codes?\b|\bstatus\b/i, has: (t) => /\bHTTP(\/[\d.]+)?\s*[1-5]\d\d\b|\bstatus(\s+code)?\s*[:=]?\s*[1-5]\d\d\b|\b[1-5]\d\d\s+(OK|Created|Bad Request|Unauthorized|Forbidden|Not Found|Conflict|Too Many)/i.test(t) },
+  { id: 'status', label: 'HTTP status', ask: /\bhttp (codes?|status(es)?)\b|\bstatus codes?\b|(?<![.\w`])status(?![_\w.`])|\b[1-5]\d\d (example|response|status)\b/i, has: (t) => /\bHTTP(\/[\d.]+)?\s*[1-5]\d\d\b|\bstatus(\s+code)?\s*[:=]?\s*[1-5]\d\d\b|\b[1-5]\d\d\s+(OK|Created|Bad Request|Unauthorized|Forbidden|Not Found|Conflict|Too Many)/i.test(t) },
   { id: 'body', label: 'response body', ask: /\bbody\b|\bresponse\b/i, has: (t) => /\bbody\s*[:=]|\{[^{}]{2,}\}|"[^"]{3,}"|'[^']{3,}'|`[^`]{3,}`/i.test(t) },
   { id: 'count', label: 'message counts', ask: /\b(message )?counts?\b/i, has: (t) => /\b(count|messages|records|entries)\s*[:=]\s*\d+|\b\d+\s+(messages|records|entries|items)\b/i.test(t) },
-  { id: 'hash', label: 'hashes', ask: /\bsha-?\d+|\bsha12\b|\bhash(es)?\b/i, has: (t) => /\b[0-9a-f]{12,64}\b/i.test(t) },
-  { id: 'pattern', label: 'quoted constraint strings', ask: /\bconstraint strings?\b|\bregex\b|\bpatterns?\b/i, has: (t) => /\^\S{3,}\$|\/\^\S+\$\//.test(t) },
+  { id: 'hash', label: 'hashes', ask: /\bsha-?\d+\b|\bsha12\b|\b(quote|give|include|report|show|list|with|plus)\s+(the\s+|its\s+|their\s+|a\s+)?(content\s+)?(hash(es)?|digest)\b|\bhash(es)?\s+(value|of each|for each)\b/i, has: (t) => /\b[0-9a-f]{12,64}\b/i.test(t) },
+  { id: 'pattern', label: 'quoted constraint strings', ask: /\bconstraint strings?\b|\b(quote|give|show|include|write|provide)\s+(the\s+|a\s+)?(regex(es)?|regular expressions?|patterns?)\b|\b(a|one) regex (that|for|to)\b/i, has: (t) => /\^\S{3,}\$|\/\^\S+\$\//.test(t) },
   { id: 'command', label: 'commands', ask: /\bcommands?\b/i, has: (t) => /`[^`]+`|(^|\n)\s*\$\s+\S|\b(kubectl|curl|git|npm|docker|psql|gh|node|python3?)\s+\S/.test(t) },
-  { id: 'query', label: 'SQL query', ask: /\b(sql|query)\b/i, has: (t) => /\bselect\b[\s\S]{1,400}\bfrom\b/i.test(t) },
+  { id: 'query', label: 'SQL query', ask: /\bsql\b|\bthe query\b|\bwrite (a|the) query\b/i, has: (t) => /\bselect\b[\s\S]{1,400}\bfrom\b/i.test(t) },
 ];
+// Words that, after a number, describe a quantity or existing things rather than items to give.
+const NOT_ITEMS = /^(chars?|characters?|bytes?|kb|mb|gb|ms|minutes?|seconds?|hours?|days?|weeks?|months?|years?|percent|decimals?|decimal|digits?|places|times|consecutive|runs?|attempts?|retries|models?|jobs?|nodes?|rooms?|users?|logins?|replicas?|instances?|shards?|partitions?|requests?|messages?|tokens?|engines?|services?|regions?|tables?|columns?|rows?|records?|files?|lines?|versions?|weeks?|or|and|to|of|in|at|for|per|x|lowercase|uppercase|sigfigs?)$/i;
 const NUMBER_WORDS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
 
 function deliverables(clause) {
   if (!clause) return [];
   const asked = DELIVERABLES.filter((d) => d.ask.test(clause)).map(({ id, label }) => ({ id, label }));
-  // "3 improvements", "the 2 most likely causes": a number of items.
-  const m = /\b(\d{1,2}|two|three|four|five|six|seven|eight|nine|ten)\s+(?:(?:most|concrete|specific|distinct|key|likely|main|different|separate)\s+){0,3}([a-z]+)/i.exec(clause);
-  if (m) { const n = Number(m[1]) || NUMBER_WORDS[m[1].toLowerCase()]; if (n >= 2 && n <= 10 && !/^(chars?|characters?|bytes?|minutes?|seconds?|hours?|days?|percent)$/i.test(m[2])) asked.push({ id: 'items', label: `${n} ${m[2]}`, n }); }
+  // "3 improvements", "the 2 most likely causes": a number of items to give. Not a quantity in a condition
+  // ("10 consecutive runs", "rounded to two decimals", "N>=2 jobs") or a count of things that already exist ("all three models").
+  for (const m of clause.matchAll(/(^|[^\w>=<.])(\d{1,2}|two|three|four|five|six|seven|eight|nine|ten)\s+(?:(?:most|concrete|specific|distinct|key|likely|main|different|separate|short|clear|actionable|practical)\s+){0,3}([a-z]+)/gi)) {
+    const before = clause.slice(Math.max(0, m.index - 12), m.index + m[1].length).toLowerCase();
+    if (/\b(all|both|across|of the|than|within|over|under|every|last|first|next)\s*$/.test(before)) continue;
+    if (NOT_ITEMS.test(m[3])) continue;
+    const n = Number(m[2]) || NUMBER_WORDS[m[2].toLowerCase()];
+    if (n >= 2 && n <= 10) {
+      // "3 criteria (latency, persistence, ops complexity)": the items are named, so look for the names.
+      const named = /^[^()]{0,40}?\(([^)]{3,160})\)/.exec(clause.slice(m.index + m[0].length));
+      const names = named ? named[1].split(/,|;|\band\b|\bor\b|\+/).map((x) => x.trim().toLowerCase().replace(/s$/, '')).filter((x) => x.length >= 3) : [];
+      asked.push({ id: 'items', label: `${n} ${m[3]}`, n, ...(names.length >= 2 ? { names } : {}) }); break;
+    }
+  }
   return asked;
 }
 
@@ -445,7 +460,11 @@ function countItems(t) {
 }
 
 function checkDeliverable(d, text) {
-  if (d.id === 'items') return countItems(text) >= d.n;
+  if (d.id === 'items') {
+    if (countItems(text) >= d.n) return true;
+    const t = String(text).toLowerCase().replace(/[-_]/g, ' ');
+    return !!d.names && d.names.every((nm) => t.includes(nm.replace(/[-_]/g, ' ')));
+  }
   return DELIVERABLES.find((x) => x.id === d.id).has(text);
 }
 
@@ -478,6 +497,14 @@ function overlap(taskText, resultText) {
 const OFF_TASK = { task: 0.10, result: 0.25 };
 
 // --- What the result shows -----------------------------------------------------------------------
+
+// The result's text without any passage copied from the task (its title, body or success line).
+function stripTaskText(result, taskText) {
+  let out = String(result || '');
+  const pieces = String(taskText || '').split('|').slice(3).flatMap((p) => p.split(/(?<=[.!?])\s+|\bSuccess\s*[:=]\s*/i)).map((p) => p.trim()).filter((p) => p.length >= 20);
+  for (const p of pieces.sort((a, b) => b.length - a.length)) out = out.split(p).join(' ');
+  return out;
+}
 
 // Text normalised so the same template posted under different jobs compares equal.
 function normalizeResult(body, id) {
@@ -527,7 +554,8 @@ function reviewCase(list, { index = null } = {}) {
     const text = r.body || '';
     const reusedIn = index ? Math.max(0, (index.get(normalizeResult(text, r.id))?.size || 1) - 1) : 0;
     const found = specs.filter((s) => text.toLowerCase().includes(s.toLowerCase()));
-    const parts = asked.map((d) => ({ ...d, present: checkDeliverable(d, text) }));
+    // A result that pastes the task back is not evidence of its parts: they are looked for in the rest of the text.
+    const parts = asked.map((d) => ({ ...d, present: checkDeliverable(d, stripTaskText(text, task.text)) }));
     const ev = evidenceIn(text);
     const refusal = REFUSAL.test(text), ov = overlap(task.text, text);
     const offTask = !refusal && !found.length && ov.task < OFF_TASK.task && ov.result < OFF_TASK.result;
@@ -735,7 +763,7 @@ function evidenceReview(host,c){
   const rs=rv.results,ok=r=>r.parts.length&&r.parts.every(p=>p.present)&&!r.refusal&&r.reusedIn<2;
   if(!rs.length)finding(host,'Results','None','No result in view to compare with the task.');
   else{
-    if(q.deliverables.length)finding(host,'Required parts, per result',`${rs.filter(r=>r.parts.every(p=>p.present)).length} of ${rs.length} ${rs.length===1?'result has':'results have'} them all`,rs.slice(0,8).map(r=>`#${r.seq}: ${r.parts.map(p=>`${p.label} ${p.present?'✓':'✗'}`).join(' · ')}`).join('\n')+'\nFound means the text contains something of that shape, for example an HTTP status. It does not mean the value is right.',rs.some(r=>r.parts.some(p=>!p.present))&&!rs.some(ok)?'alert':'');
+    if(q.deliverables.length)finding(host,'Required parts, per result',`${rs.filter(r=>r.parts.every(p=>p.present)).length} of ${rs.length} ${rs.length===1?'result has':'results have'} them all`,rs.slice(0,8).map(r=>`#${r.seq}: ${r.parts.map(p=>`${p.label} ${p.present?'✓':'✗'}`).join(' · ')}`).join('\n')+'\nText checks: found means the text contains something of that shape, for example an HTTP status, not that the value is right. Text pasted from the task does not count. In fresh tests about 1 in 10 of these readings was wrong.',rs.some(r=>r.parts.some(p=>!p.present))&&!rs.some(ok)?'alert':'');
     finding(host,'Evidence in the results',rs.some(r=>r.reusedIn>=2||r.refusal)?'Reused text or refusals':rs.some(r=>r.checkable)?'Concrete claims, not re-run':'Asserted only',rs.slice(0,8).map(r=>`#${r.seq}: ${[r.refusal&&'a refusal, not a result',r.reusedIn>=2&&`same text posted under ${r.reusedIn} other tasks in view`,!r.refusal&&r.requests.length&&`names ${r.requests.length} ${r.requests.length===1?'request':'requests'} (${r.requests.slice(0,2).join(', ')}${r.requests.length>2?', …':''})`,!r.refusal&&!r.checkable&&'nothing a reader could re-run or check'].filter(Boolean).join(' · ')||'concrete details given'}`).join('\n')+(snapshot?'\nReuse across tasks is checked in the live view only.':''));
   }
   finding(host,'Independent reproduction',rv.summary.reproduction.level==='not-performed'?'Not performed by Proofline':'',`Proofline re-runs nothing. ${rv.summary.reproduction.text.includes('claim')?rv.summary.reproduction.text.split(' · ')[1]+'.':'No attestation here claims to have reproduced it.'} An attestation saying "reproduced" is the attester\u2019s claim.`);

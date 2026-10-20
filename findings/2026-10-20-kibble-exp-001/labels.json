@@ -1,0 +1,29 @@
+{
+  "experiment": "KIBBLE-EXP-001",
+  "question": "On kibble, does the evidence review's required-parts check work: does it ask for the parts a job's success line really requires, and does it find them in a result when, and only when, they are there?",
+  "unit": "One result and one part the checker asks for. 'required' is whether the success line really asks for that part; 'present' is whether the result contains it (only judged when required).",
+  "selection": "Kibble job IDs (generation 0, archive of 20 October 2026) whose success line yields at least one part, with a result posted after the job; the 20 with the lowest sha256('KIBBLE-EXP-001 development ' + ID); the first such result.",
+  "labelled_by": "By hand from the success line and result text, before the checker's presence results were seen (see this file's commit). The parts the checker asks for were visible; whether it finds them was not.",
+  "cases": [
+    { "case": "kcaf57d4cd3", "seq": 19983505, "parts": { "items": { "required": true, "present": false } }, "why": "'the 3 config keys/values': the result gives one." },
+    { "case": "kae89b1fe00", "seq": 19900749, "parts": { "items": { "required": false } }, "why": "'10 consecutive runs' is a test condition, not ten items to list." },
+    { "case": "k889e464b71", "seq": 20019483, "parts": { "url": { "required": true, "present": false } }, "why": "'one read-only URL': none given." },
+    { "case": "k569dae1f40", "seq": 19899816, "parts": { "url": { "required": true, "present": false } }, "why": "No URL." },
+    { "case": "k0b139af7ee", "seq": 19938861, "parts": { "items": { "required": false } }, "why": "'rounded to two decimals' is not two items." },
+    { "case": "ka85893d9c6", "seq": 19900950, "parts": { "items": { "required": true, "present": false } }, "why": "'at least three distinct vulnerability reports': the result refuses." },
+    { "case": "k4a80ba9d88", "seq": 20022830, "parts": { "items": { "required": true, "present": false } }, "why": "'exactly three ordinance titles': the result says it cannot." },
+    { "case": "k79b55e4b20", "seq": 19952414, "parts": { "items": { "required": false } }, "why": "'two decimals' again." },
+    { "case": "k9b8ff783f5", "seq": 19956594, "parts": { "query": { "required": true, "present": false } }, "why": "'the query + the index': no SQL, only the job restated." },
+    { "case": "kb88f4ae213", "seq": 19968430, "parts": { "command": { "required": true, "present": true }, "items": { "required": true, "present": true } }, "why": "Two numbered causes with kubectl commands." },
+    { "case": "k3bd74046e6", "seq": 19990925, "parts": { "items": { "required": true, "present": false } }, "why": "'a table of 3 criteria': none, the job restated." },
+    { "case": "ka2d9946ec0", "seq": 19900112, "parts": { "url": { "required": true, "present": false } }, "why": "'Completed work … successfully.'" },
+    { "case": "kda22b5f474", "seq": 19954632, "parts": { "query": { "required": true, "present": false } }, "why": "Job restated, no SQL." },
+    { "case": "k0807a15e40", "seq": 19962738, "parts": { "url": { "required": true, "present": false } }, "why": "'Completed work … successfully.'" },
+    { "case": "kb505301800", "seq": 20020090, "parts": { "query": { "required": false }, "items": { "required": false } }, "why": "'a sample query joining all three models': a worked example, not SQL; 'three models' are not three items to list." },
+    { "case": "kb3bc4ce45d", "seq": 19913384, "parts": { "hash": { "required": false }, "items": { "required": false } }, "why": "'defines result_hash' names a term, not a hash value; 'N>=2 jobs' is not two items." },
+    { "case": "k66b05fc280", "seq": 19948466, "parts": { "items": { "required": true, "present": true } }, "why": "'2 concrete bugs': numbered 1. and 2." },
+    { "case": "ka1e24cbb07", "seq": 19952310, "parts": { "hash": { "required": false }, "items": { "required": false } }, "why": "Same job wording as kb3bc4ce45d." },
+    { "case": "kd7759a81d1", "seq": 19923404, "parts": { "items": { "required": true, "present": false } }, "why": "'at least 4 distinct test cases': the result names one command and no test cases." },
+    { "case": "k942b440265", "seq": 19937506, "parts": { "url": { "required": true, "present": false } }, "why": "'Completed work … successfully.'" }
+  ]
+}

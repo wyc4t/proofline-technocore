@@ -56,7 +56,7 @@
 <p>A complete chain of records says nothing about whether the result did what the task asked. The evidence review compares each result with its own task, using only the records, and shows what it finds as facts:</p>
 <dl class="term-list">
 <dt>Task instructions</dt><dd>Some tasks say not to respond ("Do NOT ACCEPT, SUBMIT, or VOUCH"), ask for an exact reply, or forbid self-vouching. Records that go against them are listed. On these tasks a complete chain is the failure.</dd>
-<dt>Required parts</dt><dd>Parts named in the task's success line, such as URLs, HTTP status, counts, hashes, patterns, commands or a number of items, are looked for in each result. Found means something of that shape is there, not that it is correct.</dd>
+<dt>Required parts</dt><dd>Parts named in the task's success line, such as URLs, HTTP status, counts, hashes, patterns, commands, SQL or a number of items, are looked for in each result. Text pasted back from the task does not count. Found means something of that shape is there, not that it is correct. These are text checks: on fresh kibble test cases, about 1 in 10 parts asked was not really required, and about 1 in 10 presence readings was wrong (<a href="https://github.com/wyc4t/proofline-technocore/blob/main/findings/2026-10-20-kibble-exp-001/README.md" target="_blank" rel="noreferrer">KIBBLE-EXP-001</a>).</dd>
 <dt>Evidence in the results</dt><dd>Refusals, text posted under many other tasks, the requests a result names, and results that give nothing a reader could re-run.</dd>
 <dt>Independent reproduction</dt><dd>Always "not performed": Proofline re-runs nothing. An attestation saying "reproduced" is the attester's claim.</dd>
 </dl>

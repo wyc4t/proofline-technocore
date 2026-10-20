@@ -1,0 +1,27 @@
+{
+  "experiment": "KIBBLE-EXP-001 held-out 2",
+  "selection": "As labels.json, with sha256('KIBBLE-EXP-001 held-out 2 ' + ID), excluding the development and held-out-1 IDs; 20 cases.",
+  "labelled_by": "By hand after evidence review v4 was frozen (previous commit) and before it was run on these cases. Parts asked visible; presence not.",
+  "cases": [
+    { "case": "k7c6d4638c6", "seq": 19937828, "parts": { "items": { "required": true, "present": false } }, "why": "Stock sentence, no improvements." },
+    { "case": "kc487f10a8e", "seq": 19978852, "parts": { "items": { "required": true, "present": false } }, "why": "The question restated, no table." },
+    { "case": "k6acbcc62f4", "seq": 19905877, "parts": { "url": { "required": false }, "items": { "required": true, "present": false } }, "why": "A file link 'or detailed markdown specification': the link is optional. The 4 named states are required; the result lists four numbered data-modeling principles instead, about something else." },
+    { "case": "ke18edf97b7", "seq": 19914624, "parts": { "url": { "required": true, "present": false } }, "why": "Stock sentence, no URL." },
+    { "case": "keac649664d", "seq": 19902172, "parts": { "command": { "required": false }, "items": { "required": true, "present": false } }, "why": "'proof of command' only if self-generated, so optional. 'exactly three objects' required; stock sentence." },
+    { "case": "k4a31210933", "seq": 19943220, "parts": { "items": { "required": true, "present": false } }, "why": "The job pasted back." },
+    { "case": "ke05bf71924", "seq": 20022839, "parts": { "count": { "required": false }, "items": { "required": true, "present": false } }, "why": "A 'failure-tolerance count' is not a message count. 'at least two real systems' required; the result is the job's own wording, cut off." },
+    { "case": "k664d08b916", "seq": 19969686, "parts": { "url": { "required": true, "present": false } }, "why": "'Completed work … successfully.'" },
+    { "case": "k2de7fe9d6b", "seq": 19930710, "parts": { "query": { "required": true, "present": false } }, "why": "Stock sentence." },
+    { "case": "kb7cf694cc2", "seq": 19941564, "parts": { "command": { "required": true, "present": true }, "items": { "required": true, "present": true } }, "why": "`kubectl describe pod`, and two causes named in prose: OOMKilled and liveness probe failures." },
+    { "case": "k2b1d08ca74", "seq": 19950675, "parts": { "query": { "required": true, "present": false } }, "why": "The job pasted back, no SQL." },
+    { "case": "k7f3428c613", "seq": 19937530, "parts": { "status": { "required": true, "present": false }, "body": { "required": true, "present": false } }, "why": "Stock sentence." },
+    { "case": "kbf7e55d2a9", "seq": 19915833, "parts": { "count": { "required": true, "present": false }, "items": { "required": true, "present": false } }, "why": "A total count and at least 5 listed matches are required; the result refuses." },
+    { "case": "k82ad34ead2", "seq": 19928574, "parts": { "items": { "required": true, "present": false } }, "why": "Stock sentence." },
+    { "case": "k4e3440425c", "seq": 19914059, "parts": { "items": { "required": true, "present": true } }, "why": "Improvements 1., 2. and 3." },
+    { "case": "k2330648d96", "seq": 19933862, "parts": { "items": { "required": true, "present": false } }, "why": "The job pasted back." },
+    { "case": "kc2e1596373", "seq": 19906905, "parts": { "items": { "required": true, "present": false } }, "why": "'the three steps' of the delivered UI; stock sentence." },
+    { "case": "kb24171975d", "seq": 19935729, "parts": { "command": { "required": true, "present": false } }, "why": "The job pasted back; its backticked names are the job's, not commands given." },
+    { "case": "k6f881e5c3b", "seq": 19992544, "parts": { "items": { "required": true, "present": false } }, "why": "The question restated." },
+    { "case": "k0dea87cc57", "seq": 19932449, "parts": { "query": { "required": true, "present": true } }, "why": "SELECT … FROM …" }
+  ]
+}
