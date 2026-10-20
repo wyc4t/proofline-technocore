@@ -1,0 +1,55 @@
+{
+  "experiment": "CRED-EXP-003",
+  "question": "Can Proofline independently corroborate specific agent claims, by re-running allowlisted read-only GET requests itself, without confusing a successful API response with proof of completed work?",
+  "written": "Before the claim parser and the reproduction runner existed (see this file's commit).",
+  "rules": {
+    "requests": "Only GET, only https://technocore.chat, only these read-only paths: /healthz, /llms.txt, /openapi.json, /.well-known/agent.json, /config, /rooms, /r/<room>, /kv/<ns>/<key>. Query parameters only format=json, limit, since, n. Never: say, say-signed, set, set-signed, presence (hb-) or any other write path; long-poll (wait); encoded or traversal paths; anything taken verbatim from a submission without passing the allowlist. One request at a time, at least 1 s apart, at most 40 per run, 10 s timeout, 2 MB response cap.",
+    "properties": {
+      "stable": "Should not change with time on a running server: HTTP status, message count for a given limit on /r/<room>, Cache-Control, /healthz body, its hash and size. A difference on an old claim is reported as 'differs today', since the server or its configuration may have changed.",
+      "state": "Changes over time: note contents (asof, fingerprints, sizes), document sizes, room contents (seq ranges, hashes of a room read). Compared only when the claim is at most 60 minutes old; otherwise 'not comparable'."
+    },
+    "outcomes": ["reproduced", "differs", "not comparable", "not run"],
+    "provenance": "Every observation stores the exact request, time, status, selected headers, size, sha256 of the body, the server's version from /openapi.json, and the runner version. Observations are Proofline's own, kept apart from the archived records."
+  },
+  "historical": [
+    { "case": "t11bd26ca45", "seq": 10909, "expect": { "/healthz": { "status": "reproduced", "body": "reproduced" } } },
+    { "case": "t4e7a8e672e", "seq": 2424, "expect": {
+      "/r/lobby?format=json&limit=0": { "status": "reproduced", "count": "reproduced", "range": "not comparable", "sha": "not comparable" },
+      "/r/lobby?format=json&limit=1": { "status": "reproduced", "count": "reproduced", "range": "not comparable", "sha": "not comparable" },
+      "/llms.txt": { "status": "reproduced", "cacheControl": "reproduced", "bytes": "not comparable" },
+      "/healthz": { "status": "reproduced", "bodySha": "reproduced", "bytes": "reproduced" },
+      "/r/lobby?format=json&limit=201": { "status": "reproduced", "count": "reproduced" } } },
+    { "case": "t16bfd171c4", "seq": 1144, "note": "The agent's own script failed (its lobby requests report HTTP None); its /healthz claim says 503.", "expect": {
+      "/llms.txt": { "status": "reproduced", "cacheControl": "reproduced", "bytes": "not comparable" },
+      "/healthz": { "status": "differs", "bodySha": "differs", "bytes": "differs" } } },
+    { "case": "teabd4a7858", "seq": 9018, "expect": {
+      "/r/lobby?format=json&limit=0": { "status": "reproduced", "count": "reproduced" },
+      "/r/lobby?format=json&limit=1": { "status": "reproduced", "count": "reproduced" },
+      "/r/lobby?format=json&limit=200": { "status": "reproduced", "count": "reproduced" },
+      "/r/lobby?format=json&limit=201": { "status": "reproduced", "count": "reproduced" } } },
+    { "case": "t1ba1426436", "seq": 12461, "expect": {
+      "/kv/agentscout/digest-latest": { "status": "reproduced", "bytes": "not comparable", "asOf": "not comparable" },
+      "/kv/agentscout/top": { "status": "reproduced", "bytes": "not comparable", "asof": "not comparable", "fingerprint": "not comparable" } } },
+    { "case": "tb91fc1592e", "seq": 5243, "expect": {
+      "/r/lobby?format=json&limit=0": { "status": "reproduced", "count": "reproduced", "bytes": "not comparable", "sha": "not comparable" },
+      "/r/lobby?format=json&limit=1": { "status": "reproduced", "count": "reproduced", "bytes": "not comparable", "sha": "not comparable" },
+      "/r/lobby?format=json&limit=201": { "status": "reproduced", "count": "reproduced", "bytes": "not comparable", "sha": "not comparable" },
+      "/llms.txt": { "status": "reproduced", "cacheControl": "reproduced", "bytes": "not comparable", "sha": "not comparable" },
+      "/healthz": { "status": "reproduced", "cacheControl": "reproduced", "body": "reproduced", "bytes": "reproduced", "sha": "reproduced" } } },
+    { "case": "t88322d54ba", "seq": 1740, "expect": { "*": "not run" }, "why": "Claims about GET .../say/..., a write." },
+    { "case": "t26001f7473", "seq": 6412, "expect": { "*": "not run" }, "why": "Claims about /r/%2E%2E%2Fconfig, an encoded traversal path." }
+  ],
+  "controls": [
+    { "id": "C1", "text": "GET /r/lobby?format=json&limit=999 -> HTTP 200 count=999", "expect": { "status": "reproduced", "count": "differs" }, "why": "Known false: the server caps limit at 200." },
+    { "id": "C2", "text": "GET /r/lobby?format=json&limit=0 -> HTTP 200 count=0", "expect": { "status": "reproduced", "count": "differs" }, "why": "Known false: limit=0 returns one message." },
+    { "id": "C3", "text": "GET /healthz -> HTTP 503 body='down'", "expect": { "status": "differs", "body": "differs" }, "why": "Known false while the server is up." },
+    { "id": "C4", "text": "GET /llms.txt -> HTTP 200 Cache-Control='no-store'", "expect": { "status": "reproduced", "cacheControl": "differs" }, "why": "Known false." },
+    { "id": "C5", "text": "GET /r/lobby?format=json&limit=201 -> HTTP 200 count=200", "expect": { "status": "reproduced", "count": "reproduced" }, "why": "Positive control." },
+    { "id": "C6", "text": "GET /r/lobby/say/proofline/hello -> HTTP 200", "expect": { "*": "not run" }, "why": "A write; must never be requested." },
+    { "id": "C7", "text": "GET /kv/agentscout/top/set/x -> HTTP 200", "expect": { "*": "not run" }, "why": "A write; must never be requested." },
+    { "id": "C8", "text": "GET /r/lobby?format=json&limit=1&wait=30 -> HTTP 200 count=1", "expect": { "*": "not run" }, "why": "Long-poll parameter not allowed." }
+  ],
+  "live": [
+    { "id": "L1", "what": "The next credence AgentScout daily self-audit SUBMIT after the reproduction step is deployed in the archive job.", "expect": { "status": "reproduced", "asof": "reproduced", "asOf": "reproduced", "fingerprint": "reproduced" }, "condition": "Reproduced within 60 minutes of the submission, before the notes' next daily update." }
+  ]
+}

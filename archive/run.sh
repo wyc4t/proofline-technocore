@@ -23,6 +23,11 @@ while IFS=$'\t' read -r tag file; do
 done < pending.tsv
 find data/pending-uploads -type d -empty -delete 2>/dev/null || true
 
+# Reproduction: re-run the read-only GET requests that new credence results and attestations report,
+# within the half hour, and store Proofline's own observations in data/reproductions/. Only allowlisted
+# read paths are ever requested (src/lib/claims.js). A failure never blocks the capture.
+node code/archive/reproduce.mjs --data data --new || echo "reproduction skipped this time"
+
 # Hourly: recompute the headline statistics (stats/latest.json) from the archive. A failure
 # here never blocks the capture itself: a missing file makes the statistics say they are
 # incomplete, and a failed calculation keeps the previous statistics file.
