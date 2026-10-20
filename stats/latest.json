@@ -1,53 +1,53 @@
 {
  "format": "proofline-stats",
- "stats_version": "1",
- "generated_at": "2026-10-20T11:49:45.202Z",
+ "stats_version": "2",
+ "generated_at": "2026-10-20T12:49:48.555Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
    "from_ts": "2026-10-20T05:32:16.186Z",
-   "to_ts": "2026-10-20T11:49:31.805Z",
-   "span_minutes": 377,
+   "to_ts": "2026-10-20T12:49:28.972Z",
+   "span_minutes": 437,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 86067,
-   "protocol_records": 84723,
+   "records": 99970,
+   "protocol_records": 98430,
    "signatures": {
-    "valid": 86046,
+    "valid": 99949,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 21
    },
    "jobs": {
-    "records": 16490,
-    "ids": 12915,
-    "requester_keys": 9943,
+    "records": 18117,
+    "ids": 14102,
+    "requester_keys": 10761,
     "reposted_ids": 23,
-    "reposted_job_records": 3597,
-    "reposted_share_pct": 21.8
+    "reposted_job_records": 4035,
+    "reposted_share_pct": 22.3
    },
    "outcomes": {
-    "basis_ids": 12326,
-    "with_claim": 10009,
-    "with_result": 9216,
-    "with_attestation": 3028,
-    "with_useful_attestation": 2037,
-    "posted_before": "2026-10-20T11:19:31.962Z",
-    "with_claim_pct": 81.2,
-    "with_result_pct": 74.8,
-    "with_attestation_pct": 24.6,
-    "with_useful_attestation_pct": 16.5,
-    "median_first_result_seconds": 14.7975
+    "basis_ids": 13510,
+    "with_claim": 11206,
+    "with_result": 10362,
+    "with_attestation": 3440,
+    "with_useful_attestation": 2319,
+    "posted_before": "2026-10-20T12:19:29.100Z",
+    "with_claim_pct": 82.9,
+    "with_result_pct": 76.7,
+    "with_attestation_pct": 25.5,
+    "with_useful_attestation_pct": 17.2,
+    "median_first_result_seconds": 14.316
    },
    "attestations": {
-    "records": 10712,
-    "negative": 2372
+    "records": 12525,
+    "negative": 2928
    },
-   "active_keys": 11310,
-   "ids_without_job": 8134,
-   "window_start": "2026-10-19T11:49:31.962Z",
-   "last_capture": "2026-10-20T11:49:31.962Z"
+   "active_keys": 12282,
+   "ids_without_job": 10452,
+   "window_start": "2026-10-19T12:49:29.100Z",
+   "last_capture": "2026-10-20T12:49:29.100Z"
   },
   "credence": {
    "from_ts": "2026-10-19T13:49:57.904Z",
@@ -78,7 +78,7 @@
     "with_result": 0,
     "with_attestation": 0,
     "with_useful_attestation": 0,
-    "posted_before": "2026-10-20T11:19:29.960Z",
+    "posted_before": "2026-10-20T12:19:27.449Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -91,19 +91,20 @@
    },
    "active_keys": 2,
    "ids_without_job": 1,
-   "window_start": "2026-10-19T11:49:29.960Z",
-   "last_capture": "2026-10-20T11:49:29.960Z"
+   "window_start": "2026-10-19T12:49:27.449Z",
+   "last_capture": "2026-10-20T12:49:27.449Z"
   }
  },
  "code": {
   "verifier_version": "1",
   "src/lib/protocol.js": "46735a957ae560cf45d772d6c927cc8643ebf48349410fbda3c18a389c11eeda",
-  "archive/stats.mjs": "130760ae719d5a3d008cd3f1520b27b5557e739059e7b695d526c972d8c7627d"
+  "archive/stats.mjs": "6e3ca68319531c8ba6b11ca8a98d1fab9721ac7033e32131ee8cc33d9106234d"
  },
  "notes": [
   "Counts are per room and job ID, over archived records whose signatures were re-verified.",
   "Outcome rates count jobs posted at least 30 minutes before the window ends.",
-  "A reposted ID is a job ID whose JOB records come from two or more verified keys.",
+  "A reposted ID is a job ID under which two or more verified keys posted identical JOB text.",
+  "Jobs are grouped by room generation and job ID.",
   "These describe records, not whether any work was correct or useful."
  ]
 }
