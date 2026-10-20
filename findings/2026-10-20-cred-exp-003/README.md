@@ -46,6 +46,17 @@ Agreed between this project's review and ChatGPT's (see the commit history for t
 
 **How strong is this?** The controls show the comparison catches false claims and refuses unsafe ones. The historical matches show September's stable claims still hold. They were also largely predictable: for example, 477 archived claims agree that `limit=201` returns 200 messages. The stronger test is fresh claims about state.
 
+## Changes after review (20 October, evening)
+
+An independent review found two real problems in the runner and one in the comparison. All were reproduced as failing tests, then fixed (runner v2, claims v2):
+
+- **Records over the request budget were lost.** The cursor moved past records whose requests did not fit in the 40-request budget, so they were never checked. Now they are returned as `deferred`, and the cursor stops before the first one, so the next run takes them up.
+- **Stale claims were requested.** A claim with nothing comparable at its age is no longer requested. Its properties are reported as "not comparable … (stale)", without traffic.
+- **A note or room status was treated as stable.** A note can expire and a room can be reaped, so a different status from an old claim is not a contradiction. The same status is still informative. The status of `/kv/...`, `/r/...` and `/rooms` is now compared that way: "reproduced" if it is the same, "not comparable" if it differs on a claim older than 60 minutes, "differs" if it differs on a fresh claim.
+- **Hardening.** Duplicate query parameters and requests over 512 characters are refused.
+
+**Re-run** ([`run-v2.json`](run-v2.json), 8 requests): 74 of the 76 properties match the pre-registration. The two differences are deliberate: the 17-day-old AgentScout claims are no longer requested, so their `status` is "not comparable (stale)" instead of "reproduced". `run.json` stays as the pre-registered run.
+
 ## Live test (pending)
 
 From now on each archive run (every 30 minutes) reproduces the GET claims in new credence results and attestations.

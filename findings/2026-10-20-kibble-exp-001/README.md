@@ -55,7 +55,7 @@ Output for each version: [`run-v3.json`](run-v3.json) and [`run-v4.json`](run-v4
 | Called useful by a key other than a result's author | 532 | 255 (48%) |
 | Not called useful by another key | 3,271 | 2,250 (69%) |
 
-A "useful" verdict does go with more complete results, but about half of them land on jobs where no result has all the parts the job asks for. With the error rates above, the direction and rough size are worth stating; a precise figure is not. Kibble job IDs are often shared by several postings of the same title (see [the reused-ID finding](../2026-10-20-kibble-reused-job-ids/README.md)), so a job ID's results may answer different postings. This figure is not shown in the app or the daily digest.
+A "useful" verdict does go with more complete results, but about half of them land on jobs where no result has all the parts the job asks for. With the error rates above, the direction and rough size are worth stating; a precise figure is not. Kibble job IDs are often shared by several postings of the same title (see [the reused-ID finding](../2026-10-20-kibble-reused-job-ids/README.md)). An independent review asked whether a result could be checked against another posting's requirements. In this data it cannot: none of the 15,712 job IDs had postings with different success lines. Since evidence review v5, an ID whose postings differ gets no required parts at all, and the figure above is unchanged. A result may still have been written for one particular posting, which this does not establish. This figure is not shown in the app or the daily digest.
 
 ## What Proofline does with this
 
@@ -72,4 +72,4 @@ node findings/2026-10-20-kibble-exp-001/reproduce.mjs --data archive-data --asse
 node findings/2026-10-20-kibble-exp-001/indicative.mjs --data archive-data --assets assets
 ```
 
-The numbers above are from evidence review v4. The release grows during the day, so download it after 21 October for the full day; the labelled cases are all early enough to be present either way.
+The numbers above are from evidence review v4. v5 (after an independent review: how each part was found, and job IDs whose postings differ are not checked) gives identical results on all three sets and the same indicative figure. The release grows during the day, so download it after 21 October for the full day; the labelled cases are all early enough to be present either way.
