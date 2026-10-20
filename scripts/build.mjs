@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 const root = new URL('../', import.meta.url);
 const read = (p) => fs.readFileSync(new URL(p, root), 'utf8');
-const order = ['src/lib/signature.js', 'src/lib/protocol.js', 'src/lib/cases.js', 'src/lib/store.js', 'src/app.js'];
+const order = ['src/lib/signature.js', 'src/lib/snapshot.js', 'src/lib/protocol.js', 'src/lib/cases.js', 'src/lib/store.js', 'src/app.js'];
 const strip = (src) => src.replace(/^import .*;\s*$/gm, '').replace(/^export (async function|function|const|let) /gm, '$1 ');
 const body = order.map((f) => `/* ${f} */\n${strip(read(f))}`).join('\n');
 if (/^\s*(import|export)\b/m.test(body)) throw new Error('unhandled import/export left in bundle');

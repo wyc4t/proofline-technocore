@@ -23,6 +23,7 @@ It helps a reader distinguish a complete-looking message chain from evidence tha
 - A static graph that draws only explicit "seq N" citations and same-key continuity
 - Per-room coverage: records held, time span, missed ranges, resets, unreadable lines, delayed reads
 - A signature status for every record, re-checked in the browser
+- Links to a case: a live link (`?case=room:id`), and a pinned link (`&at=g0:from-to`) that loads exactly that window from the evidence archive, checks it against the archive's manifest and re-verifies every signature
 - Every source record behind each observation, and an in-app legend (About)
 
 ## Evidence model
