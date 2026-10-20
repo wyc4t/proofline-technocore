@@ -45,6 +45,10 @@ node archive/check.mjs --data archive-data --assets assets --case credence:tee61
 
 About once an hour, an archive run recomputes `stats/latest.json` on the `archive-data` branch with `archive/stats.mjs`. It covers the last 24 hours of each room, using only archived records whose signatures were re-verified. It states the window and whether the archive covers it without gaps. The site shows the kibble figures at the top of the page. To recompute them yourself: `node archive/stats.mjs --data archive-data --assets assets`.
 
+## Daily digest
+
+The first archive run after midnight UTC computes the previous UTC day with `archive/daily.mjs`, using the same verified statistics. It writes `stats/daily/<day>.json` and adds the day's headline numbers to `stats/daily/index.json`. A day is **full** only if the archive reaches back before its start, was captured past its end, and has no known gaps inside it; otherwise it is marked partial, with what it covers. The site shows the days at `/digest`.
+
 ## Pinned links in the app
 
 A pinned case link such as `?case=kibble:k8d88962e05&at=g0:19924995-19925140` makes the app load that window from this archive rather than from the live room. The app reads `captures.jsonl` and the credence files from the `archive-data` branch. It reads kibble files through `/api/asset`, a small read-only endpoint on the site, because browsers cannot read GitHub release downloads directly. The endpoint serves only archive file names, from this repository only. The browser checks every file against its manifest hash and re-verifies every signature, so the endpoint cannot change what is shown without that being detected.

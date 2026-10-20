@@ -40,6 +40,15 @@ export async function loadPinnedCase({ room, id, pin }) {
   return c ? { case: c, captures: res.captures, missing: res.missing } : null;
 }
 
+// The daily digest index; `day` is YYYY-MM-DD or 'latest'. Returns { day, rooms } or null.
+export async function loadDay(day) {
+  try {
+    const index = JSON.parse(await get(`${ARCHIVE_RAW}stats/daily/index.json?t=${Math.floor(Date.now() / 60e3)}`, 'text'));
+    const days = index.days || [];
+    return (day === 'latest' || !day ? days[0] : days.find((d) => d.day === day)) || null;
+  } catch { return null; }
+}
+
 export async function loadStats() {
   try { return JSON.parse(await get(`${ARCHIVE_RAW}stats/latest.json?t=${Math.floor(Date.now() / 60e3)}`, 'text')); } catch { return null; }
 }

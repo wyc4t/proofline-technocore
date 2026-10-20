@@ -90,7 +90,8 @@ export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable 
   };
 }
 
-export function computeStats({ data, assets, hours = 24, rooms = ['kibble', 'credence'], now = Date.now() }) {
+// window: { fromMs, toMs } for a fixed period (a UTC day); otherwise the last `hours` up to the last capture.
+export function computeStats({ data, assets, hours = 24, rooms = ['kibble', 'credence'], now = Date.now(), window = null }) {
   const report = check({ data, assets, keepRecords: true });
   if (report.problems.length) throw new Error(`archive integrity problems:\n  ${report.problems.join('\n  ')}`);
   const out = { format: 'proofline-stats', stats_version: STATS_VERSION, generated_at: new Date(now).toISOString(), window_hours: hours, rooms: {},
@@ -105,21 +106,39 @@ export function computeStats({ data, assets, hours = 24, rooms = ['kibble', 'cre
   for (const room of rooms) {
     const gens = report.records[room] || {};
     const lastCapture = Object.values(report.rooms[room] || {}).map((g) => Date.parse(g.unknown.after_last_successful_capture || 0)).reduce((a, b) => Math.max(a, b), 0);
-    const toMs = lastCapture || now, fromMs = toMs - hours * 3600e3;
+    const toMs = window ? window.toMs : (lastCapture || now), fromMs = window ? window.fromMs : toMs - hours * 3600e3;
     const entries = Object.entries(gens).flatMap(([g, m]) => [...m.values()].map((p) => ({ ...p, gen: g.replace(/^g/, '') })));
     // A known gap can only be ruled out of the window if it lies entirely before an archived record dated before
     // the window: seq and ts both increase, so everything below that record is older. Any later gap may hold
     // records from inside the window, and makes the window incomplete.
     const gaps = [], unavailable = [];
+    let anyBefore = false; // an archived record dated before the window: the archive reaches back past its start
     for (const [g, info] of Object.entries(report.rooms[room] || {})) {
       let before = -Infinity;
       for (const p of (gens[g] || new Map()).values()) if (Date.parse(p.rec.ts) < fromMs && p.rec.seq > before) before = p.rec.seq;
+      if (before > -Infinity) anyBefore = true;
       for (const x of info.known_gaps) if (x.to > before) gaps.push({ generation: g.replace(/^g/, ''), from: x.from, to: x.to });
       for (const u of info.unknown.not_available_to_this_check) if (u.to > before) unavailable.push(u);
     }
-    out.rooms[room] = { ...roomStats(room, entries, { fromMs, toMs, gaps, unavailable: unavailable.length }), window_start: new Date(fromMs).toISOString(), last_capture: lastCapture ? new Date(lastCapture).toISOString() : null };
+    out.rooms[room] = { ...roomStats(room, entries, { fromMs, toMs, gaps, unavailable: unavailable.length }),
+      window_start: new Date(fromMs).toISOString(), window_end: new Date(toMs).toISOString(),
+      last_capture: lastCapture ? new Date(lastCapture).toISOString() : null,
+      // Whether the archive reaches the window's start and end. "complete" covers gaps inside what was captured;
+      // these say whether the window itself was fully captured.
+      covers_window_start: anyBefore, covers_window_end: lastCapture >= toMs };
   }
   return out;
+}
+
+// Release files for a fixed window: captures made during it, or within two hours after it ends.
+export function neededAssetsBetween(capturesText, fromMs, toMs) {
+  const out = new Set();
+  for (const l of capturesText.split('\n')) {
+    if (!l.trim()) continue;
+    const c = JSON.parse(l), t = Date.parse(c.captured_at);
+    if (c.ok && c.storage?.kind === 'release' && t >= fromMs && t <= toMs + 2 * 3600e3) out.add(`${c.storage.tag}\t${c.storage.asset}`);
+  }
+  return [...out];
 }
 
 // Release files a stats run needs: kibble captures made since the window began (plus margin).
