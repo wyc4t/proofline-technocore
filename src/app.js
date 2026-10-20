@@ -8,7 +8,7 @@ const rooms=SOURCES.map(createRoomState);
 const SIG_LABEL={valid:'SIGNATURE VERIFIED',invalid:'SIGNATURE DOES NOT VERIFY',no_sig:'KEY NAMED, NO SIGNATURE · NOT RE-VERIFIABLE',unsigned:'NOT A KEY · SELF-ASSERTED NAME',unchecked:'SIGNATURE NOT CHECKED IN THIS BROWSER'};
 const STATUS_LABEL={'all-stages':'ALL 4 STAGES','partial':'PARTIAL','no-request':'REQUEST NOT SEEN'};
 const MAX_NODES=7,FETCH_TIMEOUT_MS=10000,LIST_STEP=80;
-let cases=[],selected=null,filter='all',busy=false,paused=false,frozenAt=0,lastInspKey=null,listLimit=LIST_STEP,detailOpener=null;
+let cases=[],selected=null,filter='seen',stats=null,busy=false,paused=false,frozenAt=0,lastInspKey=null,listLimit=LIST_STEP,detailOpener=null;
 const uiSig={list:'',insp:''};
 const isNarrow=()=>matchMedia('(max-width:650px)').matches;
 const protocolTotal=()=>rooms.reduce((n,r)=>n+r.counts.protocol,0);
@@ -28,10 +28,30 @@ function el(tag,className,text){const node=document.createElement(tag);if(classN
 function formatDuration(ms){if(ms===null||!Number.isFinite(ms))return 'Unavailable';if(ms<0)return 'Invalid ordering';const s=Math.round(ms/1000);if(s<60)return `${s}s`;const m=Math.floor(s/60);if(m<60)return `${m}m ${s%60}s`;return `${Math.floor(m/60)}h ${m%60}m`}
 function shortDid(did){if(!did)return 'unknown sender';return did.startsWith('did:key:')?`${did.slice(8,18)}…${did.slice(-5)}`:did.slice(0,24)}
 const clock=ms=>ms?new Date(ms).toLocaleTimeString([],{hour12:false}):'never';
-function visibleCases(){return cases.filter(c=>filter==='all'||(filter==='negative'?c.negative:c.status===filter))}
+const FILTER_LABEL={seen:'Request in view','all-stages':'All 4 stages',partial:'Partial',negative:'Negative verdict','no-request':'Request not seen',all:'All cases'};
+const matches=(c,f)=>f==='all'||(f==='seen'?c.status!=='no-request':f==='negative'?c.negative:c.status===f);
+function visibleCases(){return cases.filter(c=>matches(c,filter))}
 function renderSummary(){
-  $('#caseCount').textContent=cases.length;$('#completeCount').textContent=cases.filter(c=>c.status==='all-stages').length;$('#disputedCount').textContent=cases.filter(c=>c.negative).length;$('#orphanCount').textContent=cases.filter(c=>c.status==='no-request').length;
+  for(const o of $('#filter').options)o.textContent=`${FILTER_LABEL[o.value]} (${cases.filter(c=>matches(c,o.value)).length})`;
+  // The live view is only the newest records of each room; say how much, and what the filter hides.
+  const win=rooms.map(coverage).map(c=>`${c.room} last ${c.spanMs===null?'…':fmtSpan(c.spanMs)}`).join(' · ');
+  const hidden=filter==='seen'?cases.filter(c=>c.status==='no-request').length:0,note=$('#casesNote');
+  note.replaceChildren(el('b','',`Live view: ${win}.`),document.createTextNode(' '));
+  if(hidden){note.append(document.createTextNode(`${hidden} ${hidden===1?'case':'cases'} whose request is older than this are hidden. `));const b=el('button','','Show them');b.type='button';b.onclick=()=>{filter='all';$('#filter').value='all';render(true)};note.append(b)}
+  else note.append(document.createTextNode('Older cases stay reachable through pinned links to the archive.'));
 }
+// Headline numbers: kibble over the last 24 hours, computed hourly from the verified archive.
+async function refreshStats(){try{const r=await fetch(`${ARCHIVE_RAW}stats/latest.json`,{cache:'no-store'});if(!r.ok)throw new Error(String(r.status));stats=await r.json();renderStats()}catch{if(!stats)$('#sDetail').textContent='The archive\u2019s numbers could not be loaded right now.'}}
+function renderStats(){
+  const k=stats?.rooms?.kibble;if(!k)return;
+  const n=x=>x===null||x===undefined?'—':Number(x).toLocaleString('en-US'),p=x=>x===null||x===undefined?'—':`${Math.round(x)}%`,hm=t=>t?String(t).slice(11,16):'?';
+  $('#sJobs').textContent=n(k.jobs.records);$('#sResult').textContent=p(k.outcomes.with_result_pct);$('#sUseful').textContent=p(k.outcomes.with_useful_attestation_pct);$('#sReposted').textContent=p(k.jobs.reposted_share_pct);
+  const span=k.span_minutes||0,full=span>=stats.window_hours*60-30;
+  $('#sScope').textContent=`kibble · ${full?'last 24 h':`last ${Math.floor(span/60)} h ${span%60} min`} · verified archive`;
+  $('#sDetail').textContent=`${hm(k.from_ts)}–${hm(k.to_ts)} UTC${full?'':' (archive younger than 24 h)'} · ${k.complete?'no gaps':'has gaps: partial'} · ${n(k.jobs.requester_keys)} requester keys · ${n(k.signatures.valid)} signatures re-checked`;
+  $('.summary p').title=`Computed from the evidence archive at ${hm(stats.generated_at)} UTC. Hover a number for its definition.`;
+}
+
 function renderList(){
   const host=$('#caseList');host.replaceChildren();const visible=visibleCases();
   if(!visible.length){host.append(el('div','loading','No matching cases in the current observation window.'));return}
@@ -223,6 +243,6 @@ about.addEventListener('close',()=>{try{if(location.hash==='#about')history.repl
 document.addEventListener('click',e=>{if(e.target.closest?.('.about-link')){e.preventDefault();openAbout()}});
 if(location.hash==='#about')openAbout();
 if(wantedKey&&linkParams.get('at')){openSnapshot(wantedKey,linkParams.get('at'));wantedKey=null}
-refreshArchiveState();setInterval(refreshArchiveState,120000);
+refreshArchiveState();setInterval(refreshArchiveState,120000);refreshStats();setInterval(refreshStats,600000);
 $('#refresh').onclick=()=>refresh();$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};addEventListener('resize',resizeCanvas);resizeCanvas();refresh();setInterval(refresh,15000);
 if(document.modelContext?.registerTool)document.modelContext.registerTool({name:'inspect_evidence_cases',title:'Inspect evidence cases',description:'Return structural observations for live Technocore work chains already loaded in Proofline.',inputSchema:{type:'object',properties:{status:{type:'string',enum:['all','all-stages','partial','no-request','negative']}},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:({status='all'}={})=>({observed_at:new Date().toISOString(),cases:cases.filter(c=>status==='all'||(status==='negative'?c.negative:c.status===status)).slice(0,20).map(c=>({room:c.room,id:c.id,status:c.status,stages:c.stages.map(s=>s.length),verdicts:c.verdicts,flags:c.flags.map(f=>f.id),records:c.list.length}))})});
