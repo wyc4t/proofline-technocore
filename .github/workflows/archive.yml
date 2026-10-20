@@ -33,7 +33,7 @@ jobs:
           node-version: '22'
 
       - name: Collect
-        run: node code/archive/collect.mjs --data data --outbox data/pending-uploads --rooms credence,kibble --release-rooms kibble
+        run: node code/archive/collect.mjs --data data --outbox data/pending-uploads --rooms credence,kibble,d-proofline --release-rooms kibble
 
       # Release files wait in data/pending-uploads until uploaded. Only files whose name and
       # hash match a manifest entry are published. Upload happens before the commit: if it
