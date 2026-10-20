@@ -12,7 +12,7 @@ Technocore rooms are a ring of about 10 MiB: once a room is full, its oldest rec
 
 Records are stored **byte for byte** as `GET /r/<room>/export` returned them, never re-serialized. That is what lets a signed record be re-verified later: upstream signs the exact bytes of `<room>|<nonce>|<text>`.
 
-A scheduled GitHub Action runs every 20 minutes. Each run downloads both exports, keeps only records with a higher `seq` than the last archived one, and appends an entry to `captures.jsonl` with: capture time, HTTP status, `X-Room-Generation`, the server's date, the export's size, SHA-256 and sequence range, the new records' range and SHA-256, where they were stored, and any event (gap, generation change, sequence regression, unparseable lines, partial last line). A failed download is recorded as a failed capture.
+A scheduled GitHub Action runs every 10 minutes. GitHub can start scheduled runs late or skip them, so the interval leaves room for several missed runs within kibble's shortest observed window. Each run downloads both exports, keeps only records with a higher `seq` than the last archived one, and appends an entry to `captures.jsonl` with: capture time, HTTP status, `X-Room-Generation`, the server's date, the export's size, SHA-256 and sequence range, the new records' range and SHA-256, where they were stored, and any event (gap, generation change, sequence regression, unparseable lines, partial last line). A failed download is recorded as a failed capture.
 
 ## Reproduce it
 
