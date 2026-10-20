@@ -7,7 +7,8 @@
 //
 //   const index = buildReuseIndex(allRecords);           // once per set of records
 //   const review = reviewCase(caseRecords, { index });   // per case
-export const EVIDENCE_VERSION = '2'; // 2: off-task by word overlap; no plain-answer check; evidence quality kept out of the class
+export const EVIDENCE_VERSION = '3'; // 3: stricter reading of required parts (items, SQL, hashes), from KIBBLE-EXP-001 development cases
+// 2: 2: off-task by word overlap; no plain-answer check; evidence quality kept out of the class
 
 const RESPONSE_KINDS = ['ACCEPT', 'CLAIM', 'SUBMIT', 'RESULT', 'DELIVER', 'VOUCH', 'ATTEST'];
 
@@ -45,19 +46,27 @@ const DELIVERABLES = [
   { id: 'status', label: 'HTTP status', ask: /\bhttp (codes?|status(es)?)\b|\bstatus codes?\b|\bstatus\b/i, has: (t) => /\bHTTP(\/[\d.]+)?\s*[1-5]\d\d\b|\bstatus(\s+code)?\s*[:=]?\s*[1-5]\d\d\b|\b[1-5]\d\d\s+(OK|Created|Bad Request|Unauthorized|Forbidden|Not Found|Conflict|Too Many)/i.test(t) },
   { id: 'body', label: 'response body', ask: /\bbody\b|\bresponse\b/i, has: (t) => /\bbody\s*[:=]|\{[^{}]{2,}\}|"[^"]{3,}"|'[^']{3,}'|`[^`]{3,}`/i.test(t) },
   { id: 'count', label: 'message counts', ask: /\b(message )?counts?\b/i, has: (t) => /\b(count|messages|records|entries)\s*[:=]\s*\d+|\b\d+\s+(messages|records|entries|items)\b/i.test(t) },
-  { id: 'hash', label: 'hashes', ask: /\bsha-?\d+|\bsha12\b|\bhash(es)?\b/i, has: (t) => /\b[0-9a-f]{12,64}\b/i.test(t) },
+  { id: 'hash', label: 'hashes', ask: /\bsha-?\d+\b|\bsha12\b|\b(quote|give|include|report|show|list|with|plus)\s+(the\s+|its\s+|their\s+|a\s+)?(content\s+)?(hash(es)?|digest)\b|\bhash(es)?\s+(value|of each|for each)\b/i, has: (t) => /\b[0-9a-f]{12,64}\b/i.test(t) },
   { id: 'pattern', label: 'quoted constraint strings', ask: /\bconstraint strings?\b|\bregex\b|\bpatterns?\b/i, has: (t) => /\^\S{3,}\$|\/\^\S+\$\//.test(t) },
   { id: 'command', label: 'commands', ask: /\bcommands?\b/i, has: (t) => /`[^`]+`|(^|\n)\s*\$\s+\S|\b(kubectl|curl|git|npm|docker|psql|gh|node|python3?)\s+\S/.test(t) },
-  { id: 'query', label: 'SQL query', ask: /\b(sql|query)\b/i, has: (t) => /\bselect\b[\s\S]{1,400}\bfrom\b/i.test(t) },
+  { id: 'query', label: 'SQL query', ask: /\bsql\b|\bthe query\b|\bwrite (a|the) query\b/i, has: (t) => /\bselect\b[\s\S]{1,400}\bfrom\b/i.test(t) },
 ];
+// Words that, after a number, describe a quantity or existing things rather than items to give.
+const NOT_ITEMS = /^(chars?|characters?|bytes?|kb|mb|gb|ms|minutes?|seconds?|hours?|days?|weeks?|months?|years?|percent|decimals?|decimal|digits?|places|times|consecutive|runs?|attempts?|retries|models?|jobs?|nodes?|rooms?|users?|logins?|replicas?|instances?|shards?|partitions?|requests?|messages?|tokens?|engines?|services?|regions?|tables?|columns?|rows?|records?|files?|lines?|versions?|weeks?|or|and|to|of|in|at|for|per|x|lowercase|uppercase|sigfigs?)$/i;
 const NUMBER_WORDS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
 
 export function deliverables(clause) {
   if (!clause) return [];
   const asked = DELIVERABLES.filter((d) => d.ask.test(clause)).map(({ id, label }) => ({ id, label }));
-  // "3 improvements", "the 2 most likely causes": a number of items.
-  const m = /\b(\d{1,2}|two|three|four|five|six|seven|eight|nine|ten)\s+(?:(?:most|concrete|specific|distinct|key|likely|main|different|separate)\s+){0,3}([a-z]+)/i.exec(clause);
-  if (m) { const n = Number(m[1]) || NUMBER_WORDS[m[1].toLowerCase()]; if (n >= 2 && n <= 10 && !/^(chars?|characters?|bytes?|minutes?|seconds?|hours?|days?|percent)$/i.test(m[2])) asked.push({ id: 'items', label: `${n} ${m[2]}`, n }); }
+  // "3 improvements", "the 2 most likely causes": a number of items to give. Not a quantity in a condition
+  // ("10 consecutive runs", "rounded to two decimals", "N>=2 jobs") or a count of things that already exist ("all three models").
+  for (const m of clause.matchAll(/(^|[^\w>=<.])(\d{1,2}|two|three|four|five|six|seven|eight|nine|ten)\s+(?:(?:most|concrete|specific|distinct|key|likely|main|different|separate|short|clear|actionable|practical)\s+){0,3}([a-z]+)/gi)) {
+    const before = clause.slice(Math.max(0, m.index - 12), m.index + m[1].length).toLowerCase();
+    if (/\b(all|both|across|of the|than|within|over|under|every|last|first|next)\s*$/.test(before)) continue;
+    if (NOT_ITEMS.test(m[3])) continue;
+    const n = Number(m[2]) || NUMBER_WORDS[m[2].toLowerCase()];
+    if (n >= 2 && n <= 10) { asked.push({ id: 'items', label: `${n} ${m[3]}`, n }); break; }
+  }
   return asked;
 }
 
