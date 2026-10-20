@@ -6,7 +6,7 @@
 //
 // A reproduced property means Proofline observed the same value itself, at a stated time. It does not mean the
 // agent made the request, or that its task was done well: only that this part of what it reported holds.
-export const CLAIMS_VERSION = '1';
+export const CLAIMS_VERSION = '2'; // 2: mutable status; stale claims not requested; duplicate parameters and long requests refused
 export const HOST = 'https://technocore.chat';
 export const FRESH_MINUTES = 60;   // state (notes, documents) is compared only for claims at most this old
 
@@ -62,6 +62,7 @@ const WRITES = /\/(say|say-signed|set|set-signed)(\/|$)|\/hb-/i;
 
 export function checkRequest(target) {
   const t = String(target || '');
+  if (t.length > 512) return { ok: false, reason: 'request too long' };
   if (WRITES.test(t)) return { ok: false, reason: 'writes: Proofline never requests a write path' };
   if (!t.startsWith('/')) return { ok: false, reason: 'incomplete request' };
   if (/%2e|%2f|%5c|\.\.|\/\.\/|\/\//i.test(t)) return { ok: false, reason: 'encoded or traversal path' };
@@ -71,7 +72,10 @@ export function checkRequest(target) {
   const p = PATHS.find((x) => x.re.test(u.pathname));
   if (!p) return { ok: false, reason: 'path not on the read-only allowlist' };
   const q = new URLSearchParams();
+  const seen = new Set();
   for (const [k, v] of u.searchParams) {
+    if (seen.has(k)) return { ok: false, reason: `duplicate parameter ${k}` };
+    seen.add(k);
     if (k === 'n') continue;                                                   // a client's cache-buster
     if (k === 'wait') return { ok: false, reason: 'long-poll (wait) not allowed' };
     if (!(p.params || []).includes(k)) return { ok: false, reason: `parameter ${k} not allowed` };
@@ -87,8 +91,11 @@ export function checkRequest(target) {
 // --- Comparing -------------------------------------------------------------------------------------
 
 // stable: should hold on a running server at any time; state: changes over time (compared only when fresh);
-// continuous: changes from second to second (a room read's range or hash), never comparable.
+// continuous: changes from second to second (a room read's range or hash), never comparable;
+// mutable: the status of a note or room, which can be created or removed: the same status later is informative,
+// a different one is not, unless the claim is fresh.
 export function propertyKind(name, kind) {
+  if (name === 'status' && (kind === 'note' || kind === 'room' || kind === 'rooms')) return 'mutable';
   if (name === 'status' || name === 'cacheControl') return 'stable';
   if (kind === 'healthz') return 'stable';
   if (kind === 'room') return name === 'count' ? 'stable' : 'continuous';
@@ -123,19 +130,31 @@ function same(name, claimed, observed) {
   return String(claimed) === String(observed);
 }
 
+const fmtAge = (m) => (m >= 2880 ? `${Math.round(m / 1440)} days` : m >= 120 ? `${Math.round(m / 60)} hours` : `${Math.round(m)} minutes`);
+
+// Whether re-running a claim of this age could show anything: a stable property, or anything else while fresh.
+export function worthRequesting(claim, ageMin) {
+  const check = checkRequest(claim.target);
+  if (!check.ok) return false;
+  const fresh = ageMin !== null && ageMin !== undefined && ageMin <= FRESH_MINUTES;
+  return Object.keys(claim.props).some((name) => { const k = propertyKind(name, check.kind); return k === 'stable' || (fresh && k !== 'continuous'); });
+}
+
 // obs: an observation from archive/reproduce.mjs, or null when the request was not run.
-export function compareClaim(claim, obs, { claimedAt, observedAt } = {}) {
+export function compareClaim(claim, obs, { claimedAt, observedAt, notRequested } = {}) {
   const check = checkRequest(claim.target);
   const ageMin = claimedAt && observedAt ? (Date.parse(observedAt) - Date.parse(claimedAt)) / 60e3 : null;
   return Object.entries(claim.props).map(([name, claimed]) => {
     const kind = check.ok ? propertyKind(name, check.kind) : null;
     if (!check.ok) return { name, claimed, outcome: 'not run', note: check.reason };
-    if (!obs) return { name, claimed, kind, outcome: 'not run', note: 'not requested in this run' };
+    if (!obs && notRequested === 'stale') return { name, claimed, kind, outcome: 'not comparable', note: `the claim is ${fmtAge(ageMin)} old: nothing in it can be compared at that age, so it was not requested (stale)` };
+    if (!obs) return { name, claimed, kind, outcome: 'not run', note: notRequested === 'budget' ? 'request budget exhausted' : 'not requested in this run' };
     if (obs.error) return { name, claimed, kind, outcome: 'not comparable', note: `the request failed: ${obs.error}` };
     const observed = observedValue(name, obs), shown = name === 'fingerprint' ? (same(name, claimed, observed) ? claimed : 'not in the note') : name === 'sha' || name === 'bodySha' ? obs.sha256?.slice(0, 12) : observed;
     if (kind === 'continuous') return { name, claimed, observed: shown, kind, outcome: 'not comparable', note: 'changes from moment to moment' };
-    if (kind === 'state' && (ageMin === null || ageMin > FRESH_MINUTES)) return { name, claimed, observed: shown, kind, outcome: 'not comparable', note: ageMin === null ? 'claim time unknown' : `changes over time; the claim is ${ageMin >= 2880 ? `${Math.round(ageMin / 1440)} days` : ageMin >= 120 ? `${Math.round(ageMin / 60)} hours` : `${Math.round(ageMin)} minutes`} old` };
+    if (kind === 'state' && (ageMin === null || ageMin > FRESH_MINUTES)) return { name, claimed, observed: shown, kind, outcome: 'not comparable', note: ageMin === null ? 'claim time unknown' : `changes over time; the claim is ${fmtAge(ageMin)} old` };
     const eq = same(name, claimed, observed);
+    if (kind === 'mutable' && eq === false && (ageMin === null || ageMin > FRESH_MINUTES)) return { name, claimed, observed: shown, kind, outcome: 'not comparable', note: 'the note or room may have been created, changed or removed since the claim' };
     if (eq === null) return { name, claimed, kind, outcome: 'not comparable', note: 'not present in the response' };
     if (eq) return { name, claimed, observed: shown, kind, outcome: 'reproduced' };
     return { name, claimed, observed: shown, kind, outcome: 'differs', note: kind === 'stable' && ageMin !== null && ageMin > 1440 ? 'the server or its configuration may have changed since the claim' : undefined };

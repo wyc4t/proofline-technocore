@@ -35,7 +35,9 @@ export function parseMessage(message, room) {
   // An attestation may name the exact result it judges by its hash (sha256 of the result text, 16 or 64 hex),
   // either as rh:<hash> in its text or as a bare hash field before the verdict: ATTEST v1 | id | <hash> | useful | ...
   const HASH = /^(?:rh:)?([0-9a-f]{64}|[0-9a-f]{16})$/i;
-  const hashField = stage === 3 && parts.length > 3 ? HASH.exec(String(parts[2] || '').trim()) : null;
+  // Only when a known verdict follows: otherwise a hex-looking third field stays the verdict.
+  const KNOWN_VERDICT = /^(useful|not|not[ _-]?useful|partial(ly useful)?|invalid|valid|rejected?|accepted?)$/i;
+  const hashField = stage === 3 && parts.length > 3 && KNOWN_VERDICT.test(String(parts[3] || '').trim()) ? HASH.exec(String(parts[2] || '').trim()) : null;
   const vAt = hashField ? 3 : 2;
   const verdict = stage === 3 ? String(parts[vAt] || '').toLowerCase() : '';
   const arg = stage === null ? String(parts[2] || '') : '';

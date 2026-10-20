@@ -246,7 +246,9 @@ function parseMessage(message, room) {
   // An attestation may name the exact result it judges by its hash (sha256 of the result text, 16 or 64 hex),
   // either as rh:<hash> in its text or as a bare hash field before the verdict: ATTEST v1 | id | <hash> | useful | ...
   const HASH = /^(?:rh:)?([0-9a-f]{64}|[0-9a-f]{16})$/i;
-  const hashField = stage === 3 && parts.length > 3 ? HASH.exec(String(parts[2] || '').trim()) : null;
+  // Only when a known verdict follows: otherwise a hex-looking third field stays the verdict.
+  const KNOWN_VERDICT = /^(useful|not|not[ _-]?useful|partial(ly useful)?|invalid|valid|rejected?|accepted?)$/i;
+  const hashField = stage === 3 && parts.length > 3 && KNOWN_VERDICT.test(String(parts[3] || '').trim()) ? HASH.exec(String(parts[2] || '').trim()) : null;
   const vAt = hashField ? 3 : 2;
   const verdict = stage === 3 ? String(parts[vAt] || '').toLowerCase() : '';
   const arg = stage === null ? String(parts[2] || '') : '';
@@ -384,7 +386,8 @@ function buildCases(records) {
 //
 //   const index = buildReuseIndex(allRecords);           // once per set of records
 //   const review = reviewCase(caseRecords, { index });   // per case
-const EVIDENCE_VERSION = '4'; // 4: named items looked for by name; stricter 'status' and 'pattern' (from KIBBLE-EXP-001 held-out 1)
+const EVIDENCE_VERSION = '5'; // 5: how each part was found; job IDs with differing postings not checked (review of 20 Oct evening)
+// 4: 4: named items looked for by name; stricter 'status' and 'pattern' (from KIBBLE-EXP-001 held-out 1)
 // 3: 3: stricter reading of required parts (items, SQL, hashes), from KIBBLE-EXP-001 development cases
 // 2: 2: off-task by word overlap; no plain-answer check; evidence quality kept out of the class
 
@@ -459,14 +462,17 @@ function countItems(t) {
   return Math.max(lines, inline);
 }
 
-function checkDeliverable(d, text) {
+// Returns how a part was found: 'list' (enough listed items), 'names' (the named items are all mentioned, which
+// says nothing about what is said about them), 'shape' (text of that shape), or null when not found.
+function findDeliverable(d, text) {
   if (d.id === 'items') {
-    if (countItems(text) >= d.n) return true;
+    if (countItems(text) >= d.n) return 'list';
     const t = String(text).toLowerCase().replace(/[-_]/g, ' ');
-    return !!d.names && d.names.every((nm) => t.includes(nm.replace(/[-_]/g, ' ')));
+    return d.names && d.names.every((nm) => t.includes(nm.replace(/[-_]/g, ' '))) ? 'names' : null;
   }
-  return DELIVERABLES.find((x) => x.id === d.id).has(text);
+  return DELIVERABLES.find((x) => x.id === d.id).has(text) ? 'shape' : null;
 }
+const checkDeliverable = (d, text) => !!findDeliverable(d, text);
 
 // The task's own specifics: paths, file names, code, quoted strings, numbers. A result that answers the task
 // usually mentions some of them; one that mentions none was probably written for something else.
@@ -544,7 +550,11 @@ function reviewCase(list, { index = null } = {}) {
   if (!task) return { available: false, reason: 'no-request', results: [], violations: [], summary: null };
 
   const banned = prohibitions(task.text), exact = exactReply(task.text), clause = successClause(task.text);
-  const asked = deliverables(clause), specs = specifics(task.text, id);
+  // Kibble job IDs can be shared by postings that ask different things. Then no single success line applies to
+  // every result, and no parts are asked.
+  const clauses = new Set(list.filter((r) => r.stage === 0).map((r) => String(successClause(r.text) || '').replace(/\s+/g, ' ').trim().toLowerCase()));
+  const ambiguous = clauses.size > 1 ? clauses.size : 0;
+  const asked = ambiguous ? [] : deliverables(clause), specs = specifics(task.text, id);
   const noSelfVouch = /\bno self-?vouch|\bno self-?attest/i.test(task.text);
   const resultKeys = new Set(results.map((r) => r.keyId).filter(Boolean));
   const violations = list.filter((r) => r.stage !== 0 && banned.includes(r.kind)).map((r) => ({ seq: r.seq, kind: r.kind, why: 'the task says not to post this' }));
@@ -555,7 +565,7 @@ function reviewCase(list, { index = null } = {}) {
     const reusedIn = index ? Math.max(0, (index.get(normalizeResult(text, r.id))?.size || 1) - 1) : 0;
     const found = specs.filter((s) => text.toLowerCase().includes(s.toLowerCase()));
     // A result that pastes the task back is not evidence of its parts: they are looked for in the rest of the text.
-    const parts = asked.map((d) => ({ ...d, present: checkDeliverable(d, stripTaskText(text, task.text)) }));
+    const parts = asked.map((d) => { const how = findDeliverable(d, stripTaskText(text, task.text)); return { ...d, present: !!how, how: how || undefined }; });
     const ev = evidenceIn(text);
     const refusal = REFUSAL.test(text), ov = overlap(task.text, text);
     const offTask = !refusal && !found.length && ov.task < OFF_TASK.task && ov.result < OFF_TASK.result;
@@ -602,7 +612,7 @@ function reviewCase(list, { index = null } = {}) {
 
   return {
     available: true, version: EVIDENCE_VERSION,
-    requirements: { prohibited: banned, exactReply: exact, successClause: clause, deliverables: asked, specifics: specs, noSelfVouch },
+    requirements: { prohibited: banned, exactReply: exact, successClause: clause, deliverables: asked, specifics: specs, noSelfVouch, ambiguous },
     results: reviewed, violations, positiveAttestations: positive.length,
     summary: { class: compliance.level === 'violated' ? 'noncompliant' : best, compliance, evidence, reproduction, assessment },
   };
@@ -758,12 +768,13 @@ function evidenceReview(host,c){
   if(!rv.available){finding(host,'Result against its task','Not possible','No request in view, so there is nothing to compare the results with.');return}
   const q=rv.requirements,hasRules=q.prohibited.length||q.exactReply||q.noSelfVouch;
   const asks=[q.prohibited.length&&`no ${q.prohibited.filter(k=>['ACCEPT','SUBMIT','VOUCH'].includes(k)).join('/')||'response'}`,q.exactReply&&`exactly “${q.exactReply}”`,q.noSelfVouch&&'no self-vouch',...q.deliverables.map(d=>d.label)].filter(Boolean);
-  finding(host,'What the task asks',asks.length?asks.join(' · '):'Nothing this review can look for',q.successClause?`Success line: “${q.successClause.length>260?q.successClause.slice(0,259)+'…':q.successClause}”`:'The task has no success line. Read the result against the request yourself.');
-  if(hasRules)finding(host,'Task instructions',rv.violations.length?`Not followed by ${rv.violations.length} ${rv.violations.length===1?'record':'records'}`:'Followed',rv.violations.length?rv.violations.map(v=>`#${v.seq} ${v.kind}: ${v.why}`).join('\n'):'No record goes against the task\u2019s instructions.',rv.violations.length?'alert':'');
+  if(q.ambiguous)finding(host,'What the task asks','Not checked',`This job ID was posted ${q.ambiguous} times with different success lines, so no single list of required parts applies to every result.`);
+  else finding(host,'What the task asks',asks.length?asks.join(' · '):'Nothing this review can look for',q.successClause?`Success line: “${q.successClause.length>260?q.successClause.slice(0,259)+'…':q.successClause}”`:'The task has no success line. Read the result against the request yourself.');
+  if(hasRules)finding(host,'Task instructions',rv.violations.length?`Not followed by ${rv.violations.length} ${rv.violations.length===1?'record':'records'}`:'No violation in the available records',rv.violations.length?rv.violations.map(v=>`#${v.seq} ${v.kind}: ${v.why}`).join('\n'):'No record in view goes against the task\u2019s instructions. Records outside the view or the archive are not covered.',rv.violations.length?'alert':'');
   const rs=rv.results,ok=r=>r.parts.length&&r.parts.every(p=>p.present)&&!r.refusal&&r.reusedIn<2;
   if(!rs.length)finding(host,'Results','None','No result in view to compare with the task.');
   else{
-    if(q.deliverables.length)finding(host,'Required parts, per result',`${rs.filter(r=>r.parts.every(p=>p.present)).length} of ${rs.length} ${rs.length===1?'result has':'results have'} them all`,rs.slice(0,8).map(r=>`#${r.seq}: ${r.parts.map(p=>`${p.label} ${p.present?'✓':'✗'}`).join(' · ')}`).join('\n')+'\nText checks: found means the text contains something of that shape, for example an HTTP status, not that the value is right. Text pasted from the task does not count. In fresh tests about 1 in 10 of these readings was wrong.',rs.some(r=>r.parts.some(p=>!p.present))&&!rs.some(ok)?'alert':'');
+    if(q.deliverables.length)finding(host,'Required parts, per result',`${rs.filter(r=>r.parts.every(p=>p.present)).length} of ${rs.length} ${rs.length===1?'result has':'results have'} them all`,rs.slice(0,8).map(r=>`#${r.seq}: ${r.parts.map(p=>`${p.label} ${p.present?(p.how==='names'?'✓ (names mentioned only)':'✓'):'✗'}`).join(' · ')}`).join('\n')+'\nText checks: found means the text contains something of that shape, for example an HTTP status, not that the value is right. Text pasted from the task does not count. "Names mentioned only" means each named item appears, not that anything useful is said about it. In fresh tests about 1 in 10 of these readings was wrong.',rs.some(r=>r.parts.some(p=>!p.present))&&!rs.some(ok)?'alert':'');
     finding(host,'Evidence in the results',rs.some(r=>r.reusedIn>=2||r.refusal)?'Reused text or refusals':rs.some(r=>r.checkable)?'Concrete claims, not re-run':'Asserted only',rs.slice(0,8).map(r=>`#${r.seq}: ${[r.refusal&&'a refusal, not a result',r.reusedIn>=2&&`same text posted under ${r.reusedIn} other tasks in view`,!r.refusal&&r.requests.length&&`names ${r.requests.length} ${r.requests.length===1?'request':'requests'} (${r.requests.slice(0,2).join(', ')}${r.requests.length>2?', …':''})`,!r.refusal&&!r.checkable&&'nothing a reader could re-run or check'].filter(Boolean).join(' · ')||'concrete details given'}`).join('\n')+(snapshot?'\nReuse across tasks is checked in the live view only.':''));
   }
   finding(host,'Independent reproduction',rv.summary.reproduction.level==='not-performed'?'Not performed by Proofline':'',`Proofline re-runs nothing. ${rv.summary.reproduction.text.includes('claim')?rv.summary.reproduction.text.split(' · ')[1]+'.':'No attestation here claims to have reproduced it.'} An attestation saying "reproduced" is the attester\u2019s claim.`);

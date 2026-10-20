@@ -54,3 +54,5 @@ node findings/2026-10-20-cred-exp-002/reproduce.mjs --data archive-data
 ```
 
 credence records live on the `archive-data` branch, so no release download is needed. The output starts with the checker's version and file hash; the held-out run used evidence review v2 as frozen in the commit that added `heldout.json` (`src/lib/evidence.js` sha256 `81566de6df04…`). Later changes renamed two internal identifiers and fixed how attestations claiming reproduction are counted; neither changes a class, and the script gives the same table. Check out that commit for the exact code.
+
+**Later versions.** Evidence review v3 to v5 (tuned on kibble in [KIBBLE-EXP-001](../2026-10-20-kibble-exp-001/README.md), then corrected after an independent review) give the same agreement on both sets here: 16 of 17 and 7 of 12.

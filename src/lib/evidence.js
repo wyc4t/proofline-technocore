@@ -7,7 +7,8 @@
 //
 //   const index = buildReuseIndex(allRecords);           // once per set of records
 //   const review = reviewCase(caseRecords, { index });   // per case
-export const EVIDENCE_VERSION = '4'; // 4: named items looked for by name; stricter 'status' and 'pattern' (from KIBBLE-EXP-001 held-out 1)
+export const EVIDENCE_VERSION = '5'; // 5: how each part was found; job IDs with differing postings not checked (review of 20 Oct evening)
+// 4: 4: named items looked for by name; stricter 'status' and 'pattern' (from KIBBLE-EXP-001 held-out 1)
 // 3: 3: stricter reading of required parts (items, SQL, hashes), from KIBBLE-EXP-001 development cases
 // 2: 2: off-task by word overlap; no plain-answer check; evidence quality kept out of the class
 
@@ -82,14 +83,17 @@ function countItems(t) {
   return Math.max(lines, inline);
 }
 
-function checkDeliverable(d, text) {
+// Returns how a part was found: 'list' (enough listed items), 'names' (the named items are all mentioned, which
+// says nothing about what is said about them), 'shape' (text of that shape), or null when not found.
+function findDeliverable(d, text) {
   if (d.id === 'items') {
-    if (countItems(text) >= d.n) return true;
+    if (countItems(text) >= d.n) return 'list';
     const t = String(text).toLowerCase().replace(/[-_]/g, ' ');
-    return !!d.names && d.names.every((nm) => t.includes(nm.replace(/[-_]/g, ' ')));
+    return d.names && d.names.every((nm) => t.includes(nm.replace(/[-_]/g, ' '))) ? 'names' : null;
   }
-  return DELIVERABLES.find((x) => x.id === d.id).has(text);
+  return DELIVERABLES.find((x) => x.id === d.id).has(text) ? 'shape' : null;
 }
+const checkDeliverable = (d, text) => !!findDeliverable(d, text);
 
 // The task's own specifics: paths, file names, code, quoted strings, numbers. A result that answers the task
 // usually mentions some of them; one that mentions none was probably written for something else.
@@ -167,7 +171,11 @@ export function reviewCase(list, { index = null } = {}) {
   if (!task) return { available: false, reason: 'no-request', results: [], violations: [], summary: null };
 
   const banned = prohibitions(task.text), exact = exactReply(task.text), clause = successClause(task.text);
-  const asked = deliverables(clause), specs = specifics(task.text, id);
+  // Kibble job IDs can be shared by postings that ask different things. Then no single success line applies to
+  // every result, and no parts are asked.
+  const clauses = new Set(list.filter((r) => r.stage === 0).map((r) => String(successClause(r.text) || '').replace(/\s+/g, ' ').trim().toLowerCase()));
+  const ambiguous = clauses.size > 1 ? clauses.size : 0;
+  const asked = ambiguous ? [] : deliverables(clause), specs = specifics(task.text, id);
   const noSelfVouch = /\bno self-?vouch|\bno self-?attest/i.test(task.text);
   const resultKeys = new Set(results.map((r) => r.keyId).filter(Boolean));
   const violations = list.filter((r) => r.stage !== 0 && banned.includes(r.kind)).map((r) => ({ seq: r.seq, kind: r.kind, why: 'the task says not to post this' }));
@@ -178,7 +186,7 @@ export function reviewCase(list, { index = null } = {}) {
     const reusedIn = index ? Math.max(0, (index.get(normalizeResult(text, r.id))?.size || 1) - 1) : 0;
     const found = specs.filter((s) => text.toLowerCase().includes(s.toLowerCase()));
     // A result that pastes the task back is not evidence of its parts: they are looked for in the rest of the text.
-    const parts = asked.map((d) => ({ ...d, present: checkDeliverable(d, stripTaskText(text, task.text)) }));
+    const parts = asked.map((d) => { const how = findDeliverable(d, stripTaskText(text, task.text)); return { ...d, present: !!how, how: how || undefined }; });
     const ev = evidenceIn(text);
     const refusal = REFUSAL.test(text), ov = overlap(task.text, text);
     const offTask = !refusal && !found.length && ov.task < OFF_TASK.task && ov.result < OFF_TASK.result;
@@ -225,7 +233,7 @@ export function reviewCase(list, { index = null } = {}) {
 
   return {
     available: true, version: EVIDENCE_VERSION,
-    requirements: { prohibited: banned, exactReply: exact, successClause: clause, deliverables: asked, specifics: specs, noSelfVouch },
+    requirements: { prohibited: banned, exactReply: exact, successClause: clause, deliverables: asked, specifics: specs, noSelfVouch, ambiguous },
     results: reviewed, violations, positiveAttestations: positive.length,
     summary: { class: compliance.level === 'violated' ? 'noncompliant' : best, compliance, evidence, reproduction, assessment },
   };

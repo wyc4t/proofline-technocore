@@ -11,9 +11,9 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, appendFileSync } fr
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { parseArgs } from 'node:util';
-import { parseClaims, checkRequest, compareClaim, CLAIMS_VERSION, HOST } from '../src/lib/claims.js';
+import { parseClaims, checkRequest, compareClaim, worthRequesting, CLAIMS_VERSION, HOST } from '../src/lib/claims.js';
 
-export const RUNNER_VERSION = '1';
+export const RUNNER_VERSION = '2'; // 2: deferred records kept for the next run; stale claims not requested
 export const MAX_REQUESTS = 40;
 const MAX_BYTES = 2 * 1024 * 1024;
 const UA = 'proofline-reproduce/1 (+https://github.com/wyc4t/proofline-technocore)';
@@ -49,21 +49,31 @@ export async function observe(url, { fetchImpl = fetch, now = () => new Date() }
   } catch (e) { return { observed_at, url, error: String(e?.message || e) }; }
 }
 
-// items: [{ source, claimedAt, claims: [{ target, props }] }]. Each distinct URL is requested once per run.
+// items: [{ source, claimedAt, claims: [{ target, props }] }], in posting order. Each distinct URL is requested once
+// per run. A claim with nothing comparable at its age is not requested (stale). When the request budget runs out,
+// the remaining records are returned in `deferred` (by seq) and left for the next run, never silently dropped.
 export async function reproduce(items, { fetchImpl = fetch, spacingMs = 1000, max = MAX_REQUESTS, now = () => new Date(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
-  const urls = new Map();
-  for (const it of items) for (const c of it.claims) { const k = checkRequest(c.target); if (k.ok && !urls.has(k.url)) urls.set(k.url, null); }
-  const wanted = [...urls.keys()].slice(0, max - 1);
+  const budget = max - 1, wanted = new Set(), done = [], deferred = [];
+  const ageOf = (it) => (it.claimedAt ? (now().getTime() - Date.parse(it.claimedAt)) / 60e3 : null);
+  for (const it of items) {
+    if (deferred.length) { deferred.push(it.source?.seq ?? null); continue; }
+    const need = new Set();
+    for (const c of it.claims) { if (!worthRequesting(c, ageOf(it))) continue; const u = checkRequest(c.target).url; if (!wanted.has(u)) need.add(u); }
+    if (wanted.size + need.size > budget) { deferred.push(it.source?.seq ?? null); continue; }
+    need.forEach((u) => wanted.add(u)); done.push(it);
+  }
+  const urls = new Map([...wanted].map((u) => [u, null]));
   let first = true;
   const get = async (u) => { if (!first) await sleep(spacingMs); first = false; return observe(u, { fetchImpl, now }); };
   const version = await get(`${HOST}/openapi.json`);
-  for (const u of wanted) urls.set(u, await get(u));
-  const server_version = version.version || null;
+  for (const u of urls.keys()) urls.set(u, await get(u));
   return {
-    format: 'proofline-reproduction', runner_version: RUNNER_VERSION, claims_version: CLAIMS_VERSION, server_version,
-    started_at: version.observed_at, requests: wanted.length + 1, skipped_over_limit: Math.max(0, urls.size - wanted.length),
-    items: items.map((it) => ({ ...it, claims: it.claims.map((c) => { const k = checkRequest(c.target); const obs = k.ok ? urls.get(k.url) || null : null;
-      return { ...c, url: k.ok ? k.url : null, refused: k.ok ? undefined : k.reason, observation: obs, comparison: compareClaim(c, obs, { claimedAt: it.claimedAt, observedAt: obs?.observed_at }) }; }) })),
+    format: 'proofline-reproduction', runner_version: RUNNER_VERSION, claims_version: CLAIMS_VERSION, server_version: version.version || null,
+    started_at: version.observed_at, requests: urls.size + 1, deferred,
+    items: done.map((it) => ({ ...it, claims: it.claims.map((c) => {
+      const k = checkRequest(c.target), stale = k.ok && !worthRequesting(c, ageOf(it)), obs = k.ok && !stale ? urls.get(k.url) || null : null;
+      return { ...c, url: k.ok ? k.url : null, refused: k.ok ? undefined : k.reason, observation: obs,
+        comparison: compareClaim(c, obs, { claimedAt: it.claimedAt, observedAt: obs?.observed_at || now().toISOString(), notRequested: stale ? 'stale' : undefined }) }; }) })),
   };
 }
 
@@ -123,11 +133,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
   const fresh = recs.filter((r) => r.gen === gen && r.seq > state.last_seq && (r.stage === 2 || r.stage === 3)).sort((a, b) => a.seq - b.seq);
   const items = fresh.map((r) => ({ source: { room: 'credence', generation: gen, case: r.id, seq: r.seq, kind: r.kind, from: r.source, sig: r.sigStatus }, claimedAt: r.ts, claims: parseClaims(r.body) })).filter((it) => it.claims.length);
+  let cursor = maxSeq;
   if (items.length && !v['dry-run']) {
     const run = await reproduce(items);
     const day = run.started_at.slice(0, 10);
     appendFileSync(join(dir, `${day}.jsonl`), JSON.stringify(run) + '\n');
-    console.log(`reproduced ${items.length} records · server ${run.server_version} · ${JSON.stringify(summarize(run))}`);
+    // Records that did not fit in this run's request budget are taken up again by the next run.
+    if (run.deferred.length) cursor = Math.min(...run.deferred.filter((x) => x !== null)) - 1;
+    console.log(`reproduced ${run.items.length} records${run.deferred.length ? `, ${run.deferred.length} deferred to the next run` : ''} · server ${run.server_version} · ${JSON.stringify(summarize(run))}`);
   } else console.log(`no new credence claims (${fresh.length} new results and attestations)`);
-  if (!v['dry-run']) writeFileSync(statePath, JSON.stringify({ ...state, last_seq: Math.max(state.last_seq, maxSeq), last_run: new Date().toISOString() }, null, 1) + '\n');
+  if (!v['dry-run']) writeFileSync(statePath, JSON.stringify({ ...state, last_seq: Math.max(state.last_seq, cursor), last_run: new Date().toISOString() }, null, 1) + '\n');
 }
