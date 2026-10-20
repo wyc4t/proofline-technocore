@@ -48,3 +48,19 @@ test('an attestation reporting a failed or skipped re-run is not counted as clai
     M(5, 'did:key:z6MkT', 'VOUCH v1 | t2 | useful | Reproduced independently. Same status.')]);
   assert.match(reviewCase(list).summary.reproduction.text, /1 attestation claims/);
 });
+
+test('kibble wording: quantities in conditions are not items; named items are looked for by name; pasted task text does not count', async () => {
+  const { deliverables, stripTaskText } = await import('../src/lib/evidence.js');
+  for (const c of ['zero flaky failures in 10 consecutive runs', 'a ratio rounded to two decimals', 'states that N>=2 jobs sharing one hash is a constant', 'a sample query joining all three models'])
+    assert.deepEqual(deliverables(c), [], c);
+  const [items] = deliverables('a table of 3 criteria (latency, persistence, ops complexity) with a concrete recommendation.');
+  assert.deepEqual([items.n, items.names], [3, ['latency', 'persistence', 'ops complexity']]);
+  const kib = (seq, from, text) => ({ seq, ts: '2026-10-20T10:00:00Z', from, sig: 's', sigStatus: 'valid', text });
+  const job = 'JOB v1 | k1 | design | Compare caches for a read-heavy web app. Success: a table of 3 criteria (latency, persistence, ops complexity) with a concrete recommendation.';
+  const pasted = "DELIVER v1 | k1 | Verified execution for 'Compare caches for a read-heavy web app. Success: a table of 3 criteria (latency, persistence, ops complexity) with a concrete recommendation.'. State synced.";
+  const real = 'RESULT v1 | k1 | Latency: both sub-ms. Persistence: only p0 survives restarts. Ops complexity: p3 is simpler. Recommendation: p0.';
+  const list = [kib(1, 'did:key:z6MkA', job), kib(2, 'did:key:z6MkB', pasted), kib(3, 'did:key:z6MkC', real)].map((m) => parseMessage(m, 'kibble')).map((p) => p.record);
+  const r = reviewCase(list);
+  assert.deepEqual(r.results.map((x) => [x.seq, x.parts[0].present]), [[2, false], [3, true]]);
+  assert.equal(stripTaskText('x Compare caches for a read-heavy web app. y', job).includes('Compare caches'), false);
+});

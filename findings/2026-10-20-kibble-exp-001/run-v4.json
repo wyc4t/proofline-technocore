@@ -30,6 +30,25 @@
     "false_missing": 0
    },
    "rows": []
+  },
+  "held-out 2": {
+   "cases": 20,
+   "asked": 26,
+   "asked_required": 23,
+   "required_missed": 0,
+   "presence": {
+    "both_present": 3,
+    "both_missing": 18,
+    "false_present": 1,
+    "false_missing": 1
+   },
+   "rows": [
+    "asked, not required  k6acbcc62f4 url: A file link 'or detailed markdown specification': the link is optional. The 4 named states are required; the result lists four numbered data-modeling principles instead, about something else.",
+    "false_present  k6acbcc62f4 items: A file link 'or detailed markdown specification': the link is optional. The 4 named states are required; the result lists four numbered data-modeling principles instead, about something else.",
+    "asked, not required  keac649664d command: 'proof of command' only if self-generated, so optional. 'exactly three objects' required; stock sentence.",
+    "asked, not required  ke05bf71924 count: A 'failure-tolerance count' is not a message count. 'at least two real systems' required; the result is the job's own wording, cut off.",
+    "false_missing  kb7cf694cc2 items: `kubectl describe pod`, and two causes named in prose: OOMKilled and liveness probe failures."
+   ]
   }
  }
 }
