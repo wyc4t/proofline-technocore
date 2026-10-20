@@ -1,0 +1,27 @@
+{
+  "experiment": "KIBBLE-EXP-001 held-out",
+  "selection": "As labels.json, with sha256('KIBBLE-EXP-001 held-out ' + ID), excluding the development IDs; 20 cases.",
+  "labelled_by": "By hand after evidence review v3 was frozen (previous commit) and before it was run on these cases. The parts v3 asks for were visible; whether it finds them was not. Parts a success line requires that v3 does not ask for are labelled too, when they are of a kind the review knows.",
+  "cases": [
+    { "case": "k9e6f31f18a", "seq": 19910255, "parts": { "items": { "required": true, "present": true } }, "why": "'3 concrete IA fixes': grouping, progressive disclosure and defaults, named in one sentence rather than numbered." },
+    { "case": "k268b272200", "seq": 19930721, "parts": { "body": { "required": true, "present": false }, "status": { "required": true, "present": false } }, "why": "'request body fields, a 201 example, and the error': the result is '* Task: Answer a technical question.'" },
+    { "case": "k2783b43aa8", "seq": 19992319, "parts": { "items": { "required": true, "present": false } }, "why": "'the 3 config keys': one given." },
+    { "case": "ka5fc43353c", "seq": 19999565, "parts": { "items": { "required": true, "present": false } }, "why": "One key given." },
+    { "case": "k0783313024", "seq": 19938899, "parts": { "command": { "required": true, "present": false }, "items": { "required": true, "present": false } }, "why": "A stock sentence about 're-deriving the bound'; no causes, no commands." },
+    { "case": "k0366271c65", "seq": 19973015, "parts": { "items": { "required": true, "present": true } }, "why": "Bugs 1. and 2." },
+    { "case": "k74d170c794", "seq": 19927881, "parts": { "pattern": { "required": false } }, "why": "'one safe pattern where each ATTEST reason includes job-specific numbers' is a practice, not a regex to quote." },
+    { "case": "k18179a34b6", "seq": 19915188, "parts": { "pattern": { "required": false } }, "why": "The deliverable is source code; it may use a regex but is not asked to quote one." },
+    { "case": "k50678bffa2", "seq": 19934104, "parts": { "items": { "required": true, "present": false } }, "why": "'a table of 3 criteria': a stock sentence about thresholds instead." },
+    { "case": "k12c38c66a2", "seq": 19982114, "parts": { "items": { "required": true, "present": false } }, "why": "'the three exit paths (0, 1, 2)': the script only exits 0 or 1." },
+    { "case": "kef48f27de9", "seq": 19949374, "parts": { "body": { "required": true, "present": false }, "status": { "required": true, "present": false } }, "why": "Same as k268b272200." },
+    { "case": "kac91e947f6", "seq": 19971293, "parts": { "items": { "required": true, "present": true } }, "why": "Bugs 1. and 2." },
+    { "case": "k9fa7785024", "seq": 19956369, "parts": { "items": { "required": true, "present": true } }, "why": "Improvements 1., 2. and 3." },
+    { "case": "k68125344cb", "seq": 19901985, "parts": { "status": { "required": false }, "body": { "required": true, "present": false }, "items": { "required": true, "present": false } }, "why": "'status' only appears in payment.status_changed and data.status, not as an HTTP status. A JSON example and 'the five JSON fields' are required; the result is a stock sentence." },
+    { "case": "kb1627f23b4", "seq": 19952704, "parts": { "items": { "required": true, "present": false } }, "why": "Job restated, no fixes." },
+    { "case": "k70c12886b1", "seq": 19927513, "parts": { "items": { "required": true, "present": false } }, "why": "'three distinct troubleshooting sections': the delivered text (307 characters) holds the start of one." },
+    { "case": "k554b8b2195", "seq": 19966034, "parts": { "command": { "required": true, "present": true } }, "why": "pipx install flopctl and flopctl sync." },
+    { "case": "kece63eeb59", "seq": 20013852, "parts": { "url": { "required": true, "present": false } }, "why": "Stock sentence, no URL." },
+    { "case": "kbac5c90476", "seq": 19958440, "parts": { "url": { "required": true, "present": false } }, "why": "'Completed work … successfully.'" },
+    { "case": "k1aeacbf857", "seq": 19954088, "parts": { "items": { "required": true, "present": true } }, "why": "A table of the 3 criteria (latency, persistence, ops complexity) as rows, with a recommendation." }
+  ]
+}
