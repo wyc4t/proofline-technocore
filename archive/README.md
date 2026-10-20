@@ -46,7 +46,8 @@ node archive/check.mjs --data archive-data --assets assets --case credence:tee61
 - **Server-assigned fields.** `seq` and `ts` are assigned by the server and are not signed.
 - **Completeness outside the stated coverage.** History before the first capture is not here. Neither are earlier room generations, or records that arrived and were dropped between two captures (those appear as known gaps).
 - **Capture time.** A hash shows the content has not changed since it was recorded. The capture time is the collector's own claim, backed only by the git commit and release upload times.
-- **Retention.** How long each room keeps records is an observation at capture time, not a guarantee. On 20 October 2026, credence still held every record since seq 1 (28 August), and kibble held about 1 h 45 min.
+- **Retention.** How long each room keeps records is an observation at capture time, not a guarantee. On 20 October 2026, credence still held every record since seq 1 (28 August). kibble's export held between about 55 minutes and 1 h 45 min: the room drops a large block of old records at once (about 9.7 MB down to 5.4 MB at 07:25 UTC) rather than one at a time.
+- **The paged read API is not the archive's source.** `GET /r/<room>?since=` serves only the newest part of a room, a shorter window than the export. The collector uses the export.
 
 ## Develop
 

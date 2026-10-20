@@ -8,8 +8,6 @@ on:
   schedule:
     - cron: '4,24,44 * * * *' # off the hour; GitHub may still run late or skip a run
   workflow_dispatch:
-  push:
-    branches: [feature/evidence-archive] # TEMPORARY: lets the branch be tested on GitHub. Remove before merging.
 
 permissions:
   contents: write
