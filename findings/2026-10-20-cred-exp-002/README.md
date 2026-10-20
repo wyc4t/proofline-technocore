@@ -53,4 +53,4 @@ git clone --branch archive-data --single-branch https://github.com/wyc4t/proofli
 node findings/2026-10-20-cred-exp-002/reproduce.mjs --data archive-data
 ```
 
-credence records live on the `archive-data` branch, so no release download is needed. The output starts with the checker's version and file hash; the numbers above are from evidence review v2, `src/lib/evidence.js` sha256 `79c3ecad17fb…`. (The held-out run itself used `81566de6df04…`, committed with `heldout.json`; the only later change renames two internal identifiers, and the output is identical.) Later versions of the checker may give different numbers; check out this commit to get these.
+credence records live on the `archive-data` branch, so no release download is needed. The output starts with the checker's version and file hash; the held-out run used evidence review v2 as frozen in the commit that added `heldout.json` (`src/lib/evidence.js` sha256 `81566de6df04…`). Later changes renamed two internal identifiers and fixed how attestations claiming reproduction are counted; neither changes a class, and the script gives the same table. Check out that commit for the exact code.

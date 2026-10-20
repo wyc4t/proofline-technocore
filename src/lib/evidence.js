@@ -129,6 +129,8 @@ function evidenceIn(text) {
 // --- Review -------------------------------------------------------------------------------------
 
 const CLAIMS_REPRODUCED = /\b(reproduced|re-?ran|re-?fetched|independently (verified|confirmed|checked|re-?ran|fetched)|confirmed independently)\b/i;
+// "Re-ran nothing", "could not reproduce", "mismatch on re-run" report a failed or skipped reproduction, not a successful one.
+const NOT_REPRODUCED = /\bre-?ran nothing\b|\bnothing to re-?run\b|\b(could ?n[o']t|cannot|can't|unable to|did ?n[o']t|not) (re-?run|reproduce|re-?confirm|confirm)|\bmismatch\b|\bnot reproducible\b/i;
 
 export function reviewCase(list, { index = null } = {}) {
   const task = list.find((r) => r.stage === 0) || null;
@@ -169,7 +171,7 @@ export function reviewCase(list, { index = null } = {}) {
   // Attestations that call a result useful when no result in the case is supported.
   const best = reviewed.some((x) => x.class === 'supported') ? 'supported' : reviewed.some((x) => x.class === 'insufficient') ? 'insufficient' : reviewed.length ? 'noncompliant' : null;
   const positive = attests.filter((a) => a.verdict === 'useful');
-  const claimsRepro = attests.filter((a) => CLAIMS_REPRODUCED.test(a.body || '')).length;
+  const claimsRepro = attests.filter((a) => CLAIMS_REPRODUCED.test(a.body || '') && !NOT_REPRODUCED.test(a.body || '')).length;
 
   // The three rows, as plain statements.
   let compliance, evidence, assessment;

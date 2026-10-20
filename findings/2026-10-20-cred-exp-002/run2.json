@@ -2,7 +2,7 @@
  "experiment": "CRED-EXP-002",
  "evidence_version": "2",
  "code": {
-  "src/lib/evidence.js": "79c3ecad17fb31b839b929f3285b0582490bd793fd05949441d06d33208be3db",
+  "src/lib/evidence.js": "827debee18f7543cb8c2d7e1e00d7eca182ef7d932cd006916751b6334b91bc8",
   "src/lib/protocol.js": "2a074acb40d2a5bce9f78775ae28ce84b974db966e427890b4a9becf321b794a"
  },
  "agreement": {

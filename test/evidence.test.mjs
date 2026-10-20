@@ -41,3 +41,10 @@ test('a partial submission is missing required parts; reuse across tasks is coun
   assert.equal(res.class, 'insufficient');
   assert.ok(!JSON.stringify(r).includes('"verified"'));
 });
+
+test('an attestation reporting a failed or skipped re-run is not counted as claiming reproduction', () => {
+  const list = recs([M(1, 'did:key:z6MkReq', 'TASK v1 | t2 | build | Measure /healthz. Success: SUBMIT must show HTTP codes.'), M(2, 'did:key:z6MkW', "SUBMIT v1 | t2 | GET /healthz → HTTP 200 body='ok'."),
+    M(3, 'did:key:z6MkV', 'VOUCH v1 | t2 | not | Re-ran nothing to re-run: SUBMIT is thin.'), M(4, 'did:key:z6MkU', "VOUCH v1 | t2 | partial | Mismatch on re-run. Mine: GET /healthz → HTTP 200 body='ok'."),
+    M(5, 'did:key:z6MkT', 'VOUCH v1 | t2 | useful | Reproduced independently. Same status.')]);
+  assert.match(reviewCase(list).summary.reproduction.text, /1 attestation claims/);
+});
