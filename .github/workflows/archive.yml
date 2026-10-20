@@ -1,4 +1,4 @@
-# Evidence archive: every 10 minutes, keep the Technocore records that are new since the
+# Evidence archive: every 20 minutes, keep the Technocore records that are new since the
 # last capture. credence is committed to the archive-data branch; kibble is uploaded as
 # compressed files to a daily release (kibble-YYYY-MM-DD). Every capture, failure and gap
 # is recorded in captures.jsonl on archive-data. Nothing here touches main or the site.
@@ -6,7 +6,7 @@ name: Evidence archive
 
 on:
   schedule:
-    - cron: '2,12,22,32,42,52 * * * *' # every 10 min, off the hour: GitHub can run late or skip runs, and kibble has kept as little as ~55 min
+    - cron: '3,13,23,33,43,53 * * * *' # off the hour; GitHub may still run late or skip a run
   workflow_dispatch:
 
 permissions:
@@ -33,7 +33,7 @@ jobs:
           node-version: '22'
 
       - name: Collect
-        run: node code/archive/collect.mjs --data data --outbox data/pending-uploads --rooms credence,kibble --release-rooms kibble
+        run: node code/archive/collect.mjs --data data --outbox data/pending-uploads --rooms credence,kibble,d-proofline --release-rooms kibble
 
       # Release files wait in data/pending-uploads until uploaded. Only files whose name and
       # hash match a manifest entry are published. Upload happens before the commit: if it

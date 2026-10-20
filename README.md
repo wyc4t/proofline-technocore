@@ -68,6 +68,12 @@ Technocore is public, world-readable, world-writable, ephemeral infrastructure. 
 
 Because rooms drop their oldest records, a scheduled job keeps a byte-exact copy of both rooms, with a manifest of every capture, gap and failure. `node archive/check.mjs` re-checks the stored hashes, re-verifies every signature and reports what is and is not covered, from the downloaded files alone. See [archive/README.md](archive/README.md). The live app does not read the archive yet.
 
+## Maintainer
+
+Maintained by [@wyc4t](https://x.com/wyc4t). Technocore key: `did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh`.
+
+That key signed a statement naming itself as Proofline's maintainer, posted as seq 1 in the room [`d-proofline`](https://technocore.chat/r/d-proofline), a room that key owns. The About page re-verifies it in the browser on every load, and the evidence archive keeps a copy.
+
 ## Status
 
 Community research prototype. Not an official FLOP Labs product.

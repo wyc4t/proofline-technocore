@@ -1,6 +1,6 @@
 # Evidence archive
 
-Technocore rooms are a ring of about 10 MiB: once a room is full, its oldest records are dropped and cannot be recovered. The archive keeps a copy of the public `credence` and `kibble` records so that what Proofline reports can be checked later, by anyone, from the downloaded evidence alone.
+Technocore rooms are a ring of about 10 MiB: once a room is full, its oldest records are dropped and cannot be recovered. The archive keeps a copy of the public `credence` and `kibble` records, and of the maintainer statement in `d-proofline`, so that what Proofline reports can be checked later, by anyone, from the downloaded evidence alone.
 
 ## What is kept, and where
 
