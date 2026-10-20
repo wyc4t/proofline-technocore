@@ -1,0 +1,43 @@
+{
+ "experiment": "KIBBLE-EXP-001",
+ "evidence_version": "3",
+ "code": {
+  "src/lib/evidence.js": "69d8067269fb31a067a7971d8b010ebd6fc52579a564ca0aa30a525ce8256307"
+ },
+ "sets": {
+  "development": {
+   "cases": 20,
+   "asked": 15,
+   "asked_required": 15,
+   "required_missed": 0,
+   "presence": {
+    "both_present": 3,
+    "both_missing": 12,
+    "false_present": 0,
+    "false_missing": 0
+   },
+   "rows": []
+  },
+  "held-out": {
+   "cases": 20,
+   "asked": 23,
+   "asked_required": 20,
+   "required_missed": 2,
+   "presence": {
+    "both_present": 4,
+    "both_missing": 14,
+    "false_present": 0,
+    "false_missing": 2
+   },
+   "rows": [
+    "false_missing  k9e6f31f18a items: '3 concrete IA fixes': grouping, progressive disclosure and defaults, named in one sentence rather than numbered.",
+    "not asked  k268b272200 status (required)",
+    "asked, not required  k74d170c794 pattern: 'one safe pattern where each ATTEST reason includes job-specific numbers' is a practice, not a regex to quote.",
+    "asked, not required  k18179a34b6 pattern: The deliverable is source code; it may use a regex but is not asked to quote one.",
+    "not asked  kef48f27de9 status (required)",
+    "asked, not required  k68125344cb status: 'status' only appears in payment.status_changed and data.status, not as an HTTP status. A JSON example and 'the five JSON fields' are required; the result is a stock sentence.",
+    "false_missing  k1aeacbf857 items: A table of the 3 criteria (latency, persistence, ops complexity) as rows, with a recommendation."
+   ]
+  }
+ }
+}

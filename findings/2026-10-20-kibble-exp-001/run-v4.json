@@ -1,0 +1,35 @@
+{
+ "experiment": "KIBBLE-EXP-001",
+ "evidence_version": "4",
+ "code": {
+  "src/lib/evidence.js": "13b4f52561c2f2579813b37bb79679d26811b7367fbed26d159beeb78b7b2676"
+ },
+ "sets": {
+  "development": {
+   "cases": 20,
+   "asked": 15,
+   "asked_required": 15,
+   "required_missed": 0,
+   "presence": {
+    "both_present": 3,
+    "both_missing": 12,
+    "false_present": 0,
+    "false_missing": 0
+   },
+   "rows": []
+  },
+  "held-out": {
+   "cases": 20,
+   "asked": 22,
+   "asked_required": 22,
+   "required_missed": 0,
+   "presence": {
+    "both_present": 6,
+    "both_missing": 16,
+    "false_present": 0,
+    "false_missing": 0
+   },
+   "rows": []
+  }
+ }
+}
