@@ -87,13 +87,13 @@ export function specifics(taskText, id) {
 }
 
 // Content words, for a rough "is this about the same thing" measure.
-const STOP = new Set(('that this with from what have will must whether only also into than then them they their there these those which while where '
+const REVIEW_STOP = new Set(('that this with from what have will must whether only also into than then them they their there these those which while where '
   + 'when your about after before being both does each every other such some more most very just over under same independently actually exactly '
   + 'report state plainly submit success task vouch accept should would could using used make sure').split(' '));
-const words = (t) => new Set((String(t).toLowerCase().match(/[a-z][a-z0-9_-]{3,}/g) || []).filter((w) => !STOP.has(w)));
+const reviewWords = (t) => new Set((String(t).toLowerCase().match(/[a-z][a-z0-9_-]{3,}/g) || []).filter((w) => !REVIEW_STOP.has(w)));
 // Share of the task's words found in the result, and of the result's words found in the task.
 export function overlap(taskText, resultText) {
-  const tw = words(String(taskText).replace(/^\s*\w+\s+v1\s*\|\s*[^|]+\|\s*[^|]*\|/, ' ')), rw = words(resultText);
+  const tw = reviewWords(String(taskText).replace(/^\s*\w+\s+v1\s*\|\s*[^|]+\|\s*[^|]*\|/, ' ')), rw = reviewWords(resultText);
   let both = 0; for (const w of rw) if (tw.has(w)) both++;
   return { task: tw.size ? both / tw.size : 0, result: rw.size ? both / rw.size : 0 };
 }

@@ -1,6 +1,7 @@
 import {STAGE_NAMES,parseMessage} from './lib/protocol.js';
 import {ARCHIVE_RAW,parsePin,formatPin,loadPinned} from './lib/snapshot.js';
 import {buildCases} from './lib/cases.js';
+import {reviewCase,buildReuseIndex} from './lib/evidence.js';
 import {parseRoomPage,annotateSignatures,annotateContentHashes,signatureSupport,checkSignature} from './lib/signature.js';
 import {createRoomState,applyPage,querySince,markOk,markError,coverage,allRecords,PAGE_LIMIT} from './lib/store.js';
 const SOURCES=['credence','kibble'];
@@ -71,6 +72,35 @@ function renderList(){
 function finding(host,label,value,detail,tone=''){
   const box=el('div',`finding ${tone}`),head=el('div','finding-head');head.append(el('b','',label),el('span','',value));box.append(head,el('p','',detail));host.append(box);
 }
+// Evidence review (experimental): each result against what its own task asks for. Only the checks that held up in
+// CRED-EXP-002 are shown, as facts; there is no overall verdict and nothing is reported as verified.
+let reuseCache={sig:'',index:null};
+function liveReuseIndex(){const recs=allRecords(rooms),sig=`${recs.length}:${recs.at(-1)?.seq}`;if(reuseCache.sig!==sig)reuseCache={sig,index:buildReuseIndex(recs)};return reuseCache.index}
+function evidenceReview(host,c){
+  host.append(el('div','eyebrow','EVIDENCE REVIEW · EXPERIMENTAL'));
+  const rv=reviewCase(c.list,{index:snapshot?null:liveReuseIndex()});
+  if(!rv.available){finding(host,'Result against its task','Not possible','No request in view, so there is nothing to compare the results with.');return}
+  const q=rv.requirements,hasRules=q.prohibited.length||q.exactReply||q.noSelfVouch;
+  const asks=[q.prohibited.length&&`no ${q.prohibited.filter(k=>['ACCEPT','SUBMIT','VOUCH'].includes(k)).join('/')||'response'}`,q.exactReply&&`exactly “${q.exactReply}”`,q.noSelfVouch&&'no self-vouch',...q.deliverables.map(d=>d.label)].filter(Boolean);
+  finding(host,'What the task asks',asks.length?asks.join(' · '):'Nothing this review can look for',q.successClause?`Success line: “${q.successClause.length>260?q.successClause.slice(0,259)+'…':q.successClause}”`:'The task has no success line. Read the result against the request yourself.');
+  if(hasRules)finding(host,'Task instructions',rv.violations.length?`Not followed by ${rv.violations.length} ${rv.violations.length===1?'record':'records'}`:'Followed',rv.violations.length?rv.violations.map(v=>`#${v.seq} ${v.kind}: ${v.why}`).join('\n'):'No record goes against the task\u2019s instructions.',rv.violations.length?'alert':'');
+  const rs=rv.results,ok=r=>r.parts.length&&r.parts.every(p=>p.present)&&!r.refusal&&r.reusedIn<2;
+  if(!rs.length)finding(host,'Results','None','No result in view to compare with the task.');
+  else{
+    if(q.deliverables.length)finding(host,'Required parts, per result',`${rs.filter(r=>r.parts.every(p=>p.present)).length} of ${rs.length} ${rs.length===1?'result has':'results have'} them all`,rs.slice(0,8).map(r=>`#${r.seq}: ${r.parts.map(p=>`${p.label} ${p.present?'✓':'✗'}`).join(' · ')}`).join('\n')+'\nFound means the text contains something of that shape, for example an HTTP status. It does not mean the value is right.',rs.some(r=>r.parts.some(p=>!p.present))&&!rs.some(ok)?'alert':'');
+    finding(host,'Evidence in the results',rs.some(r=>r.reusedIn>=2||r.refusal)?'Reused text or refusals':rs.some(r=>r.checkable)?'Concrete claims, not re-run':'Asserted only',rs.slice(0,8).map(r=>`#${r.seq}: ${[r.refusal&&'a refusal, not a result',r.reusedIn>=2&&`same text posted under ${r.reusedIn} other tasks in view`,!r.refusal&&r.requests.length&&`names ${r.requests.length} ${r.requests.length===1?'request':'requests'} (${r.requests.slice(0,2).join(', ')}${r.requests.length>2?', …':''})`,!r.refusal&&!r.checkable&&'nothing a reader could re-run or check'].filter(Boolean).join(' · ')||'concrete details given'}`).join('\n')+(snapshot?'\nReuse across tasks is checked in the live view only.':''));
+  }
+  finding(host,'Independent reproduction',rv.summary.reproduction.level==='not-performed'?'Not performed by Proofline':'',`Proofline re-runs nothing. ${rv.summary.reproduction.text.includes('claim')?rv.summary.reproduction.text.split(' · ')[1]+'.':'No attestation here claims to have reproduced it.'} An attestation saying "reproduced" is the attester\u2019s claim.`);
+  const pos=rv.positiveAttestations,anyOk=rs.some(ok);
+  const verdict=rv.violations.length&&q.prohibited.length?`The task asked for no response, and the protocol chain was filled in anyway${pos?`; ${pos} ${pos===1?'attestation calls':'attestations call'} it useful`:''}. A complete chain here is the failure, not the success.`
+    :!rs.length?'There is no result to compare with the task.'
+    :!q.deliverables.length?'The task names no parts this review can look for. Whether the result does what was asked needs reading it.'
+    :anyOk?'At least one result contains every part the task names. That is a claim in the right shape, not a check that it is true: nothing was re-run, and a result can have the right parts and still answer a different question.'
+    :`No result shows all the parts the task requires${pos?`, yet ${pos} ${pos===1?'attestation calls':'attestations call'} it useful`:''}.`;
+  finding(host,'Assessment','',verdict,rv.violations.length||(!anyOk&&rs.length&&q.deliverables.length)?'alert':'');
+  const how=el('a','about-link','How this review was tested');how.href='https://github.com/wyc4t/proofline-technocore/blob/main/findings/2026-10-20-cred-exp-002/README.md';how.target='_blank';how.rel='noreferrer';
+  host.lastChild.querySelector('p').append(' ',how);
+}
 function recordDisclosure(record,flagged){const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}${flagged?' · ⚑':''}`),p=el('p','',record.text),source=el('div',`source sig-${record.sigStatus}`,`${SIG_LABEL[record.sigStatus]} · ${shortDid(record.source)} · ${record.ts}`);d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s,p,source);return d}
 function renderInspector(){
   const host=$('#inspector');host.replaceChildren();const back=el('button','back','← All cases');back.type='button';back.onclick=closeDetail;host.append(back,el('div','eyebrow','EVIDENCE PROFILE'));
@@ -100,6 +130,7 @@ function renderInspector(){
   finding(host,'Attestation keys',av[0],av[1]);
   const v=c.verdicts;if(c.attestation.state!=='no-attestation')finding(host,'Recorded verdicts',`useful ${v.useful} · negative ${v.not}${v.other?` · other ${v.other}`:''}`,v.not?'At least one attestation carries an explicit negative verdict. Read its text below; it is a claim by that key, not a finding.':'Verdicts are claims made by the posting keys.',v.not?'alert':'');
   finding(host,'Request → result timing',c.elapsedFirst===null?'Unavailable':`first ${formatDuration(c.elapsedFirst)}${c.elapsedLast!==c.elapsedFirst?` · last ${formatDuration(c.elapsedLast)}`:''}`,'From venue timestamps, which are not signed by the sender. The first result is not necessarily the substantive one.');
+  evidenceReview(host,c);
   if(c.flags.length){host.append(el('div','eyebrow','PATTERNS IN THE VISIBLE RECORDS'));for(const f of c.flags)finding(host,f.label,`${f.seqs.length} ${f.seqs.length===1?'record':'records'}`,`${f.detail} Seq ${f.seqs.slice(0,6).map(s=>'#'+s).join(', ')}${f.seqs.length>6?'…':''}. A pattern, not a verdict.`)}
   finding(host,'Cannot be known from these records','','Whether the work was correct or useful, who holds a key, whether different keys are different parties, what caused what, or whether anything was paid.');
   const flagged=new Set(c.flags.flatMap(f=>f.seqs));
