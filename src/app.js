@@ -61,7 +61,7 @@ function renderInspector(){
   }
   if(!snapshot&&wantedMissing){host.append(el('h2','',wantedKey),el('p','','This case is not in the live window. Proofline keeps only the newest records of each room in view, and kibble moves on within minutes. A pinned link (one with "at=" in it) loads a case from the evidence archive instead.'));return}
   if(!selected){host.append(el('h2','',`No case selected`),el('p','','Select a case to see which records were observed, what is missing, and what cannot be known from them.'));return}
-  const c=selected;host.append(el('h2','',c.id),el('p','',`${c.room} · ${c.title}`));
+  const c=selected;host.append(el('h2','',c.id),el('p','',`${c.room} · ${c.title}`),citeBlock(c));
   const present=c.stages.filter(s=>s.length).length;
   finding(host,'Stages observed',`${present} of 4`,STAGE_NAMES.map((name,i)=>`${c.stages[i].length?'✓':'—'} ${name}`).join('  ·  ')+(present<4?'\nA missing stage may simply be outside the observation window.':''));
   const sc=c.list.reduce((m,r)=>(m[r.sigStatus]=(m[r.sigStatus]||0)+1,m),{});
@@ -75,26 +75,24 @@ function renderInspector(){
   finding(host,'Request → result timing',c.elapsedFirst===null?'Unavailable':`first ${formatDuration(c.elapsedFirst)}${c.elapsedLast!==c.elapsedFirst?` · last ${formatDuration(c.elapsedLast)}`:''}`,'From venue timestamps, which are not signed by the sender. The first result is not necessarily the substantive one.');
   if(c.flags.length){host.append(el('div','eyebrow','PATTERNS IN THE VISIBLE RECORDS'));for(const f of c.flags)finding(host,f.label,`${f.seqs.length} ${f.seqs.length===1?'record':'records'}`,`${f.detail} Seq ${f.seqs.slice(0,6).map(s=>'#'+s).join(', ')}${f.seqs.length>6?'…':''}. A pattern, not a verdict.`)}
   finding(host,'Cannot be known from these records','','Whether the work was correct or useful, who holds a key, whether different keys are different parties, what caused what, or whether anything was paid.');
-  host.append(citeBlock(c));
   const flagged=new Set(c.flags.flatMap(f=>f.seqs));
   host.append(el('div','eyebrow','SOURCE RECORDS'));for(const record of c.list)host.append(recordDisclosure(record,flagged.has(record.seq)));
 }
 function citeBlock(c){
-  const box=el('div','finding cite'),head=el('div','finding-head');head.append(el('b','','Link to this case'));box.append(head);
+  const box=el('div','cite-bar'),row=el('div','cite-row');
   const seqs=c.list.map(r=>r.seq),from=Math.min(...seqs),to=Math.max(...seqs);
   const gen=snapshot?snapshot.gen:String(rooms.find(r=>r.room===c.room)?.generation??0);
   const pin=snapshot?snapshot.pin:formatPin(gen,from,to),st=archiveState?.rooms?.[c.room];
   const archived=!!snapshot||(st&&String(st.generation)===gen&&st.last_seq>=to);
-  const rows=[];
-  if(!snapshot)rows.push(['Live link',caseUrl(c.key),'Opens this case as it is in the live view. Live views keep only recent records, so this link can stop showing it.']);
-  rows.push(['Pinned link',caseUrl(c.key,pin),archived?`Loads exactly records #${from}–#${to} from the evidence archive and checks them. Use this one to cite.`:st?'Not in the evidence archive yet. The archive captures every 10 minutes; this link works after the next capture.':'The archive could not be reached to say whether these records are in it yet.']);
-  for(const [label,url,note] of rows){
-    const row=el('div','cite-row'),a=el('a','',label);a.href=url;
-    const copy=el('button','copy','Copy');copy.type='button';copy.setAttribute('aria-label',`Copy ${label.toLowerCase()}`);
-    copy.onclick=async()=>{try{await navigator.clipboard.writeText(url);copy.textContent='Copied'}catch{copy.textContent='Copy failed'}setTimeout(()=>{copy.textContent='Copy'},1600)};
-    row.append(a,copy);box.append(row,el('p','',note));
-  }
-  return box;
+  const button=(label,url,primary)=>{const b=el('button',`copy${primary?' primary':''}`,label);b.type='button';
+    b.onclick=async()=>{try{await navigator.clipboard.writeText(url);b.textContent='Copied ✓'}catch{b.textContent='Copy failed'}setTimeout(()=>{b.textContent=label},1600)};return b};
+  row.append(button('🔗 Copy pinned link',caseUrl(c.key,pin),true));
+  if(!snapshot)row.append(button('Copy live link',caseUrl(c.key),false));
+  const note=el('p','cite-note'),a=el('a','','Pinned link');a.href=caseUrl(c.key,pin);
+  note.append(a,document.createTextNode(archived?`: loads exactly records #${from}–#${to} from the evidence archive and checks them. Use it to cite.`
+    :st?': not in the evidence archive yet. It works after the next capture (every 10 minutes).':': archive status unknown right now.'));
+  if(!snapshot)note.append(document.createTextNode(' The live link shows the case only while it is in the live view.'));
+  box.append(row,note);return box;
 }
 function openDetailIfNarrow(){if(isNarrow()&&!document.body.classList.contains('detail')){detailOpener=null;document.body.classList.add('detail');setDetailInert(true)}}
 async function openSnapshot(key,pinText){
