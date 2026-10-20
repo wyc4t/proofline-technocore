@@ -18,8 +18,8 @@ export async function describe(query) {
   const base = { url: `${SITE}/?${q(link)}`, image: `${SITE}/api/card?${q(link)}` };
   if (link.pin) {
     const loaded = await loadPinnedCase(link).catch(() => null);
-    if (loaded) return { ...base, cache: 86400, title: `${link.id}: ${clip(loaded.case.title, 80)}`,
-      description: `${link.room} case, verified snapshot from the Proofline evidence archive: ${summarize(loaded.case).text}. Every signature re-checked.` };
+    if (loaded) return { ...base, cache: loaded.missing ? 300 : 86400, title: `${link.id}: ${clip(loaded.case.title, 80)}`,
+      description: `${link.room} case, ${loaded.missing ? `partial snapshot (${loaded.missing} records in its window are not in the archive)` : 'verified snapshot'} from the Proofline evidence archive: ${summarize(loaded.case).text}. Every signature re-checked.` };
     return { ...base, cache: 300, title: `${link.id} · ${link.room} case · Proofline`, description: 'Pinned case link. Its records are not in the evidence archive yet.' };
   }
   return { ...base, cache: 600, title: `${link.id} · ${link.room} case · Proofline`, description: 'Live case link on Proofline. It shows the case while it is in the live view; a pinned link loads it from the verified archive.' };

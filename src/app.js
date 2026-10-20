@@ -40,7 +40,7 @@ function renderSummary(){
   const win=rooms.map(coverage).map(c=>`${c.room} last ${c.spanMs===null?'…':fmtSpan(c.spanMs)}`).join(' · ');
   const hidden=filter==='seen'?cases.filter(c=>c.status==='no-request').length:0,note=$('#casesNote');
   note.replaceChildren(el('b','',`Live view: ${win}.`),document.createTextNode(' '));
-  if(hidden){note.append(document.createTextNode(`${hidden} ${hidden===1?'case':'cases'} whose request is older than this are hidden. `));const b=el('button','','Show them');b.type='button';b.onclick=()=>{filter='all';$('#filter').value='all';render(true)};note.append(b)}
+  if(hidden){note.append(document.createTextNode(`${hidden} ${hidden===1?'case has':'cases have'} no request in view and ${hidden===1?'is':'are'} hidden. Their request may be older than the view, posted elsewhere, or missing. `));const b=el('button','','Show them');b.type='button';b.onclick=()=>{filter='all';$('#filter').value='all';render(true)};note.append(b)}
   else note.append(document.createTextNode('Older cases stay reachable through pinned links to the archive.'));
 }
 // Headline numbers: kibble over the last 24 hours, computed hourly from the verified archive.

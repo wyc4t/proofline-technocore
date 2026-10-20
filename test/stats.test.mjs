@@ -48,3 +48,36 @@ test('stats: only recent release captures are downloaded', () => {
   const text = [c('2026-10-21T11:00:00Z', 'new.gz'), c('2026-10-20T08:00:00Z', 'old.gz'), JSON.stringify({ ok: true, captured_at: '2026-10-21T11:00:00Z', storage: { kind: 'git', files: [] } })].join('\n');
   assert.deepEqual(neededAssets(text, 24, now), ['kibble-x\tnew.gz']);
 });
+
+import { roomStats } from '../archive/stats.mjs';
+const entry = (seq, min, text, from, gen = '0') => ({ rec: { seq, ts: at(min), from: from.did, text, nonce: String(nonce), sig: sign(null, Buffer.from(`kibble|${nonce}|${text}`), from.privateKey).toString('base64url') }, nonceDigits: String(nonce++), raw: Buffer.from(''), gen });
+const win = { fromMs: Date.parse(at(0)), toMs: Date.parse(at(200)) };
+
+test('stats: reposted means identical text from two or more keys; generations are never joined', () => {
+  const s = roomStats('kibble', [
+    entry(1, 0, 'JOB v1 | k000000010 | build | Title A | x', A), entry(2, 1, 'JOB v1 | k000000010 | build | Title B | x', B),   // same ID, different text
+    entry(3, 2, 'JOB v1 | k000000011 | build | Same | x', A), entry(4, 3, 'JOB v1 | k000000011 | build | Same | x', B),         // identical text
+    entry(5, 4, 'JOB v1 | k000000012 | build | Only g0 | x', A),
+    entry(1, 5, 'RESULT v1 | k000000012 | unrelated answer in a new generation', W, '1'),
+  ], win);
+  assert.deepEqual([s.jobs.reposted_ids, s.jobs.reposted_job_records], [1, 2]);
+  assert.equal(s.outcomes.with_result, 0, 'a result in generation 1 does not answer a job in generation 0');
+});
+
+test('stats: a day of records does not exceed engine limits', () => {
+  const many = Array.from({ length: 200000 }, (_, i) => ({ rec: { seq: i + 1, ts: at(i / 2000), from: 'nick', text: `CLAIM v1 | k${i} | worker` }, nonceDigits: null, raw: Buffer.from(''), gen: '0' }));
+  assert.equal(roomStats('kibble', many, win).records, 200000);
+});
+
+test('stats: a known gap after the last record dated before the window makes the window incomplete', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'proofline-gap-'));
+  try {
+    const run = (name, lines, when) => { writeFileSync(join(dir, name), lines.join('\n') + '\n'); execFileSync(process.execPath, ['archive/collect.mjs', '--data', join(dir, 'data'), '--captured-at', when, '--import', `kibble=${join(dir, name)},${join(dir, 'h.txt')}`]); };
+    writeFileSync(join(dir, 'h.txt'), 'x-room-generation: 0\n');
+    run('a', [line(1, A, 'JOB v1 | k000000020 | build | before the window | x', -1500)], at(-1500));   // ~25 h before: outside a 24 h window
+    run('b', [line(100, A, 'JOB v1 | k000000021 | build | inside | x', 60)], at(70));                  // seqs 2-99 never captured
+    const s = computeStats({ data: join(dir, 'data'), hours: 24, rooms: ['kibble'] }).rooms.kibble;
+    assert.equal(s.complete, false);
+    assert.deepEqual(s.gaps.map((g) => [g.from, g.to]), [[2, 99]]);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
