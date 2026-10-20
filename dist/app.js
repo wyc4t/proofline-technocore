@@ -124,15 +124,20 @@ function parsePin(s) {
 const formatPin = (gen, from, to) => `g${gen}:${from}-${to}`;
 
 // Successful captures of this room and generation whose new records overlap the window.
-function locateCaptures(capturesText, room, gen, from, to) {
-  const out = [];
-  for (const line of String(capturesText).split('\n')) {
-    if (!line.trim()) continue;
-    let c; try { c = JSON.parse(line); } catch { continue; }
-    if (!c.ok || c.room !== room || String(c.generation) !== String(gen) || !c.new_records) continue;
-    if (c.new_first_seq <= to && c.new_last_seq >= from) out.push(c);
-  }
-  return out;
+const parseLines = (text) => String(text).split('\n').flatMap((l) => { if (!l.trim()) return []; try { return [JSON.parse(l)]; } catch { return []; } });
+const selectCaptures = (list, room, gen, from, to) => list.filter((c) => c.ok !== false && c.room === room && String(c.generation) === String(gen)
+  && c.new_records && c.new_first_seq <= to && c.new_last_seq >= from);
+const locateCaptures = (capturesText, room, gen, from, to) => selectCaptures(parseLines(capturesText).filter((c) => c.ok), room, gen, from, to);
+
+// Same result as locateCaptures, reading only the small index: the room's day list, then the
+// day files that can hold the window. Returns null when the archive has no index yet.
+async function locateViaIndex({ room, gen, from, to, fetchText, rawBase = ARCHIVE_RAW }) {
+  let days;
+  try { days = JSON.parse(await fetchText(`${rawBase}index/${room}/days.json`)).days; } catch { return null; }
+  if (!Array.isArray(days)) return null;
+  const wanted = days.filter((d) => String(d.g) === String(gen) && d.first <= to && d.last >= from);
+  const texts = await Promise.all(wanted.map((d) => fetchText(`${rawBase}index/${room}/${d.day}.jsonl`)));
+  return selectCaptures(texts.flatMap(parseLines), room, gen, from, to);
 }
 
 // Sequence numbers in [from, to] that no capture covers (gaps, or not captured yet).
@@ -169,7 +174,8 @@ function joinLines(lines) {
 // Returns { lines: [Uint8Array], captures: [{ captured_at, range, integrity: 'verified' }], missing }.
 // Every capture used is checked against the manifest; a mismatch rejects the whole load.
 async function loadPinned({ room, gen, from, to, fetchText, fetchBytes, assetUrl, rawBase = ARCHIVE_RAW }) {
-  const captures = locateCaptures(await fetchText(`${rawBase}captures.jsonl`), room, gen, from, to);
+  const captures = await locateViaIndex({ room, gen, from, to, fetchText, rawBase })
+    ?? locateCaptures(await fetchText(`${rawBase}captures.jsonl`), room, gen, from, to);
   const missing = uncovered(captures, from, to);
   if (!captures.length) return { lines: [], captures: [], missing };
   const fileCache = new Map();

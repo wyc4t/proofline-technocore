@@ -15,6 +15,7 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { parseArgs } from 'node:util';
 import { sha256, splitExport } from './lib/records.mjs';
+import { addToIndex, ensureIndex } from './lib/index.mjs';
 
 export const COLLECTOR_VERSION = '1';
 const NL = Buffer.from('\n');
@@ -111,6 +112,7 @@ async function main() {
   if (!values.data) throw new Error('--data is required');
   const data = values.data;
   mkdirSync(data, { recursive: true });
+  if (ensureIndex(data)) console.log('built the capture index from captures.jsonl');
   const statePath = join(data, 'state.json');
   const state = existsSync(statePath) ? JSON.parse(readFileSync(statePath, 'utf8')) : { rooms: {} };
   const releaseRooms = new Set(values['release-rooms'].split(',').filter(Boolean));
@@ -140,6 +142,7 @@ async function main() {
       entry = { captured_at: capturedAt, room, ok: false, http_status: err.httpStatus ?? null, error: String(err.message || err), collector_version: COLLECTOR_VERSION };
     }
     appendFileSync(join(data, 'captures.jsonl'), JSON.stringify(entry) + '\n');
+    addToIndex(data, entry);
     const ev = (entry.events || []).map((e) => e.type).join(',');
     console.log(`${room}: ${entry.ok ? `+${entry.new_records} (seq ${entry.new_first_seq ?? '-'}..${entry.new_last_seq ?? '-'})${ev ? ' events=' + ev : ''}` : 'FAILED ' + entry.error}`);
   }

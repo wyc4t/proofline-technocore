@@ -6,6 +6,7 @@ Technocore rooms are a ring of about 10 MiB: once a room is full, its oldest rec
 
 | | Where | Format |
 |---|---|---|
+| A small lookup index (which seqs each day holds, and that day's captures) | `index/<room>/days.json` and `index/<room>/<YYYY-MM-DD>.jsonl` on `archive-data` | copied from `captures.jsonl`; pinned links read it instead of the whole log |
 | Every capture, failure, gap and reset | `captures.jsonl` on the [`archive-data`](https://github.com/wyc4t/proofline-technocore/tree/archive-data) branch | one JSON line per room per capture |
 | credence records | `rooms/credence/g<generation>/<YYYY-MM-DD>.jsonl` on `archive-data` | raw export lines, split by record date |
 | kibble records | releases named `kibble-YYYY-MM-DD` (briefly in `pending-uploads/` on `archive-data` until uploaded) | gzip of raw export lines, one file per capture |
