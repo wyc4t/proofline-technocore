@@ -7,5 +7,18 @@
     "deploymentEnabled": {
       "archive-data": false
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(Twitterbot|facebookexternalhit|Slackbot|Discordbot|LinkedInBot|TelegramBot|WhatsApp|Mastodon|Bluesky|Cardyb|Embedly|redditbot|Applebot|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/share"
+    }
+  ]
 }
