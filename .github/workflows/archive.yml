@@ -1,0 +1,68 @@
+# Evidence archive: every 20 minutes, keep the Technocore records that are new since the
+# last capture. credence is committed to the archive-data branch; kibble is uploaded as
+# compressed files to a daily release (kibble-YYYY-MM-DD). Every capture, failure and gap
+# is recorded in captures.jsonl on archive-data. Nothing here touches main or the site.
+name: Evidence archive
+
+on:
+  schedule:
+    - cron: '4,24,44 * * * *' # off the hour; GitHub may still run late or skip a run
+  workflow_dispatch:
+  push:
+    branches: [feature/evidence-archive] # TEMPORARY: lets the branch be tested on GitHub. Remove before merging.
+
+permissions:
+  contents: write
+
+concurrency:
+  group: evidence-archive
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: code
+      - uses: actions/checkout@v4
+        with:
+          ref: archive-data
+          path: data
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Collect
+        run: node code/archive/collect.mjs --data data --outbox data/pending-uploads --rooms credence,kibble --release-rooms kibble
+
+      # Release files wait in data/pending-uploads until uploaded. Only files whose name and
+      # hash match a manifest entry are published. Upload happens before the commit: if it
+      # fails, nothing is committed, the cursor does not move, and the next run fetches the
+      # same records again.
+      - name: Upload kibble files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node code/archive/pending.mjs --data data > pending.tsv
+          while IFS=$'\t' read -r tag file; do
+            if ! gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              gh release create "$tag" -R "$GITHUB_REPOSITORY" --target archive-data --latest=false \
+                --title "Evidence archive: $tag" \
+                --notes "Raw Technocore records, byte for byte as exported, captured by the Proofline evidence archive. Each file's sequence range and SHA-256 are recorded in captures.jsonl on the archive-data branch. To check: see archive/README.md on main."
+            fi
+            gh release upload "$tag" "$file" -R "$GITHUB_REPOSITORY" --clobber
+            rm "$file"
+          done < pending.tsv
+          find data/pending-uploads -type d -empty -delete 2>/dev/null || true
+
+      - name: Commit manifest and credence records
+        working-directory: data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -q -m "Capture $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q origin HEAD:archive-data
