@@ -19,6 +19,10 @@
         }
       ],
       "destination": "/api/share"
+    },
+    {
+      "source": "/",
+      "destination": "/app"
     }
   ]
 }

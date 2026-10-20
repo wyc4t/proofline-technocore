@@ -1,5 +1,5 @@
 // Bundles src/ (ES modules, unit-tested) into ONE classic script, dist/app.js, so the static site
-// works from any host and when index.html is opened directly from disk (browsers block module scripts on file://).
+// works from any host and when app.html is opened directly from disk (browsers block module scripts on file://).
 import fs from 'node:fs';
 const root = new URL('../', import.meta.url);
 const read = (p) => fs.readFileSync(new URL(p, root), 'utf8');
