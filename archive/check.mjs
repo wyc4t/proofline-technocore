@@ -39,7 +39,7 @@ const runs = (seqs) => {
   return out;
 };
 
-export function check({ data, assets, caseRef }) {
+export function check({ data, assets, caseRef, keepRecords = false }) {
   const captures = readFileSync(join(data, 'captures.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
   // Release files: those supplied with --assets, plus any still waiting in pending-uploads.
   const assetPaths = new Map([...listFiles(join(data, 'pending-uploads')), ...listFiles(assets)].map((p) => [basename(p), p]));
@@ -130,6 +130,11 @@ export function check({ data, assets, caseRef }) {
     }
   }
   if (caseRef) report.case = { ref: caseRef, records: caseRecords ?? [] };
+  if (keepRecords) {
+    // For archive/export.mjs: the verified records themselves, and the captures they came from.
+    Object.defineProperty(report, 'records', { enumerable: false, value: Object.fromEntries(Object.entries(rooms).map(([n, gens]) => [n, Object.fromEntries(Object.entries(gens).map(([g, v]) => [g, v.records]))])) });
+    Object.defineProperty(report, 'captures', { enumerable: false, value: captures });
+  }
   return report;
 }
 

@@ -12,7 +12,7 @@ Technocore rooms are a ring of about 10 MiB: once a room is full, its oldest rec
 
 Records are stored **byte for byte** as `GET /r/<room>/export` returned them, never re-serialized. That is what lets a signed record be re-verified later: upstream signs the exact bytes of `<room>|<nonce>|<text>`.
 
-A scheduled GitHub Action runs every 20 minutes. Each run downloads both exports, keeps only records with a higher `seq` than the last archived one, and appends an entry to `captures.jsonl` with: capture time, HTTP status, `X-Room-Generation`, the server's date, the export's size, SHA-256 and sequence range, the new records' range and SHA-256, where they were stored, and any event (gap, generation change, sequence regression, unparseable lines, partial last line). A failed download is recorded as a failed capture.
+A scheduled GitHub Action runs every 10 minutes. GitHub can start scheduled runs late or skip them, so the interval leaves room for several missed runs within kibble's shortest observed window. Each run downloads both exports, keeps only records with a higher `seq` than the last archived one, and appends an entry to `captures.jsonl` with: capture time, HTTP status, `X-Room-Generation`, the server's date, the export's size, SHA-256 and sequence range, the new records' range and SHA-256, where they were stored, and any event (gap, generation change, sequence regression, unparseable lines, partial last line). A failed download is recorded as a failed capture.
 
 ## Reproduce it
 
@@ -39,6 +39,14 @@ node archive/check.mjs --data archive-data --assets assets --case credence:tee61
    - **known gaps**: ranges the collector saw were missing when it captured.
    - **unknown**: anything before the first archived record, anything after the last successful capture, earlier generations, and captures whose files you did not supply.
 4. **A case** (`--case room:id`): every archived protocol record for that ID, with its signature status, parsed with the same `src/lib/protocol.js` the app uses. The parser's hash is printed so the result can be tied to a parser version.
+
+## Pinned links in the app
+
+A pinned case link such as `?case=kibble:k8d88962e05&at=g0:19924995-19925140` makes the app load that window from this archive rather than from the live room. The app reads `captures.jsonl` and the credence files from the `archive-data` branch. It reads kibble files through `/api/asset`, a small read-only endpoint on the site, because browsers cannot read GitHub release downloads directly. The endpoint serves only archive file names, from this repository only. The browser checks every file against its manifest hash and re-verifies every signature, so the endpoint cannot change what is shown without that being detected.
+
+## Cite a fixed window
+
+The archive keeps growing. To cite what it held for a given window, build an export bundle: the window's raw records, the cases Proofline builds from them, and a manifest pinning every input and code version. Its SHA-256 is the bundle ID. See [EXPORT.md](EXPORT.md).
 
 ## What this archive does not establish
 

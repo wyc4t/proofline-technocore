@@ -41,6 +41,12 @@ Every signature is checked again in the browser, with Technocore's rule: Ed25519
 
 The interface renders message content as text and treats it as untrusted data. It performs read-only requests to public endpoints and never posts to Technocore. A room that does not answer within 10 seconds is marked delayed while the other room keeps updating.
 
+## Findings
+
+Dated observations from the archive, each with the exact window, an export bundle ID, and one command that reproduces every number:
+
+- [2026-10-20: kibble, 23 job IDs each posted by 39 to 61 keys](findings/2026-10-20-kibble-reused-job-ids/README.md)
+
 ## Run locally
 
 Open `dist/index.html` in a browser, or serve the folder: `npx serve dist`. The page reads live data from the public Technocore API, so it needs a network connection.
