@@ -1,0 +1,229 @@
+{
+ "experiment": "CRED-EXP-002",
+ "evidence_version": "1",
+ "code": {
+  "src/lib/evidence.js": "7287af958daaa2a231389333f6634498fcdcbc2df884465544dc1c6706c12899",
+  "src/lib/protocol.js": "2a074acb40d2a5bce9f78775ae28ce84b974db966e427890b4a9becf321b794a"
+ },
+ "agreement": "12 of 17",
+ "never_verified": true,
+ "rows": [
+  {
+   "case": "t2a4af4821a",
+   "seqs": [
+    905,
+    911,
+    912
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 3 records do"
+  },
+  {
+   "case": "t39f101229c",
+   "seqs": [
+    6118,
+    6119,
+    6120,
+    6121
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 4 records do"
+  },
+  {
+   "case": "t2f4aaabca1",
+   "seqs": [
+    6132,
+    6133,
+    6134,
+    6188
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 4 records do"
+  },
+  {
+   "case": "t8323021e45",
+   "seqs": [
+    6144,
+    6145,
+    6146,
+    6148
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 4 records do"
+  },
+  {
+   "case": "tf641a7ad67",
+   "seqs": [
+    6165,
+    6166,
+    6167,
+    6168,
+    6169,
+    6170
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 6 records do"
+  },
+  {
+   "case": "t3efd0ef3f2",
+   "seqs": [
+    6173,
+    6174,
+    6175,
+    6178
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 4 records do"
+  },
+  {
+   "case": "t1f31cb5fd4",
+   "seqs": [
+    835
+   ],
+   "level": "result",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Mentions none of the task's specifics (48, 49, 47, 400). The same text was posted under 19 other tasks."
+  },
+  {
+   "case": "tdfa4be146c",
+   "seqs": [
+    881
+   ],
+   "level": "result",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Mentions none of the task's specifics (sign.py, 8192, 8193). The same text was posted under 19 other tasks."
+  },
+  {
+   "case": "t18abda119b",
+   "seqs": [
+    821
+   ],
+   "level": "result",
+   "expected": "noncompliant",
+   "got": "insufficient",
+   "match": false,
+   "why": "The same text was posted under 19 other tasks."
+  },
+  {
+   "case": "t8530152f3c",
+   "seqs": [
+    1386
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "insufficient",
+   "match": true,
+   "why": "The same text was posted under 65 other tasks."
+  },
+  {
+   "case": "tebb7bdd4fb",
+   "seqs": [
+    3015
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "insufficient",
+   "match": true,
+   "why": "A refusal, not a result. The same text was posted under 5 other tasks."
+  },
+  {
+   "case": "tebb7bdd4fb",
+   "seqs": [
+    3020
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "insufficient",
+   "match": true,
+   "why": "A refusal, not a result. The same text was posted under 21 other tasks."
+  },
+  {
+   "case": "t18abda119b",
+   "seqs": [
+    1230
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "insufficient",
+   "match": false,
+   "why": "Required by the task but not found: a plain answer."
+  },
+  {
+   "case": "t633d20ec12",
+   "seqs": [
+    514
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "insufficient",
+   "match": false,
+   "why": "Required by the task but not found: a plain answer."
+  },
+  {
+   "case": "t633d20ec12",
+   "seqs": [
+    1776
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "insufficient",
+   "match": false,
+   "why": "Required by the task but not found: quoted constraint strings, a plain answer."
+  },
+  {
+   "case": "td42d41083d",
+   "seqs": [
+    192
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "insufficient",
+   "match": false,
+   "why": "No checkable detail: no request, link, hash, code or measurements."
+  },
+  {
+   "case": "t0d9ac8ce7c",
+   "seqs": [
+    186
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "supported",
+   "match": true,
+   "why": "Contains every part the task requires that can be looked for, and mentions its specifics."
+  }
+ ],
+ "room": {
+  "cases_with_task": 1268,
+  "by_class": {
+   "noncompliant": 343,
+   "insufficient": 733,
+   "supported": 174,
+   "none": 18
+  },
+  "cases_with_instruction_violated": 6,
+  "cases_called_useful_without_supported_result": 791
+ }
+}

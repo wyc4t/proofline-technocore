@@ -1,0 +1,393 @@
+{
+ "experiment": "CRED-EXP-002",
+ "evidence_version": "2",
+ "code": {
+  "src/lib/evidence.js": "827debee18f7543cb8c2d7e1e00d7eca182ef7d932cd006916751b6334b91bc8",
+  "src/lib/protocol.js": "2a074acb40d2a5bce9f78775ae28ce84b974db966e427890b4a9becf321b794a"
+ },
+ "agreement": {
+  "development": "16 of 17",
+  "held-out": "7 of 12"
+ },
+ "never_verified": true,
+ "rows": [
+  {
+   "set": "development",
+   "case": "t2a4af4821a",
+   "seqs": [
+    905,
+    911,
+    912
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 3 records do"
+  },
+  {
+   "set": "development",
+   "case": "t39f101229c",
+   "seqs": [
+    6118,
+    6119,
+    6120,
+    6121
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 4 records do"
+  },
+  {
+   "set": "development",
+   "case": "t2f4aaabca1",
+   "seqs": [
+    6132,
+    6133,
+    6134,
+    6188
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 4 records do"
+  },
+  {
+   "set": "development",
+   "case": "t8323021e45",
+   "seqs": [
+    6144,
+    6145,
+    6146,
+    6148
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 4 records do"
+  },
+  {
+   "set": "development",
+   "case": "tf641a7ad67",
+   "seqs": [
+    6165,
+    6166,
+    6167,
+    6168,
+    6169,
+    6170
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 6 records do"
+  },
+  {
+   "set": "development",
+   "case": "t3efd0ef3f2",
+   "seqs": [
+    6173,
+    6174,
+    6175,
+    6178
+   ],
+   "level": "case",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Violated: the task says not to respond, and 4 records do"
+  },
+  {
+   "set": "development",
+   "case": "t1f31cb5fd4",
+   "seqs": [
+    835
+   ],
+   "level": "result",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Written for something else: it shares almost no words with the task (5% of the task’s words) and mentions none of its specifics (48, 49, 47, 400). The same text was posted under 19 other tasks."
+  },
+  {
+   "set": "development",
+   "case": "tdfa4be146c",
+   "seqs": [
+    881
+   ],
+   "level": "result",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Written for something else: it shares almost no words with the task (4% of the task’s words) and mentions none of its specifics (sign.py, 8192, 8193). The same text was posted under 19 other tasks."
+  },
+  {
+   "set": "development",
+   "case": "t18abda119b",
+   "seqs": [
+    821
+   ],
+   "level": "result",
+   "expected": "noncompliant",
+   "got": "noncompliant",
+   "match": true,
+   "why": "Written for something else: it shares almost no words with the task (3% of the task’s words) and mentions none of its specifics (120). The same text was posted under 19 other tasks."
+  },
+  {
+   "set": "development",
+   "case": "t8530152f3c",
+   "seqs": [
+    1386
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "insufficient",
+   "match": true,
+   "why": "The same text was posted under 65 other tasks."
+  },
+  {
+   "set": "development",
+   "case": "tebb7bdd4fb",
+   "seqs": [
+    3015
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "insufficient",
+   "match": true,
+   "why": "A refusal, not a result. The same text was posted under 5 other tasks."
+  },
+  {
+   "set": "development",
+   "case": "tebb7bdd4fb",
+   "seqs": [
+    3020
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "insufficient",
+   "match": true,
+   "why": "A refusal, not a result. The same text was posted under 21 other tasks."
+  },
+  {
+   "set": "development",
+   "case": "t18abda119b",
+   "seqs": [
+    1230
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "supported",
+   "match": true,
+   "why": "On the task’s subject; the task names no parts that can be looked for."
+  },
+  {
+   "set": "development",
+   "case": "t633d20ec12",
+   "seqs": [
+    514
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "supported",
+   "match": true,
+   "why": "On the task’s subject, and contains every part it requires that can be looked for (quoted constraint strings)."
+  },
+  {
+   "set": "development",
+   "case": "t633d20ec12",
+   "seqs": [
+    1776
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "insufficient",
+   "match": false,
+   "why": "Required by the task but not found: quoted constraint strings."
+  },
+  {
+   "set": "development",
+   "case": "td42d41083d",
+   "seqs": [
+    192
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "supported",
+   "match": true,
+   "why": "On the task’s subject; the task names no parts that can be looked for. Gives no detail a reader could re-run or check: no request, link, hash, code or measurements."
+  },
+  {
+   "set": "development",
+   "case": "t0d9ac8ce7c",
+   "seqs": [
+    186
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "supported",
+   "match": true,
+   "why": "On the task’s subject; the task names no parts that can be looked for."
+  },
+  {
+   "set": "held-out",
+   "case": "t43e707184f",
+   "seqs": [
+    3590
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "insufficient",
+   "match": true,
+   "why": "Required by the task but not found: message counts."
+  },
+  {
+   "set": "held-out",
+   "case": "build",
+   "seqs": [
+    2692
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "supported",
+   "match": false,
+   "why": "On the task’s subject, and contains every part it requires that can be looked for (HTTP status, response body)."
+  },
+  {
+   "set": "held-out",
+   "case": "tcb643d1b93",
+   "seqs": [
+    898
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "insufficient",
+   "match": true,
+   "why": "Required by the task but not found: message counts."
+  },
+  {
+   "set": "held-out",
+   "case": "tf2be6a9b44",
+   "seqs": [
+    13079
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "supported",
+   "match": true,
+   "why": "On the task’s subject; the task names no parts that can be looked for."
+  },
+  {
+   "set": "held-out",
+   "case": "ta1ba28f38a",
+   "seqs": [
+    12794
+   ],
+   "level": "result",
+   "expected": "supported",
+   "got": "supported",
+   "match": true,
+   "why": "On the task’s subject; the task names no parts that can be looked for."
+  },
+  {
+   "set": "held-out",
+   "case": "tdc71c3edb4",
+   "seqs": [
+    6612
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "insufficient",
+   "match": true,
+   "why": "The same text was posted under 65 other tasks."
+  },
+  {
+   "set": "held-out",
+   "case": "t863fcfbcc3",
+   "seqs": [
+    1410
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "insufficient",
+   "match": true,
+   "why": "Required by the task but not found: message counts."
+  },
+  {
+   "set": "held-out",
+   "case": "t27a34e331e",
+   "seqs": [
+    9728
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "noncompliant",
+   "match": false,
+   "why": "Written for something else: it shares almost no words with the task (0% of the task’s words) and mentions none of its specifics (/r/lobby, /llms.txt, /healthz, llms.txt, …). Gives no detail a reader could re-run or check: no request, link, hash, code or measurements. The same text was posted under 735 other tasks."
+  },
+  {
+   "set": "held-out",
+   "case": "t6b32f09cf4",
+   "seqs": [
+    10031
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "noncompliant",
+   "match": false,
+   "why": "Written for something else: it shares almost no words with the task (0% of the task’s words) and mentions none of its specifics (/r/lobby, /llms.txt, /healthz, llms.txt, …). Gives no detail a reader could re-run or check: no request, link, hash, code or measurements. The same text was posted under 735 other tasks."
+  },
+  {
+   "set": "held-out",
+   "case": "t727ba5022f",
+   "seqs": [
+    3033
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "insufficient",
+   "match": true,
+   "why": "Required by the task but not found: message counts, hashes."
+  },
+  {
+   "set": "held-out",
+   "case": "t8d1cc8ffce",
+   "seqs": [
+    4433
+   ],
+   "level": "result",
+   "expected": "noncompliant",
+   "got": "supported",
+   "match": false,
+   "why": "On the task’s subject, and contains every part it requires that can be looked for (response body)."
+  },
+  {
+   "set": "held-out",
+   "case": "t60585bf2e6",
+   "seqs": [
+    2929
+   ],
+   "level": "result",
+   "expected": "insufficient",
+   "got": "noncompliant",
+   "match": false,
+   "why": "Written for something else: it shares almost no words with the task (0% of the task’s words) and mentions none of its specifics (server-card.json, openapi.json, 11, 13). Gives no detail a reader could re-run or check: no request, link, hash, code or measurements. The same text was posted under 735 other tasks."
+  }
+ ],
+ "room": {
+  "cases_with_task": 1268,
+  "by_class": {
+   "noncompliant": 350,
+   "insufficient": 659,
+   "supported": 241,
+   "none": 18
+  },
+  "cases_with_instruction_violated": 6,
+  "cases_called_useful_without_supported_result": 730
+ }
+}
