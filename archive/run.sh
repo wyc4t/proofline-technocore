@@ -23,6 +23,20 @@ while IFS=$'\t' read -r tag file; do
 done < pending.tsv
 find data/pending-uploads -type d -empty -delete 2>/dev/null || true
 
+# Hourly: recompute the headline statistics (stats/latest.json) from the archive. A failure
+# here never blocks the capture itself: a missing file makes the statistics say they are
+# incomplete, and a failed calculation keeps the previous statistics file.
+if node -e 'try{const s=JSON.parse(require("fs").readFileSync("data/stats/latest.json"));process.exit(Date.now()-Date.parse(s.generated_at)>55*60e3?0:1)}catch{process.exit(0)}'; then
+  (
+    mkdir -p assets
+    node code/archive/stats.mjs --data data --list-assets > needed.tsv
+    while IFS=$'\t' read -r tag asset; do
+      [ -z "$asset" ] || [ -f "assets/$asset" ] || gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$asset" -D assets
+    done < needed.tsv
+    node code/archive/stats.mjs --data data --assets assets --out data/stats/latest.json
+  ) || echo "statistics not updated this time"
+fi
+
 cd data
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

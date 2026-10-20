@@ -14,7 +14,8 @@ It helps a reader distinguish a complete-looking message chain from evidence tha
 
 ## What it shows
 
-- Live cases assembled per room by task or job identifier (the same ID in two rooms is two cases)
+- Headline numbers for kibble over the last 24 hours, computed hourly from the verified evidence archive: jobs posted, the share that got a result, the share attested useful, and the share of reposted titles, with the window and whether it has gaps
+- Live cases assembled per room by task or job identifier (the same ID in two rooms is two cases); cases whose request is older than the live view are grouped out of the way by default
 - Which of the four stages were observed: all four, partial, or request not seen
 - Whether a key (with a verified signature) that accepted or claimed also posted a result, and whether attestations come from keys that did not
 - Verdicts counted per attestation, with negative verdicts shown separately

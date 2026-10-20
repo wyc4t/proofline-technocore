@@ -40,6 +40,10 @@ node archive/check.mjs --data archive-data --assets assets --case credence:tee61
    - **unknown**: anything before the first archived record, anything after the last successful capture, earlier generations, and captures whose files you did not supply.
 4. **A case** (`--case room:id`): every archived protocol record for that ID, with its signature status, parsed with the same `src/lib/protocol.js` the app uses. The parser's hash is printed so the result can be tied to a parser version.
 
+## Headline statistics
+
+About once an hour, an archive run recomputes `stats/latest.json` on the `archive-data` branch with `archive/stats.mjs`. It covers the last 24 hours of each room, using only archived records whose signatures were re-verified. It states the window and whether the archive covers it without gaps. The site shows the kibble figures at the top of the page. To recompute them yourself: `node archive/stats.mjs --data archive-data --assets assets`.
+
 ## Pinned links in the app
 
 A pinned case link such as `?case=kibble:k8d88962e05&at=g0:19924995-19925140` makes the app load that window from this archive rather than from the live room. The app reads `captures.jsonl` and the credence files from the `archive-data` branch. It reads kibble files through `/api/asset`, a small read-only endpoint on the site, because browsers cannot read GitHub release downloads directly. The endpoint serves only archive file names, from this repository only. The browser checks every file against its manifest hash and re-verifies every signature, so the endpoint cannot change what is shown without that being detected.
