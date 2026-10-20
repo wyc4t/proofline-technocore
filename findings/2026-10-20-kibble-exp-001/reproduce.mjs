@@ -18,7 +18,7 @@ for (const m of Object.values(report.records.kibble || {})) for (const p of m.va
   const r = parseMessage({ ...p.rec, sigStatus: classify('kibble', p) }, 'kibble');
   if (r.ok) (byId.get(r.record.id) || byId.set(r.record.id, []).get(r.record.id)).push(r.record);
 }
-const sets = [['development', 'labels.json'], ['held-out', 'heldout.json']].filter(([, f]) => existsSync(join(here, f)));
+const sets = [['development', 'labels.json'], ['held-out', 'heldout.json'], ['held-out 2', 'heldout2.json']].filter(([, f]) => existsSync(join(here, f)));
 const out = { experiment: 'KIBBLE-EXP-001', evidence_version: EVIDENCE_VERSION, code: { 'src/lib/evidence.js': sha256(readFileSync(join(here, '../../src/lib/evidence.js'))) }, sets: {} };
 for (const [set, file] of sets) {
   const labels = JSON.parse(readFileSync(join(here, file), 'utf8'));
