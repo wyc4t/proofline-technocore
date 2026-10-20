@@ -1,8 +1,10 @@
 import {STAGE_NAMES} from './lib/protocol.js';
 import {buildCases} from './lib/cases.js';
+import {parseRoomPage,annotateSignatures,signatureSupport} from './lib/signature.js';
 import {createRoomState,applyPage,querySince,markOk,markError,coverage,allRecords,PAGE_LIMIT} from './lib/store.js';
 const SOURCES=['credence','kibble'];
 const rooms=SOURCES.map(createRoomState);
+const SIG_LABEL={valid:'SIGNATURE VERIFIED',invalid:'SIGNATURE DOES NOT VERIFY',no_sig:'KEY NAMED, NO SIGNATURE · NOT RE-VERIFIABLE',unsigned:'NOT A KEY · SELF-ASSERTED NAME',unchecked:'SIGNATURE NOT CHECKED IN THIS BROWSER'};
 const STATUS_LABEL={'all-stages':'ALL 4 STAGES','partial':'PARTIAL','no-request':'REQUEST NOT SEEN'};
 const MAX_NODES=7,FETCH_TIMEOUT_MS=10000,LIST_STEP=80;
 let cases=[],selected=null,filter='all',busy=false,paused=false,frozenAt=0,lastInspKey=null,listLimit=LIST_STEP,detailOpener=null;
@@ -35,21 +37,24 @@ function renderList(){
 function finding(host,label,value,detail,tone=''){
   const box=el('div',`finding ${tone}`),head=el('div','finding-head');head.append(el('b','',label),el('span','',value));box.append(head,el('p','',detail));host.append(box);
 }
-function recordDisclosure(record,flagged){const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}${flagged?' · ⚑':''}`),p=el('p','',record.text),source=el('div','source',`${record.signed?'DID + SIGNATURE FIELDS PRESENT (NOT VERIFIED HERE)':'NOT A SIGNED KEY · SELF-ASSERTED NAME'} · ${shortDid(record.source)} · ${record.ts}`);d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s,p,source);return d}
+function recordDisclosure(record,flagged){const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}${flagged?' · ⚑':''}`),p=el('p','',record.text),source=el('div',`source sig-${record.sigStatus}`,`${SIG_LABEL[record.sigStatus]} · ${shortDid(record.source)} · ${record.ts}`);d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s,p,source);return d}
 function renderInspector(){
   const host=$('#inspector');host.replaceChildren();const back=el('button','back','← All cases');back.type='button';back.onclick=closeDetail;host.append(back,el('div','eyebrow','EVIDENCE PROFILE'));
   if(!selected){host.append(el('h2','',`No case selected`),el('p','','Select a case to see which records were observed, what is missing, and what cannot be known from them.'));return}
   const c=selected;host.append(el('h2','',c.id),el('p','',`${c.room} · ${c.title}`));
   const present=c.stages.filter(s=>s.length).length;
   finding(host,'Stages observed',`${present} of 4`,STAGE_NAMES.map((name,i)=>`${c.stages[i].length?'✓':'—'} ${name}`).join('  ·  ')+(present<4?'\nA missing stage may simply be outside the observation window.':''));
-  const cont={'observed':['Observed','A key that accepted or claimed also posted a result.'],'not-observed':['Not observed','No result was posted by a key that accepted or claimed.'],'no-worker':['Unavailable','No accept or claim in the window.'],'no-result':['Unavailable','No result in the window.'],'no-key':['Unavailable','The worker or result records do not come from signed keys, so keys cannot be compared.']}[c.continuity];
+  const sc=c.list.reduce((m,r)=>(m[r.sigStatus]=(m[r.sigStatus]||0)+1,m),{});
+  finding(host,'Signatures',['valid','invalid','no_sig','unsigned','unchecked'].filter(k=>sc[k]).map(k=>`${sc[k]} ${{valid:'verified',invalid:'fail',no_sig:'no signature',unsigned:'nickname',unchecked:'not checked'}[k]}`).join(' · '),
+    sc.invalid?'At least one record names a key but its signature does not verify. That record is not treated as coming from that key.':sc.unchecked&&!sc.valid?'Your browser cannot check these signatures, so no record here is compared as coming from a key.':'A verified signature shows that the key signed this room, nonce and text. It does not show who holds the key or that the work is correct. Sequence numbers and times are added by Technocore and are not signed.',sc.invalid?'alert':'');
+  const cont={'observed':['Observed','A key that accepted or claimed also posted a result.'],'not-observed':['Not observed','No result was posted by a key that accepted or claimed.'],'no-worker':['Unavailable','No accept or claim in the window.'],'no-result':['Unavailable','No result in the window.'],'no-key':['Unavailable','The worker or result records do not come from keys with a verified signature, so keys cannot be compared.']}[c.continuity];
   finding(host,'Key continuity (worker → result)',cont[0],`${cont[1]} Keys are not people; this says nothing about real-world identity.`);
-  const a=c.attestation,av={'no-attestation':['None observed','No attestation in the window.'],'no-result':['Unavailable','Attestations are present, but no result is in the window to compare keys against.'],'no-key':['Unavailable','The result records do not come from signed keys, so attestation keys cannot be compared.'],'ok':[`${a.other} other-key · ${a.self} result-key${a.unknown?` · ${a.unknown} unsigned`:''}`,'Counts attestations by whether their key also posted a result. Unsigned senders are not compared. Different keys are not proof of independent parties.']}[a.state];
+  const a=c.attestation,av={'no-attestation':['None observed','No attestation in the window.'],'no-result':['Unavailable','Attestations are present, but no result is in the window to compare keys against.'],'no-key':['Unavailable','The result records do not come from keys with a verified signature, so attestation keys cannot be compared.'],'ok':[`${a.other} other-key · ${a.self} result-key${a.unknown?` · ${a.unknown} unsigned`:''}`,'Counts attestations by whether their key also posted a result. Unsigned senders are not compared. Different keys are not proof of independent parties.']}[a.state];
   finding(host,'Attestation keys',av[0],av[1]);
   const v=c.verdicts;if(c.attestation.state!=='no-attestation')finding(host,'Recorded verdicts',`useful ${v.useful} · negative ${v.not}${v.other?` · other ${v.other}`:''}`,v.not?'At least one attestation carries an explicit negative verdict. Read its text below; it is a claim by that key, not a finding.':'Verdicts are claims made by the posting keys.',v.not?'alert':'');
   finding(host,'Request → result timing',c.elapsedFirst===null?'Unavailable':`first ${formatDuration(c.elapsedFirst)}${c.elapsedLast!==c.elapsedFirst?` · last ${formatDuration(c.elapsedLast)}`:''}`,'From venue timestamps, which are not signed by the sender. The first result is not necessarily the substantive one.');
   if(c.flags.length){host.append(el('div','eyebrow','PATTERNS IN THE VISIBLE RECORDS'));for(const f of c.flags)finding(host,f.label,`${f.seqs.length} ${f.seqs.length===1?'record':'records'}`,`${f.detail} Seq ${f.seqs.slice(0,6).map(s=>'#'+s).join(', ')}${f.seqs.length>6?'…':''}. A pattern, not a verdict.`)}
-  finding(host,'Cannot be known from these records','','Whether the work was correct or useful, whether different keys are different parties, whether signatures are valid, what caused what, or whether anything was paid.');
+  finding(host,'Cannot be known from these records','','Whether the work was correct or useful, who holds a key, whether different keys are different parties, what caused what, or whether anything was paid.');
   const flagged=new Set(c.flags.flatMap(f=>f.seqs));
   host.append(el('div','eyebrow','SOURCE RECORDS'));for(const record of c.list)host.append(recordDisclosure(record,flagged.has(record.seq)));
 }
@@ -78,13 +83,14 @@ function closeDetail(){if(history.state?.detail)history.back();else exitDetail()
 addEventListener('popstate',exitDetail);
 addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('detail')&&!document.querySelector('dialog[open]'))closeDetail()});
 function fmtSpan(ms){if(ms===null)return 'no data';const s=Math.round(ms/1000);if(s<90)return `${s}s`;const m=Math.round(s/60);if(m<120)return `${m}m`;const h=Math.round(m/60);return h<48?`${h}h`:`${Math.round(h/24)}d`}
-function coverageLine(c){const bits=[`${c.room} ${c.records} rec`,fmtSpan(c.spanMs)];if(c.status==='error')bits.push(`delayed · last ok ${clock(c.lastOkAt)}`);if(c.gaps)bits.push(`${c.missed} missed`);if(c.resets)bits.push(`${c.resets} reset`);if(c.malformed+c.unsupported)bits.push(`${c.malformed+c.unsupported} unparsed`);return bits.join(' · ')}
+function coverageLine(c){const bits=[`${c.room} ${c.records} rec`,fmtSpan(c.spanMs)];if(c.status==='error')bits.push(`delayed · last ok ${clock(c.lastOkAt)}`);if(c.gaps)bits.push(`${c.missed} missed`);if(c.resets)bits.push(`${c.resets} reset`);if(c.malformed+c.unsupported)bits.push(`${c.malformed+c.unsupported} unparsed`);const inv=[...rooms.find(r=>r.room===c.room).records.values()].filter(r=>r.sigStatus==='invalid').length;if(inv)bits.push(`${inv} signature ${inv===1?'fails':'fail'}`);return bits.join(' · ')}
 async function pollRoom(state){
   const params=new URLSearchParams({format:'json',limit:String(PAGE_LIMIT)});const since=querySince(state);if(since!==null)params.set('since',String(since));
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),FETCH_TIMEOUT_MS);
   try{
     const response=await fetch(`https://technocore.chat/r/${state.room}?${params}`,{cache:'no-store',signal:ctl.signal});if(!response.ok)throw new Error(`${state.room} returned ${response.status}`);
-    applyPage(state,await response.json(),{since});markOk(state,Date.now());
+    const page=parseRoomPage(await response.text());await annotateSignatures(state.room,page?.messages);
+    applyPage(state,page,{since});markOk(state,Date.now());
   }catch(error){throw ctl.signal.aborted?new Error(`${state.room} did not answer within ${FETCH_TIMEOUT_MS/1000}s`):error}
   finally{clearTimeout(timer)}
 }
@@ -92,7 +98,7 @@ function updateStatus(){
   const cov=rooms.map(coverage),bad=cov.filter(c=>c.status==='error'),total=cov.reduce((n,c)=>n+c.records,0),gaps=cov.reduce((n,c)=>n+c.gaps,0);
   $('#live').className=`live ${bad.length===cov.length?'error':bad.length||gaps||paused?'warn':'ready'}`;
   $('#live span').textContent=paused?`PAUSED · ${Math.max(0,protocolTotal()-frozenAt)} NEW`:bad.length===cov.length?'LIVE READ DELAYED':bad.length?`PARTIAL · ${bad.map(c=>c.room.toUpperCase()).join(', ')} DELAYED`:`LIVE · ${total} PROTOCOL RECORDS${gaps?' · GAPS':''} · ${clock(Math.max(...cov.map(c=>c.lastOkAt||0)))}`;
-  $('#sourceStatus').textContent=cov.map(coverageLine).join('  |  ');$('#sourceStatus').title=bad.map(c=>c.error).join('\n');
+  $('#sourceStatus').textContent=cov.map(coverageLine).join('  |  ')+(signatureSupport()===false?'  |  this browser cannot check signatures, so keys are not compared':'');$('#sourceStatus').title=bad.map(c=>c.error).join('\n');
   const b=$('#pause');b.setAttribute('aria-pressed',String(paused));b.querySelector('.ico').textContent=paused?'▶':'⏸';b.querySelector('.lbl').textContent=paused?`Resume · ${Math.max(0,protocolTotal()-frozenAt)} new`:'Pause updates';b.setAttribute('aria-label',paused?'Resume live updates':'Pause live updates');
 }
 async function refresh(){if(busy)return;busy=true;if(!paused){$('#live').className='live';$('#live span').textContent='READING LIVE RECORDS'}

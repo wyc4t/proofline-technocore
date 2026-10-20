@@ -20,7 +20,11 @@ export function parseMessage(message, room) {
   if (!id || !ID.test(id) || !Number.isFinite(seq)) return { ok: false, reason: 'malformed', kind };
   const from = typeof message.from === 'string' ? message.from : '';
   const stage = STAGE[kind];
-  const signed = from.startsWith('did:key:') && typeof message.sig === 'string' && message.sig.length > 0;
+  // sigStatus is set by checkSignature() before parsing (see signature.js). Only a did:key whose signature
+  // verifies counts as a key; anything else (nickname, no signature, failed or unchecked) is never compared as one.
+  const isDid = from.startsWith('did:key:');
+  const sigStatus = !isDid ? 'unsigned' : typeof message.sigStatus === 'string' ? message.sigStatus : 'unchecked';
+  const signed = sigStatus === 'valid';
   // body: free text after the structured fields. Workers' ACCEPT/CLAIM carry none; attestations put a verdict before it.
   const verdict = stage === 3 ? String(parts[2] || '').toLowerCase() : '';
   const body = stage === 1 ? '' : parts.slice(stage === 3 ? 3 : 2).join(' | ');
@@ -33,8 +37,8 @@ export function parseMessage(message, room) {
       caseKey: `${room}:${id}`,
       ts: String(message.ts || ''),
       source: from,                 // whatever the sender called itself; '' when absent
-      keyId: signed ? from : null,  // only a did:key with signature fields present counts as a key; nicknames are never compared as keys
-      signed, stage, verdict, body,
+      keyId: signed ? from : null,  // only a did:key whose signature verified counts as a key
+      signed, sigStatus, stage, verdict, body,
     },
   };
 }

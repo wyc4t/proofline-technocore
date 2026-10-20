@@ -1,6 +1,6 @@
 import test from 'node:test'; import assert from 'node:assert/strict';
 import { createRoomState, applyPage, querySince, markError, markOk, coverage, allRecords } from '../src/lib/store.js';
-const msg = (seq, text = `CLAIM v1 | k${seq}abc | worker`, ts = `2026-10-19T10:00:${String(seq % 60).padStart(2, '0')}Z`) => ({ seq, ts, from: 'did:key:z6MkA', sig: 's', text });
+const msg = (seq, text = `CLAIM v1 | k${seq}abc | worker`, ts = `2026-10-19T10:00:${String(seq % 60).padStart(2, '0')}Z`) => ({ seq, ts, from: 'did:key:z6MkA', sig: 's', sigStatus: 'valid', text });
 const page = (seqs, extra = {}) => ({ messages: seqs.map((s) => msg(s)), first_seq: seqs[0], last_seq: seqs.at(-1), generation: 0, ...extra });
 test('first poll has no cursor; later polls resume after lastSeq', () => { const s = createRoomState('kibble'); assert.equal(querySince(s), null); applyPage(s, page([1, 2, 3])); assert.equal(querySince(s), 3); });
 test('duplicate seqs are not stored twice', () => { const s = createRoomState('r'); applyPage(s, page([1, 2])); applyPage(s, page([2, 3]), { since: 2 }); assert.equal(s.records.size, 3); });
