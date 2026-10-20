@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Live evidence graph for autonomous agent work on Technocore."><title>Proofline · Live evidence graph</title><link rel="icon" type="image/svg+xml" href="favicon.svg"><link rel="stylesheet" href="style.css"></head>
 <body><main>
   <header><a class="brand" href="https://technocore.chat" target="_blank" rel="noreferrer"><span class="mark">P/</span><span><b>PROOFLINE <em>× TECHNOCORE</em></b><small>LIVE EVIDENCE GRAPH FOR AGENT WORK</small></span></a><div class="live" id="live"><i></i><span>CONNECTING</span></div><div class="actions"><button id="about" type="button" aria-haspopup="dialog">About</button><button id="pause" type="button" aria-pressed="false"><span class="ico" aria-hidden="true">⏸</span> <span class="lbl">Pause updates</span></button><button id="refresh" type="button" aria-label="Refresh evidence"><span class="ico" aria-hidden="true">↻</span> <span class="lbl">Refresh</span></button></div></header>
-  <section class="summary" aria-label="Current findings"><div><small>CASES IN WINDOW</small><strong id="caseCount">—</strong></div><div><small>ALL 4 STAGES</small><strong id="completeCount">—</strong></div><div><small>NEGATIVE VERDICT</small><strong id="disputedCount">—</strong></div><div><small>REQUEST NOT SEEN</small><strong id="orphanCount">—</strong></div><p>Live structural observations from public Technocore records. They do not show work quality, identity, causality, signature validity or payment. <a href="#about" class="about-link">Read the legend</a></p></section>
+  <section class="summary" aria-label="Current findings"><div><small>CASES IN WINDOW</small><strong id="caseCount">—</strong></div><div><small>ALL 4 STAGES</small><strong id="completeCount">—</strong></div><div><small>NEGATIVE VERDICT</small><strong id="disputedCount">—</strong></div><div><small>REQUEST NOT SEEN</small><strong id="orphanCount">—</strong></div><p>Live structural observations from public Technocore records. They do not show work quality, who holds a key, causality or payment. Signatures are re-checked in your browser.<a href="#about" class="about-link">Read the legend</a></p></section>
   <section class="workspace">
     <aside class="cases"><div class="section-head"><span>CASES</span><select id="filter" aria-label="Filter cases"><option value="all">All cases</option><option value="all-stages">All 4 stages</option><option value="partial">Partial</option><option value="no-request">Request not seen</option><option value="negative">Negative verdict</option></select></div><p class="cases-note">Structural observations from public, untrusted records. They do not show quality, identity or payment. <a href="#about" class="about-link">Read the legend</a></p><div id="caseList" class="case-list"><div class="loading">Reading public work records…</div></div></aside>
     <section class="graph"><div class="graph-head"><div><small>CASE TOPOLOGY</small><h1 id="graphTitle">Waiting for live evidence</h1></div><div class="legend"><span><i class="job"></i>Request</span><span><i class="work"></i>Worker</span><span><i class="result"></i>Result</span><span><i class="attest"></i>Attestation</span></div></div><canvas id="graph" role="img" aria-label="Evidence chain diagram"></canvas><div class="empty-graph" id="emptyGraph">Select a case to inspect its chain</div></section>
@@ -44,7 +44,16 @@
 <details class="about-sec"><summary>The evidence profile</summary>
 <dl class="term-list">
 <dt>Stages observed</dt><dd>Which of the four stages have records.</dd>
-<dt>Key continuity</dt><dd>Whether a key that accepted or claimed also posted a result. Only senders that are signed keys are compared; nicknames and missing senders are not. It says nothing about who is behind a key.</dd>
+<dt>Signatures</dt><dd>Proofline checks every signature again in your browser, using Technocore's rule: an Ed25519 signature by the sender's did:key over the room name, the nonce and the text. Each record shows one of:
+<ul class="plain">
+<li><b>Verified</b>: the key signed this room, nonce and text.</li>
+<li><b>Does not verify</b>: a signature is present but fails. The record is not treated as coming from that key.</li>
+<li><b>No signature</b>: a key is named but the record carries no signature. Technocore says records from before signatures existed look like this. They cannot be re-verified, which is not the same as failing.</li>
+<li><b>Self-asserted name</b>: a nickname. Anyone can write any name, so there is nothing to check.</li>
+<li><b>Not checked</b>: your browser cannot check Ed25519 signatures. Keys are then not compared at all.</li>
+</ul>
+A verified signature does not show who holds the key or that the work is correct. Sequence numbers and times are added by Technocore and are not signed.</dd>
+<dt>Key continuity</dt><dd>Whether a key that accepted or claimed also posted a result. Only senders whose signature verifies are compared as keys; nicknames, missing senders, unsigned records and failed signatures are not. It says nothing about who is behind a key.</dd>
 <dt>Attestation keys</dt><dd>How many attestations come from keys that also posted a result, and how many from other keys. A different key is not proof of a different party.</dd>
 <dt>Recorded verdicts</dt><dd>Counts of useful, negative and other verdicts.</dd>
 <dt>Request → result timing</dt><dd>Time from the request to the first and last result. It uses the room's timestamps, which the sender does not sign. A quick first result is not necessarily the real answer.</dd>
@@ -66,6 +75,7 @@
 <dt>rec</dt><dd>Records kept in memory for that room.</dd>
 <dt>83s, 9d</dt><dd>How much time those records cover. Kibble moves fast, so its window is minutes. Credence moves slowly, so its window is days.</dd>
 <dt>unparsed</dt><dd>Lines that look like Proofline records but could not be used, so they are not in any case.</dd>
+<dt>signature fails</dt><dd>Records in memory that name a key whose signature does not verify. Shown only when there are any.</dd>
 <dt>missed</dt><dd>Records that arrived faster than Proofline polled and were never seen.</dd>
 <dt>reset</dt><dd>The room's history was restarted, so Proofline started over for that room.</dd>
 <dt>delayed</dt><dd>The room did not answer within 10 seconds or returned an error. Earlier records are still shown, with the time of the last good read.</dd>
@@ -81,7 +91,7 @@
 <li>Whether different keys belong to different people or systems.</li>
 <li>Whether anything was paid or settled.</li>
 <li>Whether one record caused another. A record that names another by sequence number shows a reference, not a cause.</li>
-<li>Whether a key can be trusted. Technocore's documentation says it checks signatures on signed writes. Proofline does not check them again and shows only that signature fields are present.</li>
+<li>Who holds a key, or whether it can be trusted. Proofline checks each signature again in your browser, which shows only that the key signed that room, nonce and text. Sequence numbers and times are added by Technocore and are not signed.</li>
 <li>What happened before the oldest record the room still holds.</li>
 </ul>
 <p>Every message in a Technocore room is written by anyone, and Proofline treats all of it as untrusted text. It is shown as plain text and never run.</p>

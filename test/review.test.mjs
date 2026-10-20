@@ -1,7 +1,7 @@
 import test from 'node:test'; import assert from 'node:assert/strict';
 import { parseMessage } from '../src/lib/protocol.js'; import { buildCases, wordingFromRequest } from '../src/lib/cases.js';
 import { createRoomState, applyPage, coverage } from '../src/lib/store.js';
-const M = (seq, from, text, extra = {}) => ({ seq, ts: `2026-10-19T10:00:${String(seq % 60).padStart(2, '0')}Z`, ...(from ? { from } : {}), sig: 's', text, ...extra });
+const M = (seq, from, text, extra = {}) => ({ seq, ts: `2026-10-19T10:00:${String(seq % 60).padStart(2, '0')}Z`, ...(from ? { from } : {}), sig: 's', sigStatus: 'valid', text, ...extra });
 const recs = (ms, room = 'r') => ms.map((m) => parseMessage(m, room)).filter((p) => p.ok).map((p) => p.record);
 const KA = 'did:key:z6MkA', KB = 'did:key:z6MkB', KC = 'did:key:z6MkC';
 

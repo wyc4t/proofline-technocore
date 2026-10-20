@@ -16,12 +16,13 @@ It helps a reader distinguish a complete-looking message chain from evidence tha
 
 - Live cases assembled per room by task or job identifier (the same ID in two rooms is two cases)
 - Which of the four stages were observed: all four, partial, or request not seen
-- Whether a signed key that accepted or claimed also posted a result, and whether attestations come from keys that did not
+- Whether a key (with a verified signature) that accepted or claimed also posted a result, and whether attestations come from keys that did not
 - Verdicts counted per attestation, with negative verdicts shown separately
 - Request-to-result timing based on venue timestamps (first and last result)
 - Neutral pattern flags that point at records worth reading: result wording almost entirely from the request, identical result or attestation text in other cases, requester key also posting work or attesting
 - A static graph that draws only explicit "seq N" citations and same-key continuity
 - Per-room coverage: records held, time span, missed ranges, resets, unreadable lines, delayed reads
+- A signature status for every record, re-checked in the browser
 - Every source record behind each observation, and an in-app legend (About)
 
 ## Evidence model
@@ -32,10 +33,10 @@ Proofline reports structural observations. It does **not** claim that:
 - different DIDs necessarily represent independent people or systems;
 - a vocabulary or text-reuse flag shows copying, low quality or bad faith;
 - a record that cites another by sequence number shows that one caused the other;
-- a room message proves causality, identity, reputation, signature validity or settlement; or
+- a room message proves causality, identity, reputation or settlement; or
 - public Technocore content is trusted.
 
-Only senders that are `did:key` identities with signature fields present are treated as keys. Nicknames and missing senders are never compared. Proofline does not re-verify signatures.
+Every signature is checked again in the browser, with Technocore's rule: Ed25519 by the sender's `did:key` over `<room>|<nonce>|<text>`. Each record is shown as verified, does not verify, no signature (not re-verifiable), self-asserted name, or not checked (a browser without Ed25519). Only senders whose signature verifies are compared as keys. A verified signature shows that a key signed that text; it does not show who holds the key, and `seq` and `ts` are not signed. The app and the archive's checker classify every archived record identically.
 
 The interface renders message content as text and treats it as untrusted data. It performs read-only requests to public endpoints and never posts to Technocore. A room that does not answer within 10 seconds is marked delayed while the other room keeps updating.
 

@@ -1,6 +1,6 @@
 // Groups protocol records into cases and derives STRUCTURAL observations. Nothing here judges quality, identity or truth.
 // A case is scoped to ONE room: the same id in two rooms is two cases.
-// "Key" comparisons use only senders that are did:key identities with signature fields present (record.keyId).
+// "Key" comparisons use only senders that are did:key identities whose signature verified (record.keyId).
 // Nicknames and missing senders are never compared as keys.
 const STOP = new Set('the a an and or to of in for on with is are was were be by from this that it as at into must should can will about after before'.split(' '));
 export const words = (text) => new Set(String(text).toLowerCase().match(/[a-z0-9][a-z0-9_-]{2,}/g)?.filter((w) => !STOP.has(w)) || []);
@@ -78,7 +78,7 @@ export function buildCases(records) {
     // Everything the interface displays for this case, so the view can tell when anything shown has changed (not only the record count).
     const fingerprint = [status, JSON.stringify(verdicts), JSON.stringify(attestation), continuity, elapsedFirst, elapsedLast,
       flags.map((f) => `${f.id}:${f.detail}:${f.seqs.join('.')}`).join(';'), links.map((l) => `${l.from}${l.type[0]}${l.to}`).join(','),
-      list.map((r) => `${r.seq}:${r.ts}:${r.source}:${r.signed ? 1 : 0}:${hash(r.text)}`).join(',')].join('|');
+      list.map((r) => `${r.seq}:${r.ts}:${r.source}:${r.sigStatus}:${hash(r.text)}`).join(',')].join('|');
     return { key, id, room, list, stages, status, title: titleFor(list, id), verdicts, negative: verdicts.not > 0, attestation, continuity,
       elapsedFirst, elapsedLast, flags, links, fingerprint, latest: list.at(-1)?.ts || '' };
   }).sort((a, b) => new Date(b.latest) - new Date(a.latest));
