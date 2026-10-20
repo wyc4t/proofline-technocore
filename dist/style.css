@@ -91,3 +91,9 @@ footer .disclaimer{order:2;font-size:10px}
 .summary p{max-width:none}.summary p>*{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.summary div{justify-content:flex-end;align-self:stretch;padding-bottom:12px}
 @media(max-width:1250px){.summary p span:last-child{display:none}}
 @media(max-width:900px){.summary div{padding-bottom:0}}
+/* Definitions of the headline numbers: shown at once on hover, keyboard focus or tap. */
+.summary div{position:relative;cursor:help}.summary div:focus{outline:none}.summary div:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
+.summary .tip{display:none;position:absolute;top:calc(100% + 8px);left:0;z-index:30;width:max-content;max-width:min(280px,calc(100vw - 32px));padding:10px 12px;background:#111821;border:1px solid #4d5c70;border-radius:4px;box-shadow:0 8px 24px #000a;font:500 12px/1.45 Manrope,sans-serif;letter-spacing:0;text-transform:none;color:#d5dde7;white-space:normal}
+.summary div:hover .tip,.summary div:focus .tip{display:block}
+.summary div:nth-child(4) .tip{left:auto;right:0}
+@media(max-width:900px){.summary div:nth-child(3) .tip{left:auto;right:0}.summary .tip{top:calc(100% + 4px)}}
