@@ -41,7 +41,7 @@ function renderSummary(){
   else note.append(document.createTextNode('Older cases stay reachable through pinned links to the archive.'));
 }
 // Headline numbers: kibble over the last 24 hours, computed hourly from the verified archive.
-async function refreshStats(){try{const r=await fetch(`${ARCHIVE_RAW}stats/latest.json`,{cache:'no-store'});if(!r.ok)throw new Error(String(r.status));stats=await r.json();renderStats()}catch{if(!stats)$('#sDetail').textContent='The archive\u2019s numbers could not be loaded right now.'}}
+async function refreshStats(){try{const r=await fetch(`${ARCHIVE_RAW}stats/latest.json`,{cache:'no-store'});if(!r.ok)throw new Error(String(r.status));stats=await r.json();renderStats()}catch{if(!stats){$('#sDetail').textContent='The archive\u2019s numbers could not be loaded yet; trying again shortly.';setTimeout(refreshStats,30000)}}}
 function renderStats(){
   const k=stats?.rooms?.kibble;if(!k)return;
   const n=x=>x===null||x===undefined?'—':Number(x).toLocaleString('en-US'),p=x=>x===null||x===undefined?'—':`${Math.round(x)}%`,hm=t=>t?String(t).slice(11,16):'?';

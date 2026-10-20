@@ -9,5 +9,11 @@
     "check": "node scripts/build.mjs --check",
     "test": "node --test test/*.test.mjs"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@vercel/og": "0.11.1"
+  },
+  "engines": {
+    "node": "22.x"
+  }
 }
