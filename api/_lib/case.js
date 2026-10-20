@@ -2,7 +2,7 @@
 // A pinned case is loaded exactly as the browser loads it (src/lib/snapshot.js): every archive
 // file is checked against its manifest hash and every signature is re-verified.
 import { loadPinned, parsePin, ARCHIVE_RAW } from '../../src/lib/snapshot.js';
-import { parseRoomPage, annotateSignatures } from '../../src/lib/signature.js';
+import { parseRoomPage, annotateSignatures, annotateContentHashes } from '../../src/lib/signature.js';
 import { parseMessage } from '../../src/lib/protocol.js';
 import { buildCases } from '../../src/lib/cases.js';
 
@@ -34,6 +34,7 @@ export async function loadPinnedCase({ room, id, pin }) {
   const dec = new TextDecoder();
   const msgs = res.lines.map((l) => parseRoomPage(dec.decode(l)));
   await annotateSignatures(room, msgs);
+  await annotateContentHashes(msgs);
   const recs = msgs.map((m) => parseMessage(m, room)).filter((p) => p.ok).map((p) => p.record).filter((r) => r.id === id);
   const c = buildCases(recs)[0] || null;
   return c ? { case: c, captures: res.captures, missing: res.missing } : null;

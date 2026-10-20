@@ -12,7 +12,7 @@ button[aria-pressed=true]{border-color:var(--amber);color:var(--amber)}
 .case:focus-visible{outline-offset:-2px}
 footer span{white-space:nowrap}
 footer #sourceStatus{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:center;padding:0 14px}
-.cases{display:flex;flex-direction:column}.cases .case-list{flex:1;min-height:0;height:auto}.cases-note{display:block;margin:0;padding:10px 14px;font-size:12px;line-height:1.45;color:var(--muted);border-bottom:1px solid var(--line)}.cases-note b{color:#c3cdd9;font-weight:600}.cases-note button{padding:0;border:0;background:none;color:var(--blue);text-decoration:underline;font:inherit;cursor:pointer}
+.cases{display:flex;flex-direction:column}.cases .case-list{flex:1;min-height:0;height:auto}.search{padding:10px 14px 0}.search input{width:100%;font:500 13px Manrope,sans-serif;color:var(--text);background:#111821;border:1px solid var(--line);border-radius:4px;padding:8px 10px}.search input:focus{outline:2px solid var(--blue);outline-offset:-1px}.cases-note{display:block;margin:0;padding:10px 14px;font-size:12px;line-height:1.45;color:var(--muted);border-bottom:1px solid var(--line)}.cases-note b{color:#c3cdd9;font-weight:600}.cases-note button{padding:0;border:0;background:none;color:var(--blue);text-decoration:underline;font:inherit;cursor:pointer}
 .back{display:none;margin-bottom:14px}
 .case-list{height:calc(100% - 54px)}
 @media(max-width:900px){

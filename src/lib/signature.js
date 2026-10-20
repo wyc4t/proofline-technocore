@@ -84,3 +84,20 @@ export async function annotateSignatures(room, messages, subtle) {
 }
 
 export const signatureSupport = () => supported;
+
+// Content hashes kibble uses to refer to records: WITNESS binds sha256(full JOB line); an attestation's rh: is
+// sha256 of a result's text after `RESULT v1 | <job_id> |`, trimmed. Both are compared by hex prefix.
+const hexOf = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+export async function annotateContentHashes(messages, subtle = globalThis.crypto?.subtle) {
+  if (!subtle) return messages;
+  const enc = new TextEncoder();
+  await Promise.all((messages || []).map(async (m) => {
+    const t = typeof m?.text === 'string' ? m.text : '';
+    if (/^JOB v1 \|/.test(t)) m.textHash = hexOf(await subtle.digest('SHA-256', enc.encode(t)));
+    else if (/^(RESULT|DELIVER) v1 \|/.test(t)) {
+      const second = t.indexOf('|', t.indexOf('|') + 1);
+      if (second > 0) m.resultHash = hexOf(await subtle.digest('SHA-256', enc.encode(t.slice(second + 1).trim())));
+    }
+  }));
+  return messages;
+}

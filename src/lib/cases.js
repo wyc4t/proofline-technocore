@@ -25,10 +25,17 @@ export function wordingFromRequest(request, result) {
   const qt = words(request.body); let n = 0; for (const w of rt) if (qt.has(w)) n++;
   return n / rt.size >= 0.9;
 }
-function extractLinks(list, stages) {
+// An attestation's rh: names a result by content hash. It matches results of the same case posted before it.
+// Identical result text has an identical hash, so one rh: can match several results; all are kept and counted.
+export function attestationTargets(attests, results) {
+  return attests.filter((a) => a.rh).map((a) => ({ seq: a.seq, rh: a.rh,
+    matches: results.filter((r) => r.resultHash && r.resultHash.startsWith(a.rh) && r.seq < a.seq).map((r) => r.seq) }));
+}
+function extractLinks(list, stages, targets) {
   const bySeq = new Map(list.map((r) => [r.seq, r])), links = [], seen = new Set();
   const add = (from, to, type) => { const k = `${from}>${to}>${type}`; if (!seen.has(k)) { seen.add(k); links.push({ from, to, type }); } };
   for (const r of list) for (const m of r.text.matchAll(/\bseq\s*#?(\d+)/gi)) { const to = Number(m[1]); if (to !== r.seq && bySeq.has(to)) add(r.seq, to, 'cites'); }
+  for (const t of targets) for (const to of t.matches) add(t.seq, to, 'hash');
   for (const w of stages[1]) for (const res of stages[2]) if (w.keyId && w.keyId === res.keyId && w.seq < res.seq) add(w.seq, res.seq, 'same-key');
   return links;
 }
@@ -47,6 +54,14 @@ export function buildCases(records) {
     const room = list[0].room, id = list[0].id;
     const stages = [0, 1, 2, 3].map((s) => list.filter((r) => r.stage === s));
     const [requests, workers, results, attests] = stages, request = requests[0];
+    const extras = list.filter((r) => r.stage === null);
+    const targets = attestationTargets(attests, results);
+    // A WITNESS binds the exact job text by hash; it matches when a JOB of this case has that hash.
+    const witnesses = extras.filter((r) => r.kind === 'WITNESS').map((w) => ({ seq: w.seq, key: w.keyId, source: w.source,
+      matches: requests.some((j) => j.textHash && /^[0-9a-f]{16,64}$/i.test(w.arg) && j.textHash.startsWith(w.arg.toLowerCase())),
+      checkable: requests.some((j) => j.textHash) }));
+    const disputes = extras.filter((r) => r.kind === 'DISPUTE').map((d) => ({ seq: d.seq, reason: d.arg }));
+    const resolutions = extras.filter((r) => r.kind === 'RESOLVE').map((r) => ({ seq: r.seq, outcome: r.arg.toLowerCase() }));
     const status = stages.every((s) => s.length) ? 'all-stages' : request ? 'partial' : 'no-request';
     const verdicts = { useful: 0, not: 0, other: 0 };
     for (const a of attests) { if (NEGATIVE.has(a.verdict)) verdicts.not++; else if (a.verdict === 'useful') verdicts.useful++; else verdicts.other++; }
@@ -74,12 +89,14 @@ export function buildCases(records) {
     if (rw.length) flags.push({ id: 'requester-posted-work', label: 'Requester key also posted as worker or result', detail: 'The key that posted the request also appears on a claim, accept or result.', seqs: rw.map((r) => r.seq) });
     const ra2 = attests.filter((r) => r.keyId && requestKeys.has(r.keyId));
     if (ra2.length) flags.push({ id: 'requester-attested', label: 'Requester key also attested', detail: 'The key that posted the request also appears on an attestation. This can be ordinary workflow.', seqs: ra2.map((r) => r.seq) });
-    const links = extractLinks(list, stages);
+    if (disputes.length) flags.unshift({ id: 'disputed', label: 'Disputed', detail: `A DISPUTE record challenges this job (${[...new Set(disputes.map((d) => d.reason))].join(', ')}).${resolutions.length ? ` Resolution recorded: ${resolutions.map((r) => r.outcome).join(', ')}.` : ' No resolution is recorded.'} Both are claims by their keys.`, seqs: [...disputes, ...resolutions].map((d) => d.seq) });
+    const links = extractLinks(list, stages, targets);
     // Everything the interface displays for this case, so the view can tell when anything shown has changed (not only the record count).
     const fingerprint = [status, JSON.stringify(verdicts), JSON.stringify(attestation), continuity, elapsedFirst, elapsedLast,
       flags.map((f) => `${f.id}:${f.detail}:${f.seqs.join('.')}`).join(';'), links.map((l) => `${l.from}${l.type[0]}${l.to}`).join(','),
-      list.map((r) => `${r.seq}:${r.ts}:${r.source}:${r.sigStatus}:${hash(r.text)}`).join(',')].join('|');
+      list.map((r) => `${r.seq}:${r.ts}:${r.source}:${r.sigStatus}:${hash(r.text)}`).join(','),
+      JSON.stringify([targets, witnesses, disputes, resolutions])].join('|');
     return { key, id, room, list, stages, status, title: titleFor(list, id), verdicts, negative: verdicts.not > 0, attestation, continuity,
-      elapsedFirst, elapsedLast, flags, links, fingerprint, latest: list.at(-1)?.ts || '' };
+      elapsedFirst, elapsedLast, flags, links, targets, witnesses, disputes, resolutions, disputed: disputes.length > 0, fingerprint, latest: list.at(-1)?.ts || '' };
   }).sort((a, b) => new Date(b.latest) - new Date(a.latest));
 }

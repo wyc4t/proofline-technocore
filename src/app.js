@@ -1,7 +1,7 @@
 import {STAGE_NAMES,parseMessage} from './lib/protocol.js';
 import {ARCHIVE_RAW,parsePin,formatPin,loadPinned} from './lib/snapshot.js';
 import {buildCases} from './lib/cases.js';
-import {parseRoomPage,annotateSignatures,signatureSupport,checkSignature} from './lib/signature.js';
+import {parseRoomPage,annotateSignatures,annotateContentHashes,signatureSupport,checkSignature} from './lib/signature.js';
 import {createRoomState,applyPage,querySince,markOk,markError,coverage,allRecords,PAGE_LIMIT} from './lib/store.js';
 const SOURCES=['credence','kibble'];
 const rooms=SOURCES.map(createRoomState);
@@ -28,9 +28,12 @@ function el(tag,className,text){const node=document.createElement(tag);if(classN
 function formatDuration(ms){if(ms===null||!Number.isFinite(ms))return 'Unavailable';if(ms<0)return 'Invalid ordering';const s=Math.round(ms/1000);if(s<60)return `${s}s`;const m=Math.floor(s/60);if(m<60)return `${m}m ${s%60}s`;return `${Math.floor(m/60)}h ${m%60}m`}
 function shortDid(did){if(!did)return 'unknown sender';return did.startsWith('did:key:')?`${did.slice(8,18)}…${did.slice(-5)}`:did.slice(0,24)}
 const clock=ms=>ms?new Date(ms).toLocaleTimeString([],{hour12:false}):'never';
-const FILTER_LABEL={seen:'Request in view','all-stages':'All 4 stages',partial:'Partial',negative:'Negative verdict','no-request':'Request not seen',all:'All cases'};
-const matches=(c,f)=>f==='all'||(f==='seen'?c.status!=='no-request':f==='negative'?c.negative:c.status===f);
-function visibleCases(){return cases.filter(c=>matches(c,filter))}
+const FILTER_LABEL={seen:'Request in view','all-stages':'All 4 stages',partial:'Partial',negative:'Negative verdict',disputed:'Disputed','no-request':'Request not seen',all:'All cases'};
+const matches=(c,f)=>f==='all'||(f==='seen'?c.status!=='no-request':f==='negative'?c.negative:f==='disputed'?c.disputed:c.status===f);
+// Search: job ID, sender key (any part of it) or text, over the live view.
+let query='';
+const hits=(c,q)=>!q||c.id.toLowerCase().includes(q)||c.title.toLowerCase().includes(q)||c.list.some(r=>(r.source||'').toLowerCase().includes(q)||r.text.toLowerCase().includes(q));
+function visibleCases(){return cases.filter(c=>matches(c,filter)&&hits(c,query))}
 function renderSummary(){
   for(const o of $('#filter').options)o.textContent=`${FILTER_LABEL[o.value]} (${cases.filter(c=>matches(c,o.value)).length})`;
   // The live view is only the newest records of each room; say how much, and what the filter hides.
@@ -54,7 +57,7 @@ function renderStats(){
 
 function renderList(){
   const host=$('#caseList');host.replaceChildren();const visible=visibleCases();
-  if(!visible.length){host.append(el('div','loading','No matching cases in the current observation window.'));return}
+  if(!visible.length){host.append(el('div','loading',query?`No case in the live view matches \u201c${query}\u201d. Search covers only the live view; for an older case, use its pinned link.`:'No matching cases in the current observation window.'));return}
   for(const item of visible.slice(0,listLimit)){
     const button=el('button',`case${selected?.key===item.key?' active':''}`);button.type='button';button.dataset.key=item.key;if(selected?.key===item.key)button.setAttribute('aria-current','true');
     const top=el('div','case-top'),badges=el('span','badges');if(item.negative)badges.append(el('span','badge negative',`NEGATIVE ×${item.verdicts.not}`));badges.append(el('span',`badge ${item.status}`,STATUS_LABEL[item.status]));
@@ -87,6 +90,10 @@ function renderInspector(){
   const sc=c.list.reduce((m,r)=>(m[r.sigStatus]=(m[r.sigStatus]||0)+1,m),{});
   finding(host,'Signatures',['valid','invalid','no_sig','unsigned','unchecked'].filter(k=>sc[k]).map(k=>`${sc[k]} ${{valid:'verified',invalid:'fail',no_sig:'no signature',unsigned:'nickname',unchecked:'not checked'}[k]}`).join(' · '),
     sc.invalid?'At least one record names a key but its signature does not verify. That record is not treated as coming from that key.':sc.unchecked&&!sc.valid?'Your browser cannot check these signatures, so no record here is compared as coming from a key.':'A verified signature shows that the key signed this room, nonce and text. It does not show who holds the key or that the work is correct. Sequence numbers and times are added by Technocore and are not signed.',sc.invalid?'alert':'');
+  if(c.targets.length){const m=c.targets.filter(t=>t.matches.length).length,multi=c.targets.filter(t=>t.matches.length>1).length;
+    finding(host,'Attestations that name a result',`${m} of ${c.targets.length} matched`,`An attestation can name the exact result it judges by hash (rh:). Matched means a result of this case, posted earlier, has that hash; the graph draws it in green.${m<c.targets.length?' The others name a result that is not in view.':''}${multi?` ${multi} name text that was posted more than once, so they match several results.`:''}`)}
+  for(const w of c.witnesses)finding(host,'Job countersign (WITNESS)',w.matches?'matches the job text':w.checkable?'does not match':'job not in view',`A WITNESS record by ${shortDid(w.source)} binds the exact job text by hash. ${w.matches?'Its hash matches the JOB record of this case.':w.checkable?'Its hash does not match the JOB record shown here.':'The JOB record it refers to is not in view.'} It shows that key saw this text; it says nothing about the work.`,w.checkable&&!w.matches?'alert':'');
+  if(c.disputes.length)finding(host,'Disputed',c.resolutions.length?c.resolutions.map(r=>r.outcome).join(', '):'no resolution',`${c.disputes.length} ${c.disputes.length===1?'DISPUTE':'DISPUTE records'}: ${[...new Set(c.disputes.map(d=>d.reason))].join(', ')}. A dispute and a resolution are claims by their keys, not findings.`,'alert');
   const cont={'observed':['Observed','A key that accepted or claimed also posted a result.'],'not-observed':['Not observed','No result was posted by a key that accepted or claimed.'],'no-worker':['Unavailable','No accept or claim in the window.'],'no-result':['Unavailable','No result in the window.'],'no-key':['Unavailable','The worker or result records do not come from keys with a verified signature, so keys cannot be compared.']}[c.continuity];
   finding(host,'Key continuity (worker → result)',cont[0],`${cont[1]} Keys are not people; this says nothing about real-world identity.`);
   const a=c.attestation,av={'no-attestation':['None observed','No attestation in the window.'],'no-result':['Unavailable','Attestations are present, but no result is in the window to compare keys against.'],'no-key':['Unavailable','The result records do not come from keys with a verified signature, so attestation keys cannot be compared.'],'ok':[`${a.other} other-key · ${a.self} result-key${a.unknown?` · ${a.unknown} unsigned`:''}`,'Counts attestations by whether their key also posted a result. Unsigned senders are not compared. Different keys are not proof of independent parties.']}[a.state];
@@ -123,7 +130,7 @@ async function openSnapshot(key,pinText){
     const fetchText=async u=>{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(`the archive index returned ${r.status}`);return r.text()};
     const fetchBytes=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(`an archive file returned ${r.status}`);return new Uint8Array(await r.arrayBuffer())};
     const res=await loadPinned({room,gen:pin.gen,from:pin.from,to:pin.to,fetchText,fetchBytes,assetUrl:(t,a)=>`${assetBase}/api/asset?tag=${encodeURIComponent(t)}&asset=${encodeURIComponent(a)}`});
-    const dec=new TextDecoder(),msgs=res.lines.map(l=>parseRoomPage(dec.decode(l)));await annotateSignatures(room,msgs);
+    const dec=new TextDecoder(),msgs=res.lines.map(l=>parseRoomPage(dec.decode(l)));await annotateSignatures(room,msgs);await annotateContentHashes(msgs);
     const recs=msgs.map(m=>parseMessage(m,room)).filter(p=>p.ok).map(p=>p.record).filter(r=>r.id===id);
     const c=buildCases(recs)[0]||null;
     snapshot={key,room,id,pin:pinText,gen:pin.gen,from:pin.from,to:pin.to,loading:false,case:c,captures:res.captures,missing:res.missing,records:res.lines.length,
@@ -177,7 +184,7 @@ async function pollRoom(state){
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),FETCH_TIMEOUT_MS);
   try{
     const response=await fetch(`https://technocore.chat/r/${state.room}?${params}`,{cache:'no-store',signal:ctl.signal});if(!response.ok)throw new Error(`${state.room} returned ${response.status}`);
-    const page=parseRoomPage(await response.text());await annotateSignatures(state.room,page?.messages);
+    const page=parseRoomPage(await response.text());await annotateSignatures(state.room,page?.messages);await annotateContentHashes(page?.messages);
     applyPage(state,page,{since});markOk(state,Date.now());
   }catch(error){throw ctl.signal.aborted?new Error(`${state.room} did not answer within ${FETCH_TIMEOUT_MS/1000}s`):error}
   finally{clearTimeout(timer)}
@@ -207,7 +214,7 @@ function drawGraph(){
     if(items.length>MAX_NODES){ctx.fillStyle='#8696a8';ctx.font='10px DM Mono';ctx.fillText(`+${items.length-MAX_NODES} more · see records`,xs[stage],centerY+(MAX_NODES/2+.4)*55)}});
   let hidden=0;
   for(const link of selected.links){const a0=pos.get(link.from),b0=pos.get(link.to);if(!a0||!b0){hidden++;continue}
-    ctx.strokeStyle=link.type==='cites'?'#9fb2c8':'#4b5d72';ctx.lineWidth=link.type==='cites'?1.6:1;ctx.setLineDash(link.type==='cites'?[]:[4,4]);ctx.beginPath();
+    const solid=link.type!=='same-key';ctx.strokeStyle=link.type==='hash'?'#67e8a5':link.type==='cites'?'#9fb2c8':'#4b5d72';ctx.lineWidth=solid?1.6:1;ctx.setLineDash(solid?[]:[4,4]);ctx.beginPath();
     if(a0.x===b0.x){const bulge=a0.x+16+Math.min(46,Math.abs(a0.y-b0.y)*.35+14);ctx.moveTo(a0.x+13,a0.y);ctx.bezierCurveTo(bulge,a0.y,bulge,b0.y,b0.x+13,b0.y)}
     else{let a=a0,b=b0;if(a.x>b.x)[a,b]=[b,a];ctx.moveTo(a.x+14,a.y);ctx.bezierCurveTo((a.x+b.x)/2,a.y,(a.x+b.x)/2,b.y,b.x-14,b.y)}
     ctx.stroke();ctx.setLineDash([])}
@@ -215,7 +222,7 @@ function drawGraph(){
     const r=stage===0?16:13;ctx.font='9px DM Mono';ctx.fillStyle='#cbd5e1';ctx.fillText(record.kind,x,y+r+11);ctx.fillStyle='#8696a8';ctx.fillText(`#${record.seq}`,x,y+r+21)}
   const missing=STAGE_NAMES.filter((_,i)=>!selected.stages[i].length);ctx.font='10px DM Mono';ctx.fillStyle='#8696a8';
   if(missing.length)ctx.fillText(`NOT IN OBSERVED WINDOW: ${missing.join(' · ')}`,w/2,h-46);
-  ctx.fillText('Solid line: record names another by seq  ·  Dashed: same key continues  ·  Columns are stages, not relationships',w/2,h-24);
+  ctx.fillText('Solid: names another record (grey: by seq, green: attestation names a result by hash)  ·  Dashed: same key continues',w/2,h-24);
   if(hidden)ctx.fillText(`${hidden} ${hidden===1?'connection involves a record':'connections involve records'} not drawn (see the records list)`,w/2,h-8);
 }
 // The maintainer's key is fixed here, so a statement signed by any other key can never pass as the maintainer's.
@@ -244,5 +251,5 @@ document.addEventListener('click',e=>{if(e.target.closest?.('.about-link')){e.pr
 if(location.hash==='#about')openAbout();
 if(wantedKey&&linkParams.get('at')){openSnapshot(wantedKey,linkParams.get('at'));wantedKey=null}
 refreshArchiveState();setInterval(refreshArchiveState,120000);refreshStats();setInterval(refreshStats,600000);
-$('#refresh').onclick=()=>refresh();$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};addEventListener('resize',resizeCanvas);resizeCanvas();refresh();setInterval(refresh,15000);
+$('#refresh').onclick=()=>refresh();$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};$('#search').oninput=e=>{query=e.target.value.trim().toLowerCase();listLimit=LIST_STEP;render(true)};addEventListener('resize',resizeCanvas);resizeCanvas();refresh();setInterval(refresh,15000);
 if(document.modelContext?.registerTool)document.modelContext.registerTool({name:'inspect_evidence_cases',title:'Inspect evidence cases',description:'Return structural observations for live Technocore work chains already loaded in Proofline.',inputSchema:{type:'object',properties:{status:{type:'string',enum:['all','all-stages','partial','no-request','negative']}},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:({status='all'}={})=>({observed_at:new Date().toISOString(),cases:cases.filter(c=>status==='all'||(status==='negative'?c.negative:c.status===status)).slice(0,20).map(c=>({room:c.room,id:c.id,status:c.status,stages:c.stages.map(s=>s.length),verdicts:c.verdicts,flags:c.flags.map(f=>f.id),records:c.list.length}))})});
