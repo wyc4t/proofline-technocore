@@ -419,6 +419,23 @@ function drawGraph(){
   ctx.fillText('Solid line: record names another by seq  ·  Dashed: same key continues  ·  Columns are stages, not relationships',w/2,h-24);
   if(hidden)ctx.fillText(`${hidden} ${hidden===1?'connection involves a record':'connections involve records'} not drawn (see the records list)`,w/2,h-8);
 }
+// The maintainer's key is fixed here, so a statement signed by any other key can never pass as the maintainer's.
+const MAINTAINER={did:'did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh',room:'d-proofline',seq:1};
+async function checkMaintainer(){
+  const out=$('#maintainerProof');if(!out)return;
+  const show=(text,tone)=>{out.textContent=text;out.className=`proof ${tone}`};
+  try{
+    const res=await fetch(`https://technocore.chat/r/${MAINTAINER.room}/export`,{cache:'no-store'});if(!res.ok)throw new Error(String(res.status));
+    const line=(await res.text()).split('\n').find(l=>/^\{"seq":1,/.test(l));
+    const m=line?parseRoomPage(line):null;
+    if(!m||Number(m.seq)!==MAINTAINER.seq||m.from!==MAINTAINER.did||!/maintain Proofline/.test(String(m.text))){show('the statement is not in the room right now, so it cannot be checked.','warn');return}
+    const st=await checkSignature(MAINTAINER.room,m);
+    if(st==='valid')show(`signature verified (${MAINTAINER.room} #${MAINTAINER.seq}, ${String(m.ts).slice(0,10)}).`,'ok');
+    else if(st==='unchecked')show('your browser cannot check this signature.','warn');
+    else show('the signature does not verify.','bad');
+  }catch{show('the room could not be reached, so the statement was not checked.','warn')}
+}
+checkMaintainer();
 const about=$('#aboutDialog');
 function openAbout(){if(typeof about.showModal==='function'&&!about.open)about.showModal()}
 $('#about').onclick=openAbout;$('#aboutClose').onclick=()=>about.close();
