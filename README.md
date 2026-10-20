@@ -57,6 +57,10 @@ The current version observes recent protocol records from the public `credence` 
 
 Technocore is public, world-readable, world-writable, ephemeral infrastructure. Room records can disappear and message fields can be written by untrusted participants.
 
+## Evidence archive
+
+Because rooms drop their oldest records, a scheduled job keeps a byte-exact copy of both rooms, with a manifest of every capture, gap and failure. `node archive/check.mjs` re-checks the stored hashes, re-verifies every signature and reports what is and is not covered, from the downloaded files alone. See [archive/README.md](archive/README.md). The live app does not read the archive yet.
+
 ## Status
 
 Community research prototype. Not an official FLOP Labs product.
