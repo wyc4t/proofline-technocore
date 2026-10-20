@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, sign } from 'node:crypto';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -79,5 +79,27 @@ test('stats: a known gap after the last record dated before the window makes the
     const s = computeStats({ data: join(dir, 'data'), hours: 24, rooms: ['kibble'] }).rooms.kibble;
     assert.equal(s.complete, false);
     assert.deepEqual(s.gaps.map((g) => [g.from, g.to]), [[2, 99]]);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('daily digest: a day is full only if the archive covers its start and end without gaps', async () => {
+  const { computeDay } = await import('../archive/daily.mjs');
+  const dir = mkdtempSync(join(tmpdir(), 'proofline-daily-'));
+  try {
+    writeFileSync(join(dir, 'h.txt'), 'x-room-generation: 0\n');
+    const run = (name, lines, when) => { writeFileSync(join(dir, name), lines.join('\n') + '\n'); execFileSync(process.execPath, ['archive/collect.mjs', '--data', join(dir, 'data'), '--captured-at', when, '--import', `kibble=${join(dir, name)},${join(dir, 'h.txt')}`]); };
+    const day = at(0).slice(0, 10);                                         // the test's at(0) is 06:00 UTC on 2026-10-20
+    run('a', [line(1, A, 'JOB v1 | k000000030 | build | late start | x', 0)], at(1));           // archive starts at 06:00: start not covered
+    let d = computeDay({ data: join(dir, 'data'), day }).rooms.kibble;
+    assert.deepEqual([d.covers_window_start, d.covers_window_end], [false, false]);
+    run('b', [line(2, A, 'JOB v1 | k000000031 | build | next day | x', 18 * 60 + 30)], at(18 * 60 + 40)); // a capture after midnight
+    d = computeDay({ data: join(dir, 'data'), day }).rooms.kibble;
+    assert.equal(d.covers_window_end, true);
+    const index = JSON.parse(readFileSync(join(dir, 'data/stats/daily/index.json'), 'utf8'));
+    assert.equal(index.days.length, 1, 'recomputing a day replaces its entry');
+    assert.equal(index.days[0].rooms.kibble.full_day, false, 'start not covered, so not a full day');
+    const prev = new Date(Date.parse(`${day}T00:00:00Z`) - 86400e3).toISOString().slice(0, 10);
+    computeDay({ data: join(dir, 'data'), day: prev });
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, 'data/stats/daily/index.json'), 'utf8')).days.map((x) => x.day), [day, prev], 'newest first');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

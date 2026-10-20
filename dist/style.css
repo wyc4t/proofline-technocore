@@ -97,3 +97,5 @@ footer .disclaimer{order:2;font-size:10px}
 .summary div:hover .tip,.summary div:focus .tip{display:block}
 .summary div:nth-child(4) .tip{left:auto;right:0}
 @media(max-width:900px){.summary div:nth-child(3) .tip{left:auto;right:0}.summary .tip{top:calc(100% + 4px)}}
+.actions a.button{display:inline-block;font:500 12px Manrope,sans-serif;color:var(--text);background:#111821;border:1px solid var(--line);border-radius:4px;padding:8px 11px;text-decoration:none}.actions a.button:hover{border-color:#4d5c70}
+@media(max-width:650px){.actions a.button{padding:10px 14px;font-size:16px}}

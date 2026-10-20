@@ -1,12 +1,20 @@
 // The site's page, with link-preview metadata filled in for one case. vercel.json sends only
 // link-preview crawlers here (X, Slack, Discord, LinkedIn, Telegram, WhatsApp...); everyone
 // else gets the static page directly. If anything here fails, the plain page is served.
-import { SITE, parseLink, loadPinnedCase, loadStats, summarize, clip } from './_lib/case.js';
+import { SITE, parseLink, loadPinnedCase, loadStats, loadDay, summarize, clip } from './_lib/case.js';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const q = (link) => `case=${encodeURIComponent(link.key).replace(/%3A/gi, ':')}${link.pinText ? `&at=${encodeURIComponent(link.pinText).replace(/%3A/gi, ':')}` : ''}`;
 
 export async function describe(query) {
+  if (query.view === 'digest') {
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(String(query.day || '')) ? String(query.day) : 'latest';
+    const d = await loadDay(day), k = d?.rooms?.kibble;
+    const p = (x) => (x === null || x === undefined ? '?' : `${Math.round(x)}%`);
+    if (!k) return { cache: 300, url: `${SITE}/digest`, image: `${SITE}/api/card`, title: 'Proofline · Daily digest', description: 'One UTC day of public agent work on Technocore, from the verified evidence archive.' };
+    return { cache: day === 'latest' ? 1800 : 86400, url: `${SITE}/digest?day=${d.day}`, image: `${SITE}/api/card?day=${d.day}`, title: `Proofline daily digest · ${d.day}`,
+      description: `kibble, ${k.full_day ? 'full day' : 'partial day'}: ${Number(k.jobs).toLocaleString('en-US')} jobs posted, ${p(k.with_result_pct)} got a result, ${p(k.with_useful_attestation_pct)} attested useful, ${p(k.reposted_share_pct)} reposted titles. From the verified archive.` };
+  }
   const link = parseLink(query);
   if (!link) {
     const k = (await loadStats())?.rooms?.kibble;
@@ -28,9 +36,10 @@ export async function describe(query) {
 export default async function handler(req, res) {
   // The page from this same deployment (production or preview), never a stale or missing copy.
   const host = /^[a-z0-9.-]+\.vercel\.app$|^localhost(:\d+)?$/i.test(String(req.headers?.host || '')) ? `https://${req.headers.host}` : SITE;
-  const page = await fetch(`${host}/app`, { headers: { 'user-agent': 'proofline-share' }, signal: AbortSignal.timeout(10_000) })
+  const path = req.query?.view === 'digest' ? '/daily' : '/app';
+  const page = await fetch(`${host}${path}`, { headers: { 'user-agent': 'proofline-share' }, signal: AbortSignal.timeout(10_000) })
     .then((r) => (r.ok ? r.text() : null)).catch(() => null);
-  if (!page || !page.includes('</head>')) { res.status(302).setHeader('Location', `${host}/app`); res.end(); return; }
+  if (!page || !page.includes('</head>')) { res.status(302).setHeader('Location', `${host}${path}`); res.end(); return; }
   let html = page, cache = 300;
   try {
     const d = await describe(req.query || {});

@@ -5,7 +5,7 @@
 //   /api/card?case=kibble:k123                  live case link (no data: the live view moves on)
 // Pinned to @vercel/og 0.11.1: 1.0.x's Node build cannot load as an ES module (it calls require()).
 import { ImageResponse } from '@vercel/og';
-import { parseLink, loadPinnedCase, loadStats, summarize, clip } from './_lib/case.js';
+import { parseLink, loadPinnedCase, loadStats, loadDay, summarize, clip } from './_lib/case.js';
 
 const C = { bg: '#05070a', panel: '#0d1219', line: '#202935', text: '#e5ebf2', muted: '#8696a8', acid: '#d7ff55', blue: '#65bfff', amber: '#ffbe5c', green: '#67e8a5' };
 const STAGE_COLOR = [C.acid, C.blue, C.amber, C.green];
@@ -61,11 +61,29 @@ function siteCard(stats) {
       k ? h({ fontSize: 21, color: C.acid, marginTop: 20, letterSpacing: 1 }, `kibble · ${full ? 'last 24 h' : `last ${Math.floor(span / 60)} h ${span % 60} min`} · ${k.complete ? 'no gaps' : 'has gaps'} · ${n(k.signatures?.valid)} signatures re-checked`) : null]);
 }
 
+function dayCard(d) {
+  const k = d.rooms.kibble;
+  const n = (x) => (x === null || x === undefined ? '—' : Number(x).toLocaleString('en-US')), p = (x) => (x === null || x === undefined ? '—' : `${Math.round(x)}%`);
+  const hm = (t) => (t ? String(t).slice(11, 16) : '?');
+  const nums = [['JOBS POSTED', n(k.jobs)], ['GOT A RESULT', p(k.with_result_pct)], ['ATTESTED USEFUL', p(k.with_useful_attestation_pct)], ['REPOSTED TITLES', p(k.reposted_share_pct)]];
+  return frame({ text: k.full_day ? 'FULL DAY · NO GAPS' : `PARTIAL DAY · ${hm(k.from_ts)}–${hm(k.to_ts)} UTC`, color: k.full_day ? C.green : C.amber },
+    [h({ fontSize: 22, color: C.muted, letterSpacing: 3 }, 'KIBBLE · DAILY DIGEST'),
+      h({ fontSize: 64, marginTop: 6 }, d.day),
+      h({ gap: 18, marginTop: 30 }, nums.map(([label, v]) => h({ flexDirection: 'column', flexGrow: 1, flexBasis: 0, background: C.panel, border: `1px solid ${C.line}`, padding: '18px 22px' },
+        h({ fontSize: 17, letterSpacing: 2, color: C.muted }, label), h({ fontSize: 52, marginTop: 6 }, v)))),
+      h({ fontSize: 21, color: '#c3cdd9', marginTop: 20 }, `${n(k.job_ids)} job IDs · ${n(k.requester_keys)} requester keys · ${n(k.records)} records, every signature re-checked`)],
+    'From the verified evidence archive · not an official FLOP Labs product');
+}
+
 export default async function handler(req, res) {
   const link = parseLink(req.query);
   let element, maxAge = 1800;
   try {
-    if (link?.pin) {
+    if (req.query?.day) {
+      const d = await loadDay(String(req.query.day));
+      if (d?.rooms?.kibble) { element = dayCard(d); maxAge = req.query.day === 'latest' ? 1800 : 86400; }
+      else { element = siteCard(await loadStats()); maxAge = 300; }
+    } else if (link?.pin) {
       const loaded = await loadPinnedCase(link);
       // A complete archived window never changes, so its card can be cached for good; a partial one may
       // still be filled by a later capture, so it is looked at again soon.

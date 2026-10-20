@@ -37,6 +37,21 @@ if node -e 'try{const s=JSON.parse(require("fs").readFileSync("data/stats/latest
   ) || echo "statistics not updated this time"
 fi
 
+# Daily digest: once per UTC day, for the previous day, from the first run after midnight.
+# The first digest is the archive's first day (a partial day, since it started mid-day).
+YDAY=$(date -u -d yesterday +%F)
+FIRST=$(head -c 400 data/captures.jsonl | grep -o '"captured_at":"[0-9-]*' | head -1 | cut -d'"' -f4)
+if [ -n "$FIRST" ] && [ ! -f "data/stats/daily/$YDAY.json" ] && [[ ! "$YDAY" < "$FIRST" ]]; then
+  (
+    mkdir -p assets
+    node code/archive/daily.mjs --data data --day "$YDAY" --list-assets > needed-day.tsv
+    while IFS=$'\t' read -r tag asset; do
+      [ -z "$asset" ] || [ -f "assets/$asset" ] || gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$asset" -D assets
+    done < needed-day.tsv
+    node code/archive/daily.mjs --data data --assets assets --day "$YDAY"
+  ) || echo "daily digest not computed this time"
+fi
+
 cd data
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
