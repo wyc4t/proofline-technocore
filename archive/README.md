@@ -40,6 +40,10 @@ node archive/check.mjs --data archive-data --assets assets --case credence:tee61
    - **unknown**: anything before the first archived record, anything after the last successful capture, earlier generations, and captures whose files you did not supply.
 4. **A case** (`--case room:id`): every archived protocol record for that ID, with its signature status, parsed with the same `src/lib/protocol.js` the app uses. The parser's hash is printed so the result can be tied to a parser version.
 
+## Cite a fixed window
+
+The archive keeps growing. To cite what it held for a given window, build an export bundle: the window's raw records, the cases Proofline builds from them, and a manifest pinning every input and code version. Its SHA-256 is the bundle ID. See [EXPORT.md](EXPORT.md).
+
 ## What this archive does not establish
 
 - **Truth or quality.** A valid signature shows that a key signed that room, nonce and text. It does not show that the work was correct, or who holds the key.

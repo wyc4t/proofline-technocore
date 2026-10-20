@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { parseLine, splitExport, classify } from '../archive/lib/records.mjs';
 import { ingest } from '../archive/collect.mjs';
 import { check } from '../archive/check.mjs';
+import { exportBundle } from '../archive/export.mjs';
 
 const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function b58encode(buf) {
@@ -121,6 +122,18 @@ test('collect + check: reproduces counts, coverage and a case; detects tampering
     assert.equal(check({ data: pdata }).rooms.kibble.g0.records, 2, 'check also reads files still waiting for upload');
     writeFileSync(join(pdata, 'pending-uploads/kibble-2026-10-20/extra.jsonl.gz'), 'x');
     assert.throws(() => pend(pdata));
+
+    // Export: deterministic, pinned to a window, refuses windows the archive does not cover.
+    const b1 = exportBundle({ data, assets: outbox, room: 'credence', fromSeq: 1, toSeq: 4 });
+    const b2 = exportBundle({ data, assets: outbox, room: 'credence', fromSeq: 1, toSeq: 4 });
+    assert.equal(b1.bundleId, b2.bundleId);
+    assert.ok(b1.rawBytes.equals(b2.rawBytes) && b1.casesBytes.equals(b2.casesBytes));
+    assert.deepEqual(b1.manifest.signatures, { valid: 2, invalid: 0, no_sig: 1, unsigned: 1 });
+    assert.deepEqual(JSON.parse(b1.casesBytes)[0].records.map((r) => `${r.kind}:${r.sig_status}:${r.key ? 'key' : '-'}`),
+      ['TASK:valid:key', 'ACCEPT:no_sig:-', 'SUBMIT:unsigned:-', 'VOUCH:valid:key']);
+    assert.throws(() => exportBundle({ data, assets: outbox, room: 'kibble', fromSeq: 100, toSeq: 105 }), /3 sequence numbers/);
+    assert.equal(exportBundle({ data, assets: outbox, room: 'kibble', fromSeq: 100, toSeq: 105, allowGaps: true }).manifest.coverage.seqs_missing_from_archive, 3);
+    assert.notEqual(exportBundle({ data, assets: outbox, room: 'credence', fromSeq: 1, toSeq: 3 }).bundleId, b1.bundleId, 'a different window is a different bundle');
 
     // One changed byte in an archived file is caught.
     const f = join(data, 'rooms/credence/g0/2026-10-20.jsonl');
