@@ -1,0 +1,117 @@
+{
+ "format": "proofline-stats",
+ "stats_version": "2",
+ "generated_at": "2026-10-21T00:13:16.574Z",
+ "window_hours": 24,
+ "rooms": {
+  "kibble": {
+   "from_ts": "2026-10-20T05:32:16.186Z",
+   "to_ts": "2026-10-20T23:59:59.718Z",
+   "span_minutes": 1108,
+   "complete": true,
+   "gaps": [],
+   "unavailable_captures": 0,
+   "records": 199813,
+   "protocol_records": 196148,
+   "signatures": {
+    "valid": 199776,
+    "invalid": 0,
+    "no_sig": 0,
+    "unsigned": 37
+   },
+   "jobs": {
+    "records": 31451,
+    "ids": 26155,
+    "requester_keys": 15001,
+    "reposted_ids": 23,
+    "reposted_job_records": 5310,
+    "reposted_share_pct": 16.9
+   },
+   "outcomes": {
+    "basis_ids": 25530,
+    "with_claim": 21537,
+    "with_result": 19918,
+    "with_attestation": 7815,
+    "with_useful_attestation": 5825,
+    "posted_before": "2026-10-20T23:30:00.000Z",
+    "with_claim_pct": 84.4,
+    "with_result_pct": 78,
+    "with_attestation_pct": 30.6,
+    "with_useful_attestation_pct": 22.8,
+    "median_first_result_seconds": 14.242
+   },
+   "attestations": {
+    "records": 28522,
+    "negative": 7494
+   },
+   "active_keys": 18143,
+   "ids_without_job": 18112,
+   "window_start": "2026-10-20T00:00:00.000Z",
+   "window_end": "2026-10-21T00:00:00.000Z",
+   "last_capture": "2026-10-21T00:12:39.202Z",
+   "covers_window_start": false,
+   "covers_window_end": true
+  },
+  "credence": {
+   "from_ts": null,
+   "to_ts": null,
+   "span_minutes": 0,
+   "complete": true,
+   "gaps": [],
+   "unavailable_captures": 0,
+   "records": 0,
+   "protocol_records": 0,
+   "signatures": {
+    "valid": 0,
+    "invalid": 0,
+    "no_sig": 0,
+    "unsigned": 0
+   },
+   "jobs": {
+    "records": 0,
+    "ids": 0,
+    "requester_keys": 0,
+    "reposted_ids": 0,
+    "reposted_job_records": 0,
+    "reposted_share_pct": null
+   },
+   "outcomes": {
+    "basis_ids": 0,
+    "with_claim": 0,
+    "with_result": 0,
+    "with_attestation": 0,
+    "with_useful_attestation": 0,
+    "posted_before": "2026-10-20T23:30:00.000Z",
+    "with_claim_pct": null,
+    "with_result_pct": null,
+    "with_attestation_pct": null,
+    "with_useful_attestation_pct": null,
+    "median_first_result_seconds": null
+   },
+   "attestations": {
+    "records": 0,
+    "negative": 0
+   },
+   "active_keys": 0,
+   "ids_without_job": 0,
+   "window_start": "2026-10-20T00:00:00.000Z",
+   "window_end": "2026-10-21T00:00:00.000Z",
+   "last_capture": "2026-10-21T00:12:37.766Z",
+   "covers_window_start": true,
+   "covers_window_end": true
+  }
+ },
+ "code": {
+  "verifier_version": "1",
+  "src/lib/protocol.js": "bf2d778884b388565b0e4f42ee9a3ad65b315a0283360057f961ac143627638a",
+  "archive/stats.mjs": "006e507c7fe6884bf9bd843b4441fb03a11055de357d3b99a063e96944e925b5"
+ },
+ "notes": [
+  "Counts are per room and job ID, over archived records whose signatures were re-verified.",
+  "Outcome rates count jobs posted at least 30 minutes before the window ends.",
+  "A reposted ID is a job ID under which two or more verified keys posted identical JOB text.",
+  "Jobs are grouped by room generation and job ID.",
+  "These describe records, not whether any work was correct or useful."
+ ],
+ "day": "2026-10-20"
+}
