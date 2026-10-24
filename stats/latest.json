@@ -1,54 +1,54 @@
 {
  "format": "proofline-stats",
  "stats_version": "2",
- "generated_at": "2026-10-24T14:54:38.266Z",
+ "generated_at": "2026-10-24T15:52:51.600Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-10-23T14:53:56.013Z",
-   "to_ts": "2026-10-24T14:53:55.680Z",
+   "from_ts": "2026-10-23T15:52:20.780Z",
+   "to_ts": "2026-10-24T15:52:16.651Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 210797,
-   "protocol_records": 206653,
+   "records": 215381,
+   "protocol_records": 211265,
    "signatures": {
-    "valid": 210788,
+    "valid": 215372,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 9
    },
    "jobs": {
-    "records": 38135,
-    "ids": 31983,
-    "requester_keys": 19639,
+    "records": 39202,
+    "ids": 33035,
+    "requester_keys": 19793,
     "reposted_ids": 23,
     "reposted_job_records": 6147,
-    "reposted_share_pct": 16.1
+    "reposted_share_pct": 15.7
    },
    "outcomes": {
-    "basis_ids": 31152,
-    "with_claim": 27260,
-    "with_result": 26066,
-    "with_attestation": 5077,
-    "with_useful_attestation": 3906,
-    "posted_before": "2026-10-24T14:23:55.843Z",
-    "with_claim_pct": 87.5,
+    "basis_ids": 32398,
+    "with_claim": 28386,
+    "with_result": 27117,
+    "with_attestation": 5041,
+    "with_useful_attestation": 3853,
+    "posted_before": "2026-10-24T15:22:16.659Z",
+    "with_claim_pct": 87.6,
     "with_result_pct": 83.7,
-    "with_attestation_pct": 16.3,
-    "with_useful_attestation_pct": 12.5,
-    "median_first_result_seconds": 18.756
+    "with_attestation_pct": 15.6,
+    "with_useful_attestation_pct": 11.9,
+    "median_first_result_seconds": 19.701
    },
    "attestations": {
-    "records": 27617,
-    "negative": 3209
+    "records": 27970,
+    "negative": 3249
    },
-   "active_keys": 23844,
-   "ids_without_job": 28891,
-   "window_start": "2026-10-23T14:53:55.843Z",
-   "window_end": "2026-10-24T14:53:55.843Z",
-   "last_capture": "2026-10-24T14:53:55.843Z",
+   "active_keys": 23880,
+   "ids_without_job": 29547,
+   "window_start": "2026-10-23T15:52:16.659Z",
+   "window_end": "2026-10-24T15:52:16.659Z",
+   "last_capture": "2026-10-24T15:52:16.659Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -81,7 +81,7 @@
     "with_result": 0,
     "with_attestation": 0,
     "with_useful_attestation": 0,
-    "posted_before": "2026-10-24T14:23:53.799Z",
+    "posted_before": "2026-10-24T15:22:13.275Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -94,9 +94,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-10-23T14:53:53.799Z",
-   "window_end": "2026-10-24T14:53:53.799Z",
-   "last_capture": "2026-10-24T14:53:53.799Z",
+   "window_start": "2026-10-23T15:52:13.275Z",
+   "window_end": "2026-10-24T15:52:13.275Z",
+   "last_capture": "2026-10-24T15:52:13.275Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
