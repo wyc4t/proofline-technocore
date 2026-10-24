@@ -1,0 +1,60 @@
+{
+ "format": "proofline-export",
+ "export_version": "1",
+ "room": "credence",
+ "generation": "0",
+ "window": {
+  "from_seq": 1,
+  "to_seq": 13281,
+  "first_ts": "2026-08-28T15:24:49.338739Z",
+  "last_ts": "2026-10-19T17:06:04.704743Z"
+ },
+ "coverage": {
+  "records_in_window": 13281,
+  "seqs_missing_from_archive": 0,
+  "known_gaps_in_window": [],
+  "note": "Complete for this window when seqs_missing_from_archive is 0. Says nothing about earlier generations or anything outside the window."
+ },
+ "files": {
+  "records.jsonl": {
+   "sha256": "4bde2b7a24b9b8533ed80a93ba46afb01be664be0fe63673e6e2e1927fed0783",
+   "bytes": 8413866,
+   "records": 13281,
+   "note": "byte-exact lines of the room export, ascending seq"
+  },
+  "cases.json": {
+   "sha256": "927361188114e54daaa0167578c3cf8fbfc46da81d5bf3c79fca2e953014d29c",
+   "bytes": 3801008,
+   "cases": 2051,
+   "protocol_records": 9879
+  }
+ },
+ "signatures": {
+  "valid": 12807,
+  "invalid": 0,
+  "no_sig": 406,
+  "unsigned": 68
+ },
+ "code": {
+  "verifier_version": "1",
+  "src/lib/protocol.js": "bf2d778884b388565b0e4f42ee9a3ad65b315a0283360057f961ac143627638a",
+  "src/lib/cases.js": "bf78a2830af99e449162eecd1c301b27d59db2f86e16dc6d58bb34ee2fab76b5",
+  "archive/lib/records.mjs": "aec6ae28fbff00633b55f5024928437b014f98769acb02ce063f158c1cdc5e29",
+  "archive/export.mjs": "0d0fa6f2f251f29249c713129dd510dffc43b4d11c54514ceeb4a9446f1705e2"
+ },
+ "archive_inputs": [
+  {
+   "captured_at": "2026-10-20T07:15:48Z",
+   "new_first_seq": 1,
+   "new_last_seq": 13281,
+   "new_sha256": "4bde2b7a24b9b8533ed80a93ba46afb01be664be0fe63673e6e2e1927fed0783",
+   "stored": "archive-data rooms/credence/g0/2026-08-28.jsonl, rooms/credence/g0/2026-08-29.jsonl, rooms/credence/g0/2026-08-30.jsonl, rooms/credence/g0/2026-08-31.jsonl, rooms/credence/g0/2026-09-01.jsonl, rooms/credence/g0/2026-09-02.jsonl, rooms/credence/g0/2026-09-03.jsonl, rooms/credence/g0/2026-09-04.jsonl, rooms/credence/g0/2026-09-05.jsonl, rooms/credence/g0/2026-09-06.jsonl, rooms/credence/g0/2026-09-07.jsonl, rooms/credence/g0/2026-09-08.jsonl, rooms/credence/g0/2026-09-09.jsonl, rooms/credence/g0/2026-09-10.jsonl, rooms/credence/g0/2026-09-11.jsonl, rooms/credence/g0/2026-09-12.jsonl, rooms/credence/g0/2026-09-13.jsonl, rooms/credence/g0/2026-09-14.jsonl, rooms/credence/g0/2026-09-15.jsonl, rooms/credence/g0/2026-09-16.jsonl, rooms/credence/g0/2026-09-17.jsonl, rooms/credence/g0/2026-09-18.jsonl, rooms/credence/g0/2026-09-19.jsonl, rooms/credence/g0/2026-09-20.jsonl, rooms/credence/g0/2026-09-21.jsonl, rooms/credence/g0/2026-09-22.jsonl, rooms/credence/g0/2026-09-23.jsonl, rooms/credence/g0/2026-09-24.jsonl, rooms/credence/g0/2026-09-25.jsonl, rooms/credence/g0/2026-09-26.jsonl, rooms/credence/g0/2026-09-27.jsonl, rooms/credence/g0/2026-09-28.jsonl, rooms/credence/g0/2026-09-29.jsonl, rooms/credence/g0/2026-09-30.jsonl, rooms/credence/g0/2026-10-01.jsonl, rooms/credence/g0/2026-10-02.jsonl, rooms/credence/g0/2026-10-03.jsonl, rooms/credence/g0/2026-10-04.jsonl, rooms/credence/g0/2026-10-05.jsonl, rooms/credence/g0/2026-10-06.jsonl, rooms/credence/g0/2026-10-07.jsonl, rooms/credence/g0/2026-10-08.jsonl, rooms/credence/g0/2026-10-09.jsonl, rooms/credence/g0/2026-10-10.jsonl, rooms/credence/g0/2026-10-11.jsonl, rooms/credence/g0/2026-10-12.jsonl, rooms/credence/g0/2026-10-13.jsonl, rooms/credence/g0/2026-10-14.jsonl, rooms/credence/g0/2026-10-15.jsonl, rooms/credence/g0/2026-10-16.jsonl, rooms/credence/g0/2026-10-17.jsonl, rooms/credence/g0/2026-10-18.jsonl, rooms/credence/g0/2026-10-19.jsonl"
+  }
+ ],
+ "limits": [
+  "A valid signature shows that a key signed room, nonce and text; not who holds the key, nor that the work is correct.",
+  "seq and ts are assigned by Technocore and are not signed.",
+  "Cases group records by room and ID. An ID reused by several requests is one case here.",
+  "Capture times are the collector's claim, backed by git commit and release upload times."
+ ]
+}

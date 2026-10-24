@@ -259,19 +259,30 @@ function drawGraph(){
 }
 // The maintainer's key is fixed here, so a statement signed by any other key can never pass as the maintainer's.
 const MAINTAINER={did:'did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh',room:'d-proofline',seq:1};
+// Checked in the live room first. If the room no longer holds it (Technocore removes a room whose only message is
+// 12 hours old), the archived copy is loaded, checked against its manifest hash, and its signature re-verified.
+const isStatement=m=>m&&Number(m.seq)===MAINTAINER.seq&&m.from===MAINTAINER.did&&/maintain Proofline/.test(String(m.text));
+async function archivedStatement(){
+  const fetchText=async u=>{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(String(r.status));return r.text()};
+  const fetchBytes=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(String(r.status));return new Uint8Array(await r.arrayBuffer())};
+  const res=await loadPinned({room:MAINTAINER.room,gen:'1',from:MAINTAINER.seq,to:MAINTAINER.seq,fetchText,fetchBytes,assetUrl:()=>''});
+  const dec=new TextDecoder();return res.lines.map(l=>parseRoomPage(dec.decode(l))).find(isStatement)||null;
+}
 async function checkMaintainer(){
   const out=$('#maintainerProof');if(!out)return;
   const show=(text,tone)=>{out.textContent=text;out.className=`proof ${tone}`};
+  let m=null,live=true;
   try{
-    const res=await fetch(`https://technocore.chat/r/${MAINTAINER.room}/export`,{cache:'no-store'});if(!res.ok)throw new Error(String(res.status));
-    const line=(await res.text()).split('\n').find(l=>/^\{"seq":1,/.test(l));
-    const m=line?parseRoomPage(line):null;
-    if(!m||Number(m.seq)!==MAINTAINER.seq||m.from!==MAINTAINER.did||!/maintain Proofline/.test(String(m.text))){show('the statement is not in the room right now, so it cannot be checked.','warn');return}
-    const st=await checkSignature(MAINTAINER.room,m);
-    if(st==='valid')show(`signature verified (${MAINTAINER.room} #${MAINTAINER.seq}, ${String(m.ts).slice(0,10)}).`,'ok');
-    else if(st==='unchecked')show('your browser cannot check this signature.','warn');
-    else show('the signature does not verify.','bad');
-  }catch{show('the room could not be reached, so the statement was not checked.','warn')}
+    const res=await fetch(`https://technocore.chat/r/${MAINTAINER.room}/export`,{cache:'no-store'});
+    if(res.ok){const line=(await res.text()).split('\n').find(l=>/^\{"seq":1,/.test(l));m=line?parseRoomPage(line):null}
+  }catch{}
+  if(!isStatement(m)){live=false;try{m=await archivedStatement()}catch{m=null}}
+  if(!isStatement(m)){show('the statement is neither in the room nor in the evidence archive right now, so it cannot be checked.','warn');return}
+  const st=await checkSignature(MAINTAINER.room,m);
+  const where=live?`${MAINTAINER.room} #${MAINTAINER.seq}, ${String(m.ts).slice(0,10)}`:`archived copy of ${MAINTAINER.room} #${MAINTAINER.seq}, ${String(m.ts).slice(0,10)}; the room no longer holds it`;
+  if(st==='valid')show(`signature verified (${where}).`,'ok');
+  else if(st==='unchecked')show('your browser cannot check this signature.','warn');
+  else show('the signature does not verify.','bad');
 }
 checkMaintainer();
 const about=$('#aboutDialog');
