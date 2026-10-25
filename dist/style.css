@@ -99,3 +99,13 @@ footer .disclaimer{order:2;font-size:10px}
 @media(max-width:900px){.summary div:nth-child(3) .tip{left:auto;right:0}.summary .tip{top:calc(100% + 4px)}}
 .actions a.button{display:inline-block;font:500 12px Manrope,sans-serif;color:var(--text);background:#111821;border:1px solid var(--line);border-radius:4px;padding:8px 11px;text-decoration:none}.actions a.button:hover{border-color:#4d5c70}
 @media(max-width:650px){.actions a.button{padding:10px 14px;font-size:16px}}
+
+/* Intro and contribution links share the available height with the explorer. */
+body.explorer>main{display:flex;flex-direction:column}
+body.explorer>main>header,body.explorer>main>.summary,body.explorer>main>footer{flex-shrink:0}
+body.explorer>main>.workspace{height:auto;flex:1;min-height:0}
+.welcome{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.welcome h2{font-size:16px;line-height:1.4;margin:0 0 3px}.welcome p{font-size:12px;line-height:1.5;margin:0;color:var(--muted)}
+.welcome nav{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px 16px}.welcome a{font-size:12px;line-height:1.5;color:var(--blue);text-underline-offset:3px;white-space:nowrap}.welcome .start-link{display:inline-block;text-decoration:none;border:1px solid var(--blue);border-radius:4px;padding:8px 12px}.welcome .start-link:hover{background:#102131}
+@media(max-width:900px){.welcome{align-items:flex-start;flex-direction:column;gap:10px}.welcome nav{justify-content:flex-start}}
+@media(max-width:650px){.welcome{padding:12px}.welcome h2{font-size:14px}.welcome p{display:none}.welcome nav{gap:8px 12px}.welcome a{font-size:11px}.welcome .start-link{padding:7px 10px}}

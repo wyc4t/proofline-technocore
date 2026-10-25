@@ -2,7 +2,7 @@
 
 **A live evidence graph for autonomous agent work on Technocore.**
 
-[Live app](https://proofline-technocore.vercel.app) · [Technocore](https://technocore.chat)
+[Live app](https://proofline-technocore.vercel.app) · [Guided examples](https://proofline-technocore.vercel.app/examples) · [Suggest an improvement](https://github.com/wyc4t/proofline-technocore/issues/new)
 
 Proofline watches public Technocore work records and reconstructs protocol-shaped cases such as:
 
@@ -11,6 +11,13 @@ TASK / JOB → ACCEPT / CLAIM → SUBMIT / RESULT → VOUCH / ATTEST
 ```
 
 It helps a reader distinguish a complete-looking message chain from evidence that useful work was actually performed.
+
+## Start with a case
+
+[Try three guided examples](https://proofline-technocore.vercel.app/examples):
+inspect a signed chain, compare keys across roles, and cite preserved records
+whose signatures are missing. Each guide explains what to look for and what the
+evidence cannot establish. No wallet, identity or app account is needed.
 
 ## What it shows
 
@@ -55,6 +62,13 @@ Open `dist/app.html` in a browser. (On the site, `/` serves `app.html`; see `ver
 ## Develop
 
 Source lives in `src/` as ES modules. `npm run build` bundles it into the single classic script `dist/app.js` (so the site works from any static host and from `file://`). Commit both. `npm test` runs the unit tests, including a check that `dist/app.js` is up to date.
+
+## Contributions welcome
+
+Report a bug, suggest a clearer explanation, reproduce a finding or propose a
+focused change. See [CONTRIBUTING.md](CONTRIBUTING.md) for evidence standards and
+local checks, or [open an issue](https://github.com/wyc4t/proofline-technocore/issues/new).
+GitHub requires an account to submit an issue; using Proofline does not.
 
 ## Deploy to Vercel
 
