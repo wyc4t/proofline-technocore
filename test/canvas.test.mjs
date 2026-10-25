@@ -19,7 +19,7 @@ test('graph redraw fits a changed layout without a window resize', () => {
   const s = setup();
   const source = fs.readFileSync(new URL('../src/app.js', import.meta.url), 'utf8');
   const graph = source.slice(source.indexOf("const canvas=$('#graph')"), source.indexOf('// The maintainer\'s key'));
-  const context = { fitCanvas, $: selector => selector === '#graph' ? s.canvas : selector === '#graphControls' ? null : { style: {} }, devicePixelRatio: 2,
+  const context = { snapshot:null, fitCanvas, $: selector => selector === '#graph' ? s.canvas : selector === '#graphControls' ? null : { style: {} }, devicePixelRatio: 2,
     selected: { id: 'example', status: 'all-stages', stages: [0, 1, 2, 3].map(seq => [{ seq, kind: 'record' }]), links: [] },
     STATUS_LABEL: { 'all-stages': 'ALL 4 STAGES' }, STAGE_NAMES: ['REQUEST', 'WORKER', 'RESULT', 'ATTESTATION'], MAX_NODES: 7 };
   vm.createContext(context);
@@ -57,7 +57,7 @@ test('crowded stages keep drawn controls clear of the heading and each other', (
   const s = setup();s.box(640, 458);
   const source = fs.readFileSync(new URL('../src/app.js', import.meta.url), 'utf8');
   const graph = source.slice(source.indexOf("const canvas=$('#graph')"), source.indexOf('// The maintainer\'s key'));
-  const context = { fitCanvas, $: selector => selector === '#graph' ? s.canvas : selector === '#graphControls' ? null : { style: {} }, devicePixelRatio: 2,
+  const context = { snapshot:null, fitCanvas, $: selector => selector === '#graph' ? s.canvas : selector === '#graphControls' ? null : { style: {} }, devicePixelRatio: 2,
     selected: { id: 'crowded', status: 'all-stages', stages: [0,1,2,3].map(stage => Array.from({length:7}, (_,i) => ({seq:stage*10+i,kind:'record'}))), links: [] },
     STATUS_LABEL: { 'all-stages':'ALL 4 STAGES' }, STAGE_NAMES:['REQUEST','WORKER','RESULT','ATTESTATION'], MAX_NODES:7 };
   vm.createContext(context);vm.runInContext(graph+'\ndrawGraph()',context);
@@ -66,4 +66,23 @@ test('crowded stages keep drawn controls clear of the heading and each other', (
   const ys=s.circles.filter(([x])=>x===70).map(([,y])=>y);
   for(let i=1;i<ys.length;i++)assert.ok(ys[i]-ys[i-1]>=50,'50px controls do not overlap');
   assert.equal(s.labels.filter(([label])=>label==='+2 more · see records').length,4);
+});
+
+test('archived example loading and failure never show live or selection instructions', () => {
+  const s=setup();s.box(640,458);
+  const nodes=new Map();
+  const source=fs.readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+  const graph=source.slice(source.indexOf("const canvas=$('#graph')"),source.indexOf('// The maintainer\'s key'));
+  const context={fitCanvas,devicePixelRatio:2,selected:null,guidedCase:'credence:example',snapshot:{key:'credence:example',loading:true},
+    $:selector=>{if(selector==='#graph')return s.canvas;if(selector==='#graphControls')return null;if(!nodes.has(selector))nodes.set(selector,{style:{}});return nodes.get(selector)}};
+  vm.createContext(context);vm.runInContext(graph+'\ndrawGraph()',context);
+  assert.equal(nodes.get('#graphTitle').textContent,'Opening guided example');
+  assert.match(nodes.get('#emptyGraph').textContent,/appear here automatically/);
+  assert.equal(nodes.get('.graph-help').hidden,true);
+  assert.match(nodes.get('#emptyGraph').className,/is-loading/);
+  context.snapshot={key:'credence:example',loading:false,error:'offline'};vm.runInContext('drawGraph()',context);
+  assert.equal(nodes.get('#graphTitle').textContent,'Archived case unavailable');
+  assert.doesNotMatch(nodes.get('#emptyGraph').className,/is-loading/);
+  context.snapshot=null;vm.runInContext('drawGraph()',context);
+  assert.equal(nodes.get('#graphTitle').textContent,'No case selected');
 });

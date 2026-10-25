@@ -841,7 +841,7 @@ function renderInspector(){
   const host=$('#inspector');host.replaceChildren();const back=el('button','back','← All cases');back.type='button';back.onclick=closeDetail;host.append(back,el('div','eyebrow','EVIDENCE PROFILE'));
   if(snapshot){
     const exit=el('button','snap-exit','Back to live cases');exit.type='button';exit.onclick=()=>{snapshot=null;setUrl(null);render(true)};
-    if(snapshot.loading){host.append(el('h2','',snapshot.id||'Pinned case'),el('p','','Loading the pinned records from the evidence archive and checking them…'));return}
+    if(snapshot.loading){const status=el('p','archive-loading',`${snapshot.progress||'Fetching the archived records…'} This can take a few seconds. The case will open automatically when the checks finish.`);status.setAttribute('role','status');host.append(el('h2','',guidedCase===snapshot.key?'Opening guided example':'Opening archived case'),status);return}
     if(snapshot.error){host.append(el('h2','',snapshot.id||'Pinned case'),el('p','',snapshot.error),exit);return}
     const b=el('div','snapshot-banner');b.append(el('b','',`ARCHIVED SNAPSHOT · ${snapshot.room} · seq ${snapshot.from}–${snapshot.to}`),
       el('p','',`The archive holds ${snapshot.records} ${snapshot.room} records in this window, from ${snapshot.captures.length} ${snapshot.captures.length===1?'capture':'captures'}, each checked against the archive's manifest${snapshot.missing?`. ${snapshot.missing} sequence numbers in the window are not in the archive`:''}. Signatures were re-checked in your browser. Later records of this case are not included.`),exit);
@@ -901,6 +901,7 @@ async function openSnapshot(key,pinText){
     const fetchText=async u=>{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(`the archive index returned ${r.status}`);return r.text()};
     const fetchBytes=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(`an archive file returned ${r.status}`);return new Uint8Array(await r.arrayBuffer())};
     const res=await loadPinned({room,gen:pin.gen,from:pin.from,to:pin.to,fetchText,fetchBytes,assetUrl:(t,a)=>`${assetBase}/api/asset?tag=${encodeURIComponent(t)}&asset=${encodeURIComponent(a)}`});
+    snapshot={...snapshot,progress:'Records downloaded. Checking signatures…'};render(true);
     const dec=new TextDecoder(),msgs=res.lines.map(l=>parseRoomPage(dec.decode(l)));await annotateSignatures(room,msgs);await annotateContentHashes(msgs);
     const recs=msgs.map(m=>parseMessage(m,room)).filter(p=>p.ok).map(p=>p.record).filter(r=>r.id===id);
     const c=buildCases(recs)[0]||null;
@@ -994,7 +995,17 @@ function resizeCanvas(){drawGraph()}
 if(typeof ResizeObserver==='function')new ResizeObserver(resizeCanvas).observe(canvas.parentElement);
 // The graph is static: it is redrawn only when the selection or data changes. Columns are stages, not relationships.
 function drawGraph(){
-  const size=fitCanvas(canvas,ctx,devicePixelRatio);if(!size)return;const {width:w,height:h}=size;ctx.clearRect(0,0,w,h);if(!selected){graphControls(new Map());$('#emptyGraph').style.display='block';return}$('#emptyGraph').style.display='none';$('#graphTitle').textContent=`${selected.id} · ${STATUS_LABEL[selected.status]}`;canvas.setAttribute('aria-label',`Diagram of case ${selected.id}: ${selected.stages.map((x,i)=>`${x.length} ${STAGE_NAMES[i].toLowerCase()}`).join(', ')} records. The same records are listed in the evidence profile.`);
+  const size=fitCanvas(canvas,ctx,devicePixelRatio);if(!size)return;const {width:w,height:h}=size;ctx.clearRect(0,0,w,h);
+  const empty=$('#emptyGraph'),help=$('.graph-help');if(help)help.hidden=!selected;
+  empty.className='empty-graph'+(snapshot?.loading?' is-loading':'');
+  if(!selected){
+    graphControls(new Map());empty.style.display='block';
+    if(snapshot?.loading){$('#graphTitle').textContent=guidedCase===snapshot.key?'Opening guided example':'Opening archived case';empty.textContent=`${snapshot.progress||'Fetching the archived records…'} This can take a few seconds. Your case will appear here automatically.`}
+    else if(snapshot?.error){$('#graphTitle').textContent='Archived case unavailable';empty.textContent='The archive could not be opened. See the evidence profile for details.'}
+    else{$('#graphTitle').textContent='No case selected';empty.textContent='Select a case to inspect its records.'}
+    return;
+  }
+  empty.style.display='none';$('#graphTitle').textContent=`${selected.id} · ${STATUS_LABEL[selected.status]}`;canvas.setAttribute('aria-label',`Diagram of case ${selected.id}: ${selected.stages.map((x,i)=>`${x.length} ${STAGE_NAMES[i].toLowerCase()}`).join(', ')} records. The same records are listed in the evidence profile.`);
   const margin=Math.max(70,w*.1),xs=[margin,w*.36,w*.64,w-margin],centerY=(h+60)/2,nodeLimit=Math.max(1,Math.min(MAX_NODES,Math.floor((h-220)/55)+1)),nodeColors=['#d7ff55','#65bfff','#ffbe5c','#67e8a5'],pos=new Map();
   ctx.textAlign='center';ctx.font='10px DM Mono';for(let i=0;i<4;i++){ctx.fillStyle='#8696a8';ctx.fillText(STAGE_NAMES[i],xs[i],112)}
   selected.stages.forEach((items,stage)=>{const shown=items.slice(0,nodeLimit);shown.forEach((record,index)=>pos.set(record.seq,{x:xs[stage],y:centerY+(index-(shown.length-1)/2)*55,stage,record}));

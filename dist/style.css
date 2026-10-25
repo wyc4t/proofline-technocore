@@ -133,3 +133,9 @@ body.explorer>main>.workspace{height:auto;flex:1;min-height:0}
 .reading-guide .guide-feedback{border-top:1px solid var(--line);padding-top:12px;margin-top:16px;color:var(--muted);font-size:12px}
 
 .guide-toggle{display:block;min-height:44px;margin:12px 0;color:var(--blue);border-color:#344454}
+
+.empty-graph{width:min(360px,80%);text-align:center;line-height:1.7}
+.empty-graph.is-loading::before,.archive-loading::before{content:"";display:block;width:20px;height:20px;border:2px solid #344454;border-top-color:var(--blue);border-radius:50%;margin:0 auto 14px;animation:archive-spin 1s linear infinite}
+.archive-loading{color:var(--muted);line-height:1.6}.archive-loading::before{margin:16px 0}
+@keyframes archive-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.empty-graph.is-loading::before,.archive-loading::before{animation:none}}
