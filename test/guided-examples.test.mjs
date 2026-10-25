@@ -22,6 +22,7 @@ test('guided pins and key/signature observations match preserved evidence', asyn
     const href = /class="example-action" href="([^"]+)"/.exec(body)[1].replaceAll('&amp;', '&');
     const url = new URL(href, 'https://proofline-technocore.vercel.app/');
     assert.equal(url.searchParams.get('case'), attr('case'));
+    assert.equal(url.searchParams.get('guide'), '1', 'example links explicitly opt into the walkthrough');
     const pin = parsePin(url.searchParams.get('at'));
     assert.equal(pin.gen, '0');
     const window = messages.filter(m => m.seq >= pin.from && m.seq <= pin.to);

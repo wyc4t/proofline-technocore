@@ -131,3 +131,5 @@ body.explorer>main>.workspace{height:auto;flex:1;min-height:0}
 .reading-guide button,.record-guide-return,.guide-return{min-height:44px}
 .record-guide-return{display:block;margin:10px 0;color:var(--blue)}
 .reading-guide .guide-feedback{border-top:1px solid var(--line);padding-top:12px;margin-top:16px;color:var(--muted);font-size:12px}
+
+.guide-toggle{display:block;min-height:44px;margin:12px 0;color:var(--blue);border-color:#344454}

@@ -20,11 +20,12 @@ const $=s=>document.querySelector(s);
 const SITE='https://proofline-technocore.vercel.app';
 const linkParams=new URLSearchParams(location.search);
 let wantedKey=linkParams.get('case'),wantedMissing=false,snapshot=null,archiveState=null;
+let guidedCase=linkParams.get('guide')==='1'?wantedKey:null;
 const assetBase=location.protocol==='file:'?SITE:'';
 // Colons are kept readable in links: room:id and g0:from-to.
 const q=(key,pin)=>`?case=${encodeURIComponent(key).replace(/%3A/gi,':')}${pin?`&at=${encodeURIComponent(pin).replace(/%3A/gi,':')}`:''}`;
 function caseUrl(key,pin){return (location.protocol==='file:'?`${SITE}/`:location.origin+location.pathname)+q(key,pin)}
-function setUrl(key,pin){try{history.replaceState(history.state,'',location.pathname+(key?q(key,pin):'')+location.hash)}catch{}}
+function setUrl(key,pin){try{history.replaceState(history.state,'',location.pathname+(key?q(key,pin)+(guidedCase===key?'&guide=1':''):'')+location.hash)}catch{}}
 
 function el(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node}
 function formatDuration(ms){if(ms===null||!Number.isFinite(ms))return 'Unavailable';if(ms<0)return 'Invalid ordering';const s=Math.round(ms/1000);if(s<60)return `${s}s`;const m=Math.floor(s/60);if(m<60)return `${m}m ${s%60}s`;return `${Math.floor(m/60)}h ${m%60}m`}
@@ -110,7 +111,7 @@ function returnToGuide(){
 function recordDisclosure(record,flagged){
   const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}${flagged?' · ⚑':''}`),p=el('p','',record.text),source=el('div',`source sig-${record.sigStatus}`,`${SIG_LABEL[record.sigStatus]} · ${shortDid(record.source)} · ${record.ts}`);
   const back=el('button','record-guide-return','← Back to the steps');back.type='button';back.onclick=returnToGuide;
-  d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s,back,source,p);return d;
+  d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s);if($('#inspector .reading-guide'))d.append(back);d.append(source,p);return d;
 }
 function openSourceRecord(seq){
   const record=$('#inspector').querySelector(`details[data-seq="${seq}"]`);
@@ -146,8 +147,11 @@ function renderInspector(){
   }
   if(!snapshot&&wantedMissing){host.append(el('h2','',wantedKey),el('p','','This case is not in the live window. Proofline keeps only the newest records of each room in view, and kibble moves on within minutes. A pinned link (one with "at=" in it) loads a case from the evidence archive instead.'));return}
   if(!selected){host.append(el('h2','',`No case selected`),el('p','','Select a case to see which records were observed, what is missing, and what cannot be known from them.'));return}
-  const c=selected,guide=readingGuide(c),banner=host.querySelector('.snapshot-banner');
-  host.insertBefore(el('h2','',c.id),banner);host.insertBefore(guide.box,banner);
+  const c=selected,guide=guidedCase===c.key?readingGuide(c):null,banner=host.querySelector('.snapshot-banner');
+  host.insertBefore(el('h2','',c.id),banner);
+  const toggle=el('button','guide-toggle',guide?'Hide the steps':'Guide me through this case');toggle.type='button';toggle.setAttribute('aria-expanded',String(!!guide));
+  toggle.onclick=()=>{guidedCase=guide?null:c.key;setUrl(c.key,snapshot?.pin);render(true);$('#inspector .guide-toggle')?.focus({preventScroll:true})};
+  host.insertBefore(toggle,banner);if(guide)host.insertBefore(guide.box,banner);
   host.append(el('p','',`${c.room} · ${c.title}`),citeBlock(c));
   const present=c.stages.filter(s=>s.length).length;
   finding(host,'Stages observed',`${present} of 4`,STAGE_NAMES.map((name,i)=>`${c.stages[i].length?'✓':'—'} ${name}`).join('  ·  ')+(present<4?'\nA missing stage may simply be outside the observation window.':''));
@@ -168,7 +172,7 @@ function renderInspector(){
   if(c.flags.length){host.append(el('div','eyebrow','PATTERNS IN THE VISIBLE RECORDS'));for(const f of c.flags)finding(host,f.label,`${f.seqs.length} ${f.seqs.length===1?'record':'records'}`,`${f.detail} Seq ${f.seqs.slice(0,6).map(s=>'#'+s).join(', ')}${f.seqs.length>6?'…':''}. A pattern, not a verdict.`)}
   finding(host,'Cannot be known from these records','','Whether the work was correct or useful, who holds a key, whether different keys are different parties, what caused what, or whether anything was paid.');
   const flagged=new Set(c.flags.flatMap(f=>f.seqs));
-  host.append(guide.back,el('div','eyebrow','SOURCE RECORDS'));for(const record of c.list)host.append(recordDisclosure(record,flagged.has(record.seq)));
+  if(guide)host.append(guide.back);host.append(el('div','eyebrow','SOURCE RECORDS'));for(const record of c.list)host.append(recordDisclosure(record,flagged.has(record.seq)));
 }
 function citeBlock(c){
   const box=el('div','cite-bar'),row=el('div','cite-row');
