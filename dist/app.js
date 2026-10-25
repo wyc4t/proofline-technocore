@@ -805,7 +805,37 @@ function evidenceReview(host,c){
   const how=el('a','about-link','How this review was tested');how.href='https://github.com/wyc4t/proofline-technocore/blob/main/findings/2026-10-20-cred-exp-002/README.md';how.target='_blank';how.rel='noreferrer';
   host.lastChild.querySelector('p').append(' ',how);
 }
-function recordDisclosure(record,flagged){const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}${flagged?' · ⚑':''}`),p=el('p','',record.text),source=el('div',`source sig-${record.sigStatus}`,`${SIG_LABEL[record.sigStatus]} · ${shortDid(record.source)} · ${record.ts}`);d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s,p,source);return d}
+function returnToGuide(){
+  const guide=$('#inspector .reading-guide');if(!guide)return;
+  guide.scrollIntoView({block:'start'});guide.querySelector('button')?.focus({preventScroll:true});
+}
+function recordDisclosure(record,flagged){
+  const d=el('details','record'),s=el('summary','',`${record.kind} · ${record.room} #${record.seq}${flagged?' · ⚑':''}`),p=el('p','',record.text),source=el('div',`source sig-${record.sigStatus}`,`${SIG_LABEL[record.sigStatus]} · ${shortDid(record.source)} · ${record.ts}`);
+  const back=el('button','record-guide-return','← Back to the steps');back.type='button';back.onclick=returnToGuide;
+  d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s,back,source,p);return d;
+}
+function openSourceRecord(seq){
+  const record=$('#inspector').querySelector(`details[data-seq="${seq}"]`);
+  if(!record)return;
+  for(const other of document.querySelectorAll('#inspector .record.is-selected'))other.classList.remove('is-selected');
+  record.open=true;record.classList.add('is-selected');
+  record.scrollIntoView({block:'start',behavior:'instant'});
+  record.querySelector('summary').focus({preventScroll:true});
+}
+function readingGuide(c){
+  const box=el('section','reading-guide');box.setAttribute('aria-label','Read this case step by step');
+  box.append(el('h3','','Start here: inspect this claim'),el('p','','Open each record and read its message. On a large screen, you can also click the labelled circles in the graph.'));
+  const steps=el('ol','');
+  for(const [stage,question] of [[0,'What work was requested?'],[2,'What was submitted? Compare it with the request.'],[3,'Who vouched for the result, and what did they say?']]){
+    const li=el('li','');li.append(el('p','',question));
+    for(const record of c.stages[stage]){const button=el('button','',`Read ${record.kind} #${record.seq}`);button.type='button';button.onclick=()=>openSourceRecord(record.seq);li.append(button)}
+    if(!c.stages[stage].length)li.append(el('p','','No record for this stage in this window. You cannot check this step from these records.'));
+    steps.append(li);
+  }
+  const last=el('li','');last.append(el('p','','Your assessment: does the submitted result meet the request? Decide yes, no or unsure, and say what evidence is missing. A signature or an attestation alone cannot establish that the work is correct.'));steps.append(last);box.append(steps,el('p','guide-feedback','Testing Proofline? Tell the person who shared this case what you concluded and where you got stuck. No answer is saved on this page.'));
+  const back=el('button','guide-return','Back to the steps');back.type='button';back.onclick=returnToGuide;
+  return {box,back};
+}
 function renderInspector(){
   const host=$('#inspector');host.replaceChildren();const back=el('button','back','← All cases');back.type='button';back.onclick=closeDetail;host.append(back,el('div','eyebrow','EVIDENCE PROFILE'));
   if(snapshot){
@@ -818,7 +848,9 @@ function renderInspector(){
   }
   if(!snapshot&&wantedMissing){host.append(el('h2','',wantedKey),el('p','','This case is not in the live window. Proofline keeps only the newest records of each room in view, and kibble moves on within minutes. A pinned link (one with "at=" in it) loads a case from the evidence archive instead.'));return}
   if(!selected){host.append(el('h2','',`No case selected`),el('p','','Select a case to see which records were observed, what is missing, and what cannot be known from them.'));return}
-  const c=selected;host.append(el('h2','',c.id),el('p','',`${c.room} · ${c.title}`),citeBlock(c));
+  const c=selected,guide=readingGuide(c),banner=host.querySelector('.snapshot-banner');
+  host.insertBefore(el('h2','',c.id),banner);host.insertBefore(guide.box,banner);
+  host.append(el('p','',`${c.room} · ${c.title}`),citeBlock(c));
   const present=c.stages.filter(s=>s.length).length;
   finding(host,'Stages observed',`${present} of 4`,STAGE_NAMES.map((name,i)=>`${c.stages[i].length?'✓':'—'} ${name}`).join('  ·  ')+(present<4?'\nA missing stage may simply be outside the observation window.':''));
   const sc=c.list.reduce((m,r)=>(m[r.sigStatus]=(m[r.sigStatus]||0)+1,m),{});
@@ -838,7 +870,7 @@ function renderInspector(){
   if(c.flags.length){host.append(el('div','eyebrow','PATTERNS IN THE VISIBLE RECORDS'));for(const f of c.flags)finding(host,f.label,`${f.seqs.length} ${f.seqs.length===1?'record':'records'}`,`${f.detail} Seq ${f.seqs.slice(0,6).map(s=>'#'+s).join(', ')}${f.seqs.length>6?'…':''}. A pattern, not a verdict.`)}
   finding(host,'Cannot be known from these records','','Whether the work was correct or useful, who holds a key, whether different keys are different parties, what caused what, or whether anything was paid.');
   const flagged=new Set(c.flags.flatMap(f=>f.seqs));
-  host.append(el('div','eyebrow','SOURCE RECORDS'));for(const record of c.list)host.append(recordDisclosure(record,flagged.has(record.seq)));
+  host.append(guide.back,el('div','eyebrow','SOURCE RECORDS'));for(const record of c.list)host.append(recordDisclosure(record,flagged.has(record.seq)));
 }
 function citeBlock(c){
   const box=el('div','cite-bar'),row=el('div','cite-row');
@@ -939,16 +971,31 @@ async function refresh(){if(busy)return;busy=true;if(!paused){$('#live').classNa
 function togglePause(){paused=!paused;if(paused)frozenAt=protocolTotal();else render(true);updateStatus()}
 
 const canvas=$('#graph'),ctx=canvas.getContext('2d');
+function graphControls(pos){
+  const host=$('#graphControls');if(!host)return;
+  const wanted=new Set([...pos.keys()].map(String));
+  for(const b of [...host.children])if(!wanted.has(b.dataset.seq))b.remove();
+  for(const {x,y,stage,record} of pos.values()){
+    let b=[...host.children].find(b=>b.dataset.seq===String(record.seq));
+    if(!b){b=el('button','graph-node');b.type='button';b.dataset.seq=String(record.seq);b.onclick=()=>openSourceRecord(record.seq);host.append(b)}
+    b.setAttribute('aria-label',`Read ${record.kind} #${record.seq}`);b.dataset.label=`Read ${record.kind} #${record.seq}`;
+    b.style.setProperty('--node-color',['#d7ff55','#65bfff','#ffbe5c','#67e8a5'][stage]);
+    b.style.setProperty('--node-ring',stage===0?'42px':'36px');
+    b.style.left=`${x}px`;b.style.top=`${y}px`;
+  }
+}
+
 function resizeCanvas(){drawGraph()}
 // Panel layout can settle after the initial draw without a window resize.
 if(typeof ResizeObserver==='function')new ResizeObserver(resizeCanvas).observe(canvas.parentElement);
 // The graph is static: it is redrawn only when the selection or data changes. Columns are stages, not relationships.
 function drawGraph(){
-  const size=fitCanvas(canvas,ctx,devicePixelRatio);if(!size)return;const {width:w,height:h}=size;ctx.clearRect(0,0,w,h);if(!selected){$('#emptyGraph').style.display='block';return}$('#emptyGraph').style.display='none';$('#graphTitle').textContent=`${selected.id} · ${STATUS_LABEL[selected.status]}`;canvas.setAttribute('aria-label',`Diagram of case ${selected.id}: ${selected.stages.map((x,i)=>`${x.length} ${STAGE_NAMES[i].toLowerCase()}`).join(', ')} records. The same records are listed in the evidence profile.`);
-  const margin=Math.max(70,w*.1),xs=[margin,w*.36,w*.64,w-margin],centerY=h*.54,nodeColors=['#d7ff55','#65bfff','#ffbe5c','#67e8a5'],pos=new Map();
+  const size=fitCanvas(canvas,ctx,devicePixelRatio);if(!size)return;const {width:w,height:h}=size;ctx.clearRect(0,0,w,h);if(!selected){graphControls(new Map());$('#emptyGraph').style.display='block';return}$('#emptyGraph').style.display='none';$('#graphTitle').textContent=`${selected.id} · ${STATUS_LABEL[selected.status]}`;canvas.setAttribute('aria-label',`Diagram of case ${selected.id}: ${selected.stages.map((x,i)=>`${x.length} ${STAGE_NAMES[i].toLowerCase()}`).join(', ')} records. The same records are listed in the evidence profile.`);
+  const margin=Math.max(70,w*.1),xs=[margin,w*.36,w*.64,w-margin],centerY=(h+60)/2,nodeLimit=Math.max(1,Math.min(MAX_NODES,Math.floor((h-220)/55)+1)),nodeColors=['#d7ff55','#65bfff','#ffbe5c','#67e8a5'],pos=new Map();
   ctx.textAlign='center';ctx.font='10px DM Mono';for(let i=0;i<4;i++){ctx.fillStyle='#8696a8';ctx.fillText(STAGE_NAMES[i],xs[i],112)}
-  selected.stages.forEach((items,stage)=>{const shown=items.slice(0,MAX_NODES);shown.forEach((record,index)=>pos.set(record.seq,{x:xs[stage],y:centerY+(index-(shown.length-1)/2)*55,stage,record}));
-    if(items.length>MAX_NODES){ctx.fillStyle='#8696a8';ctx.font='10px DM Mono';ctx.fillText(`+${items.length-MAX_NODES} more · see records`,xs[stage],centerY+(MAX_NODES/2+.4)*55)}});
+  selected.stages.forEach((items,stage)=>{const shown=items.slice(0,nodeLimit);shown.forEach((record,index)=>pos.set(record.seq,{x:xs[stage],y:centerY+(index-(shown.length-1)/2)*55,stage,record}));
+    if(items.length>nodeLimit){ctx.fillStyle='#8696a8';ctx.font='10px DM Mono';ctx.fillText(`+${items.length-nodeLimit} more · see records`,xs[stage],centerY+(nodeLimit/2+.4)*55)}});
+  graphControls(pos);
   let hidden=0;
   for(const link of selected.links){const a0=pos.get(link.from),b0=pos.get(link.to);if(!a0||!b0){hidden++;continue}
     const solid=link.type!=='same-key';ctx.strokeStyle=link.type==='hash'?'#67e8a5':link.type==='cites'?'#9fb2c8':'#4b5d72';ctx.lineWidth=solid?1.6:1;ctx.setLineDash(solid?[]:[4,4]);ctx.beginPath();

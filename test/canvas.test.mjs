@@ -6,20 +6,20 @@ import { fitCanvas } from '../src/lib/canvas.js';
 
 function setup() {
   let width = 300, height = 150;
-  const transforms = [], labels = [];
+  const transforms = [], labels = [], circles = [];
   const canvas = { width: 300, height: 150, get clientWidth() { return width; }, get clientHeight() { return height; },
     getBoundingClientRect: () => ({ width, height }), setAttribute() {} };
   const ctx = { setTransform: (...args) => transforms.push(args), clearRect() {}, fillText: (...args) => labels.push(args),
-    beginPath() {}, arc() {}, fill() {}, stroke() {}, setLineDash() {} };
+    beginPath() {}, arc: (...args) => circles.push(args), fill() {}, stroke() {}, setLineDash() {} };
   canvas.getContext = () => ctx;
-  return { canvas, ctx, transforms, labels, box: (w, h) => { width = w; height = h; } };
+  return { canvas, ctx, transforms, labels, circles, box: (w, h) => { width = w; height = h; } };
 }
 
 test('graph redraw fits a changed layout without a window resize', () => {
   const s = setup();
   const source = fs.readFileSync(new URL('../src/app.js', import.meta.url), 'utf8');
   const graph = source.slice(source.indexOf("const canvas=$('#graph')"), source.indexOf('// The maintainer\'s key'));
-  const context = { fitCanvas, $: selector => selector === '#graph' ? s.canvas : { style: {} }, devicePixelRatio: 2,
+  const context = { fitCanvas, $: selector => selector === '#graph' ? s.canvas : selector === '#graphControls' ? null : { style: {} }, devicePixelRatio: 2,
     selected: { id: 'example', status: 'all-stages', stages: [0, 1, 2, 3].map(seq => [{ seq, kind: 'record' }]), links: [] },
     STATUS_LABEL: { 'all-stages': 'ALL 4 STAGES' }, STAGE_NAMES: ['REQUEST', 'WORKER', 'RESULT', 'ATTESTATION'], MAX_NODES: 7 };
   vm.createContext(context);
@@ -51,4 +51,19 @@ test('fractional boxes use the actual bitmap ratio and cap retina allocation', (
   assert.equal(s.canvas.width, 1283);
   assert.equal(s.canvas.height, 800);
   assert.deepEqual(s.transforms.at(-1), [1283 / 641.25, 0, 0, 800 / 399.75, 0, 0]);
+});
+
+test('crowded stages keep drawn controls clear of the heading and each other', () => {
+  const s = setup();s.box(640, 458);
+  const source = fs.readFileSync(new URL('../src/app.js', import.meta.url), 'utf8');
+  const graph = source.slice(source.indexOf("const canvas=$('#graph')"), source.indexOf('// The maintainer\'s key'));
+  const context = { fitCanvas, $: selector => selector === '#graph' ? s.canvas : selector === '#graphControls' ? null : { style: {} }, devicePixelRatio: 2,
+    selected: { id: 'crowded', status: 'all-stages', stages: [0,1,2,3].map(stage => Array.from({length:7}, (_,i) => ({seq:stage*10+i,kind:'record'}))), links: [] },
+    STATUS_LABEL: { 'all-stages':'ALL 4 STAGES' }, STAGE_NAMES:['REQUEST','WORKER','RESULT','ATTESTATION'], MAX_NODES:7 };
+  vm.createContext(context);vm.runInContext(graph+'\ndrawGraph()',context);
+  assert.equal(s.circles.length,20,'five nodes per stage fit; remaining records stay in the list');
+  for(const [x,y] of s.circles){assert.ok(y-22>112);assert.ok(y+28<458-46);}
+  const ys=s.circles.filter(([x])=>x===70).map(([,y])=>y);
+  for(let i=1;i<ys.length;i++)assert.ok(ys[i]-ys[i-1]>=50,'50px controls do not overlap');
+  assert.equal(s.labels.filter(([label])=>label==='+2 more · see records').length,4);
 });

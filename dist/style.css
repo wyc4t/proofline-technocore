@@ -110,3 +110,24 @@ body.explorer>main>.workspace{height:auto;flex:1;min-height:0}
 .welcome nav{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px 16px}.welcome a{font-size:12px;line-height:1.5;color:var(--blue);text-underline-offset:3px;white-space:nowrap}.welcome .start-link{display:inline-block;text-decoration:none;border:1px solid var(--blue);border-radius:4px;padding:8px 12px}.welcome .start-link:hover{background:#102131}
 @media(max-width:900px){.welcome{align-items:flex-start;flex-direction:column;gap:10px}.welcome nav{justify-content:flex-start}}
 @media(max-width:650px){.welcome{padding:12px}.welcome h2{font-size:14px}.welcome p{display:none}.welcome nav{gap:8px 12px}.welcome a{font-size:11px}.welcome .start-link{padding:7px 10px}}
+
+/* Graph records are real buttons so mouse, touch and keyboard open the same source. */
+#graphControls{position:absolute;inset:0;pointer-events:none}
+.graph-node{position:absolute;transform:translate(-50%,-22px);width:48px;height:50px;padding:0;border:0;border-radius:50%;background:transparent;pointer-events:auto;isolation:isolate}
+.graph-node::before{content:"";position:absolute;left:50%;top:22px;width:var(--node-ring);height:var(--node-ring);transform:translate(-50%,-50%) scale(.9);border-radius:50%;border:1px solid var(--node-color);box-shadow:0 0 16px var(--node-color);opacity:0;transition:opacity 140ms ease,transform 140ms ease;pointer-events:none}
+.graph-node::after{content:attr(data-label);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translate(-50%,4px);padding:7px 10px;border:1px solid #344454;border-radius:6px;background:#111b26;color:#e5ebf2;box-shadow:0 4px 16px #0008;font:11px/1.3 DM Mono,monospace;white-space:nowrap;opacity:0;transition:opacity 140ms ease,transform 140ms ease;pointer-events:none}
+.graph-node:hover,.graph-node:focus-visible{background:transparent;border-color:transparent;outline:none;z-index:1}
+.graph-node:hover::before,.graph-node:focus-visible::before{opacity:.65;transform:translate(-50%,-50%) scale(1)}
+.graph-node:hover::after,.graph-node:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+.graph-node:focus-visible::before{border-width:2px;opacity:1}
+@media(prefers-reduced-motion:reduce){.graph-node::before,.graph-node::after{transition:none}}
+.graph-help{position:absolute;top:73px;left:22px;margin:0;color:var(--blue);font-size:12px;pointer-events:none}
+.reading-guide{border:1px solid var(--blue);border-radius:5px;padding:14px;margin:16px 0;background:#0d1822}
+.reading-guide h3{font-size:15px;margin:0 0 8px}.reading-guide p{font-size:13px;line-height:1.5;margin:5px 0 9px;color:#c3cdd9}
+.reading-guide ol{padding-left:20px;margin-bottom:0}.reading-guide li{margin:12px 0}.reading-guide button{margin:0 4px 6px 0;border-color:var(--blue)}
+.record.is-selected{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}.record summary:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
+.guide-return{margin:18px 0 12px}
+
+.reading-guide button,.record-guide-return,.guide-return{min-height:44px}
+.record-guide-return{display:block;margin:10px 0;color:var(--blue)}
+.reading-guide .guide-feedback{border-top:1px solid var(--line);padding-top:12px;margin-top:16px;color:var(--muted);font-size:12px}
