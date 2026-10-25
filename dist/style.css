@@ -101,6 +101,7 @@ footer .disclaimer{order:2;font-size:10px}
 @media(max-width:650px){.actions a.button{padding:10px 14px;font-size:16px}}
 
 /* Intro and contribution links share the available height with the explorer. */
+#graph{position:absolute;inset:0}
 body.explorer>main{display:flex;flex-direction:column}
 body.explorer>main>header,body.explorer>main>.summary,body.explorer>main>footer{flex-shrink:0}
 body.explorer>main>.workspace{height:auto;flex:1;min-height:0}

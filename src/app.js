@@ -4,6 +4,7 @@ import {buildCases} from './lib/cases.js';
 import {reviewCase,buildReuseIndex} from './lib/evidence.js';
 import {parseRoomPage,annotateSignatures,annotateContentHashes,signatureSupport,checkSignature} from './lib/signature.js';
 import {createRoomState,applyPage,querySince,markOk,markError,coverage,allRecords,PAGE_LIMIT} from './lib/store.js';
+import {fitCanvas} from './lib/canvas.js';
 const SOURCES=['credence','kibble'];
 const rooms=SOURCES.map(createRoomState);
 const SIG_LABEL={valid:'SIGNATURE VERIFIED',invalid:'SIGNATURE DOES NOT VERIFY',no_sig:'KEY NAMED, NO SIGNATURE · NOT RE-VERIFIABLE',unsigned:'NOT A KEY · SELF-ASSERTED NAME',unchecked:'SIGNATURE NOT CHECKED IN THIS BROWSER'};
@@ -236,10 +237,12 @@ async function refresh(){if(busy)return;busy=true;if(!paused){$('#live').classNa
 function togglePause(){paused=!paused;if(paused)frozenAt=protocolTotal();else render(true);updateStatus()}
 
 const canvas=$('#graph'),ctx=canvas.getContext('2d');
-function resizeCanvas(){const rect=canvas.getBoundingClientRect(),scale=Math.min(devicePixelRatio,2);canvas.width=rect.width*scale;canvas.height=rect.height*scale;ctx.setTransform(scale,0,0,scale,0,0);drawGraph()}
+function resizeCanvas(){drawGraph()}
+// Panel layout can settle after the initial draw without a window resize.
+if(typeof ResizeObserver==='function')new ResizeObserver(resizeCanvas).observe(canvas.parentElement);
 // The graph is static: it is redrawn only when the selection or data changes. Columns are stages, not relationships.
 function drawGraph(){
-  const w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);if(!selected){$('#emptyGraph').style.display='block';return}$('#emptyGraph').style.display='none';$('#graphTitle').textContent=`${selected.id} · ${STATUS_LABEL[selected.status]}`;canvas.setAttribute('aria-label',`Diagram of case ${selected.id}: ${selected.stages.map((x,i)=>`${x.length} ${STAGE_NAMES[i].toLowerCase()}`).join(', ')} records. The same records are listed in the evidence profile.`);
+  const size=fitCanvas(canvas,ctx,devicePixelRatio);if(!size)return;const {width:w,height:h}=size;ctx.clearRect(0,0,w,h);if(!selected){$('#emptyGraph').style.display='block';return}$('#emptyGraph').style.display='none';$('#graphTitle').textContent=`${selected.id} · ${STATUS_LABEL[selected.status]}`;canvas.setAttribute('aria-label',`Diagram of case ${selected.id}: ${selected.stages.map((x,i)=>`${x.length} ${STAGE_NAMES[i].toLowerCase()}`).join(', ')} records. The same records are listed in the evidence profile.`);
   const margin=Math.max(70,w*.1),xs=[margin,w*.36,w*.64,w-margin],centerY=h*.54,nodeColors=['#d7ff55','#65bfff','#ffbe5c','#67e8a5'],pos=new Map();
   ctx.textAlign='center';ctx.font='10px DM Mono';for(let i=0;i<4;i++){ctx.fillStyle='#8696a8';ctx.fillText(STAGE_NAMES[i],xs[i],112)}
   selected.stages.forEach((items,stage)=>{const shown=items.slice(0,MAX_NODES);shown.forEach((record,index)=>pos.set(record.seq,{x:xs[stage],y:centerY+(index-(shown.length-1)/2)*55,stage,record}));

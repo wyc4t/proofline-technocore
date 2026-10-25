@@ -683,7 +683,24 @@ function coverage(state) {
 }
 function allRecords(states) { return states.flatMap((s) => [...s.records.values()]); }
 
+/* src/lib/canvas.js */
+// The bitmap must follow the final CSS box, including layout changes that do not
+// trigger window.resize (font loading, flex layout and panels becoming visible).
+function fitCanvas(canvas, ctx, pixelRatio = 1) {
+  const { width, height } = canvas.getBoundingClientRect();
+  if (!(width > 0 && height > 0)) return null;
+  const scale = Math.min(Number.isFinite(pixelRatio) && pixelRatio > 0 ? pixelRatio : 1, 2);
+  const bitmapWidth = Math.max(1, Math.round(width * scale));
+  const bitmapHeight = Math.max(1, Math.round(height * scale));
+  if (canvas.width !== bitmapWidth) canvas.width = bitmapWidth;
+  if (canvas.height !== bitmapHeight) canvas.height = bitmapHeight;
+  // Account for fractional CSS pixels and the integer bitmap dimensions.
+  ctx.setTransform(bitmapWidth / width, 0, 0, bitmapHeight / height, 0, 0);
+  return { width, height };
+}
+
 /* src/app.js */
+
 
 
 
@@ -922,10 +939,12 @@ async function refresh(){if(busy)return;busy=true;if(!paused){$('#live').classNa
 function togglePause(){paused=!paused;if(paused)frozenAt=protocolTotal();else render(true);updateStatus()}
 
 const canvas=$('#graph'),ctx=canvas.getContext('2d');
-function resizeCanvas(){const rect=canvas.getBoundingClientRect(),scale=Math.min(devicePixelRatio,2);canvas.width=rect.width*scale;canvas.height=rect.height*scale;ctx.setTransform(scale,0,0,scale,0,0);drawGraph()}
+function resizeCanvas(){drawGraph()}
+// Panel layout can settle after the initial draw without a window resize.
+if(typeof ResizeObserver==='function')new ResizeObserver(resizeCanvas).observe(canvas.parentElement);
 // The graph is static: it is redrawn only when the selection or data changes. Columns are stages, not relationships.
 function drawGraph(){
-  const w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);if(!selected){$('#emptyGraph').style.display='block';return}$('#emptyGraph').style.display='none';$('#graphTitle').textContent=`${selected.id} · ${STATUS_LABEL[selected.status]}`;canvas.setAttribute('aria-label',`Diagram of case ${selected.id}: ${selected.stages.map((x,i)=>`${x.length} ${STAGE_NAMES[i].toLowerCase()}`).join(', ')} records. The same records are listed in the evidence profile.`);
+  const size=fitCanvas(canvas,ctx,devicePixelRatio);if(!size)return;const {width:w,height:h}=size;ctx.clearRect(0,0,w,h);if(!selected){$('#emptyGraph').style.display='block';return}$('#emptyGraph').style.display='none';$('#graphTitle').textContent=`${selected.id} · ${STATUS_LABEL[selected.status]}`;canvas.setAttribute('aria-label',`Diagram of case ${selected.id}: ${selected.stages.map((x,i)=>`${x.length} ${STAGE_NAMES[i].toLowerCase()}`).join(', ')} records. The same records are listed in the evidence profile.`);
   const margin=Math.max(70,w*.1),xs=[margin,w*.36,w*.64,w-margin],centerY=h*.54,nodeColors=['#d7ff55','#65bfff','#ffbe5c','#67e8a5'],pos=new Map();
   ctx.textAlign='center';ctx.font='10px DM Mono';for(let i=0;i<4;i++){ctx.fillStyle='#8696a8';ctx.fillText(STAGE_NAMES[i],xs[i],112)}
   selected.stages.forEach((items,stage)=>{const shown=items.slice(0,MAX_NODES);shown.forEach((record,index)=>pos.set(record.seq,{x:xs[stage],y:centerY+(index-(shown.length-1)/2)*55,stage,record}));
