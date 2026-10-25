@@ -945,8 +945,8 @@ function drawGraph(){
 }
 // The maintainer's key is fixed here, so a statement signed by any other key can never pass as the maintainer's.
 const MAINTAINER={did:'did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh',room:'d-proofline',seq:1};
-// Checked in the live room first. If the room no longer holds it (Technocore removes a room whose only message is
-// 12 hours old), the archived copy is loaded, checked against its manifest hash, and its signature re-verified.
+// Check the live signature first. If the statement is absent or does not verify, try the
+// archived copy, checked against its manifest hash and independently signature-verified.
 const isStatement=m=>m&&Number(m.seq)===MAINTAINER.seq&&m.from===MAINTAINER.did&&/maintain Proofline/.test(String(m.text));
 async function archivedStatement(){
   const fetchText=async u=>{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(String(r.status));return r.text()};
@@ -962,10 +962,13 @@ async function checkMaintainer(){
     const res=await fetch(`https://technocore.chat/r/${MAINTAINER.room}/export`,{cache:'no-store'});
     if(res.ok){const line=(await res.text()).split('\n').find(l=>/^\{"seq":1,/.test(l));m=line?parseRoomPage(line):null}
   }catch{}
-  if(!isStatement(m)){live=false;try{m=await archivedStatement()}catch{m=null}}
-  if(!isStatement(m)){show('the statement is neither in the room nor in the evidence archive right now, so it cannot be checked.','warn');return}
-  const st=await checkSignature(MAINTAINER.room,m);
-  const where=live?`${MAINTAINER.room} #${MAINTAINER.seq}, ${String(m.ts).slice(0,10)}`:`archived copy of ${MAINTAINER.room} #${MAINTAINER.seq}, ${String(m.ts).slice(0,10)}; the room no longer holds it`;
+  let st=isStatement(m)?await checkSignature(MAINTAINER.room,m):null;
+  if(!isStatement(m)||!['valid','unchecked'].includes(st)){
+    live=false;try{m=await archivedStatement()}catch{m=null}
+    st=isStatement(m)?await checkSignature(MAINTAINER.room,m):null;
+  }
+  if(!isStatement(m)){show('no verifiable maintainer statement is available from the room or evidence archive right now.','warn');return}
+  const where=live?`${MAINTAINER.room} #${MAINTAINER.seq}, ${String(m.ts).slice(0,10)}`:`archived copy of ${MAINTAINER.room} #${MAINTAINER.seq}, ${String(m.ts).slice(0,10)}`;
   if(st==='valid')show(`signature verified (${where}).`,'ok');
   else if(st==='unchecked')show('your browser cannot check this signature.','warn');
   else show('the signature does not verify.','bad');
