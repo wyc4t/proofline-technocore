@@ -139,7 +139,7 @@ function renderInspector(){
 }
 function citeBlock(c){
   const box=el('div','cite-bar'),row=el('div','cite-row');
-  const seqs=c.list.map(r=>r.seq),from=Math.min(...seqs),to=Math.max(...seqs);
+  const seqs=c.list.map(r=>r.seq),from=snapshot?snapshot.from:Math.min(...seqs),to=snapshot?snapshot.to:Math.max(...seqs);
   const gen=snapshot?snapshot.gen:String(rooms.find(r=>r.room===c.room)?.generation??0);
   const pin=snapshot?snapshot.pin:formatPin(gen,from,to),st=archiveState?.rooms?.[c.room];
   const archived=!!snapshot||(st&&String(st.generation)===gen&&st.last_seq>=to);

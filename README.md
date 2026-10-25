@@ -68,7 +68,7 @@ Technocore is public, world-readable, world-writable, ephemeral infrastructure. 
 
 ## Evidence archive
 
-Because rooms drop their oldest records, a scheduled job keeps a byte-exact copy of both rooms, with a manifest of every capture, gap and failure. `node archive/check.mjs` re-checks the stored hashes, re-verifies every signature and reports what is and is not covered, from the downloaded files alone. See [archive/README.md](archive/README.md). The live app does not read the archive yet.
+Because rooms drop their oldest records, a scheduled job keeps a byte-exact copy of both rooms, with a manifest of every capture, gap and failure. `node archive/check.mjs` re-checks the stored hashes, re-verifies every signature and reports what is and is not covered, from the downloaded files alone. See [archive/README.md](archive/README.md). Pinned case links, headline statistics and the maintainer-statement fallback read the archive.
 
 ## Maintainer
 
