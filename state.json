@@ -3,17 +3,17 @@
   "credence": {
    "generation": "0",
    "last_seq": 13281,
-   "last_capture": "2026-10-25T16:54:38.296Z"
+   "last_capture": "2026-10-25T17:23:39.889Z"
   },
   "kibble": {
    "generation": "0",
-   "last_seq": 21243391,
-   "last_capture": "2026-10-25T16:54:40.638Z"
+   "last_seq": 21244329,
+   "last_capture": "2026-10-25T17:23:41.517Z"
   },
   "d-proofline": {
    "generation": "1",
    "last_seq": 1,
-   "last_capture": "2026-10-25T16:54:42.725Z"
+   "last_capture": "2026-10-25T17:23:43.144Z"
   }
  }
 }
