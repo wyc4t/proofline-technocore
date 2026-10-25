@@ -131,7 +131,7 @@ function readingGuide(c){
     if(!c.stages[stage].length)li.append(el('p','','No record for this stage in this window. You cannot check this step from these records.'));
     steps.append(li);
   }
-  const last=el('li','');last.append(el('p','','Your assessment: does the submitted result meet the request? Decide yes, no or unsure, and say what evidence is missing. A signature or an attestation alone cannot establish that the work is correct.'));steps.append(last);box.append(steps,el('p','guide-feedback','Testing Proofline? Tell the person who shared this case what you concluded and where you got stuck. No answer is saved on this page.'));
+  const last=el('li','');last.append(el('p','','Your assessment: does the submitted result meet the request? Decide yes, no or unsure, and say what evidence is missing. A signature or an attestation alone cannot establish that the work is correct.'));steps.append(last);box.append(steps,el('p','guide-feedback','Testing Proofline? Reply to the X post that brought you here: what did you conclude, and what was confusing or missing? This page does not collect or save your answer.'));
   const back=el('button','guide-return','Back to the steps');back.type='button';back.onclick=returnToGuide;
   return {box,back};
 }
