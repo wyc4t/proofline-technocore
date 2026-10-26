@@ -2,6 +2,51 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-10-25",
+   "generated_at": "2026-10-26T00:08:59.950Z",
+   "stats_version": "2",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-10-25T00:00:00.156Z",
+     "to_ts": "2026-10-25T23:59:59.619Z",
+     "records": 175191,
+     "jobs": 29388,
+     "job_ids": 28137,
+     "requester_keys": 17358,
+     "reposted_share_pct": 4.2,
+     "with_result_pct": 82,
+     "with_useful_attestation_pct": 8.2,
+     "median_first_result_seconds": 25.271,
+     "attestations": 24484,
+     "negative_attestations": 2643,
+     "active_keys": 22864
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "median_first_result_seconds": null,
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-10-24",
    "generated_at": "2026-10-25T00:24:20.352Z",
    "stats_version": "2",
