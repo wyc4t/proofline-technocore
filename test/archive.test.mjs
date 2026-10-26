@@ -141,3 +141,11 @@ test('collect + check: reproduces counts, coverage and a case; detects tampering
     assert.equal(check({ data, assets: outbox }).problems.length, 1);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('an empty export after archived records is logged as room_emptied, and archives nothing', async () => {
+  const { ingest } = await import('../archive/collect.mjs');
+  const prev = { generation: '0', last_seq: 13281, last_capture: 'T0' };
+  const { entry, newLines } = ingest({ room: 'credence', body: Buffer.alloc(0), generation: '0', capturedAt: 'T1', httpStatus: 200, prev });
+  assert.deepEqual(entry.events, [{ type: 'room_emptied', archived_last_seq: 13281 }]);
+  assert.equal(newLines.length, 0);
+});

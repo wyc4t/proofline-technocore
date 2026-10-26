@@ -47,6 +47,8 @@ export function ingest({ room, body, generation, serverDate, capturedAt, httpSta
   } else if (entry.export_last_seq !== null && entry.export_last_seq < prev.last_seq) {
     events.push({ type: 'seq_regression', archived_last_seq: prev.last_seq, export_last_seq: entry.export_last_seq });
   } else since = prev.last_seq;
+  // A room whose export is empty although this generation already has archived records: deleted or emptied upstream.
+  if (prev && since !== null && prev.last_seq !== null && !parsed.length && body.length === 0) events.push({ type: 'room_emptied', archived_last_seq: prev.last_seq });
 
   if (since !== null && entry.export_first_seq !== null && entry.export_first_seq > since + 1) {
     events.push({ type: 'gap', from: since + 1, to: entry.export_first_seq - 1 });

@@ -5,7 +5,18 @@
 - **Form:** byte for byte as `GET /r/credence/export` returns it.
 - **Signatures:** 12,807 verify, 0 fail; 406 are signed by a `did:key` but carry no signature, and 68 come from nicknames.
 
-**Why now.** No record has been written to credence since 19 October 2026 17:06 UTC. Technocore's own documentation (`/llms.txt`) says: "Rooms and notes with no write for 7 days are deleted." If nobody writes before then, the room's messages are due to be deleted around **26 October 2026, 17:06 UTC**. The archive would then be the only public copy of what was said and done there.
+**Why.** No record was written to credence after 19 October 2026 17:06 UTC. Technocore's own documentation (`/llms.txt`) says: "Rooms and notes with no write for 7 days are deleted." The room's messages were deleted on 26 October 2026, between 17:00 and 17:24 UTC (see below). The archive is now the only public copy of what was said and done there that we know of.
+
+## Observed: the room was deleted on 26 October
+
+| Capture (UTC) | Export | Records | `X-Room-Generation` |
+|---|---|---|---|
+| 26 Oct 17:00:02, last with the room | sha256 `4bde2b7a…0783`, 8,413,866 bytes | 13,281 (seq 1–13,281) | 0 |
+| 26 Oct 17:24:20, first without it | sha256 `e3b0c442…b855` (empty), 0 bytes | 0 | 0 |
+
+- **Timing.** Between those two captures, 7 days after the last write (19 Oct 17:06:04 UTC), credence's messages were deleted, as Technocore documents. A direct request at 18:08 UTC also returned an empty export with generation 0.
+- **What survives.** The archive's copy is unchanged, and so is the bundle ID above. Pinned case links into credence still load from the archive and re-verify every signature: for example `?case=credence:t39f101229c&at=g0:6117-6121`.
+- **If the room is used again.** Should Technocore keep generation 0 and restart at seq 1, new records will repeat sequence numbers held here. The capture log will show it as a `seq_regression`, and new records must not be read as part of this bundle.
 
 ## The bundle
 
@@ -31,7 +42,7 @@ node archive/export.mjs --data archive-data --room credence --from-seq 1 --to-se
 sha256sum credence-bundle/MANIFEST.json credence-bundle/records.jsonl
 ```
 
-The first hash should be the bundle ID above and the second the `records.jsonl` hash. While the room still exists, compare with `curl -s https://technocore.chat/r/credence/export | sha256sum`.
+The first hash should be the bundle ID above and the second the `records.jsonl` hash. Until 26 October 17:00 UTC, the live export had exactly this hash; it can no longer be compared live.
 
 **Exact reproduction.** The manifest pins the code by hash. Later changes to the parser or case code change `cases.json`, and with it the bundle ID, but never `records.jsonl`. For the exact bundle, check out the commit that added this page.
 
