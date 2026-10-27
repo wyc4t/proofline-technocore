@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 const PAGE = '<!doctype html><html><head><title>Proofline · Live evidence graph</title><meta property="og:title" content="Proofline: default"><meta property="og:image" content="https://x/api/card"><meta property="og:image:width" content="1200"><meta name="twitter:image" content="https://x/api/card"></head><body></body></html>';
-const STATS = { window_hours: 24, rooms: { kibble: { jobs: { records: 11975, reposted_share_pct: 18.9 }, outcomes: { with_result_pct: 75.1, with_useful_attestation_pct: 17.2 } } } };
+const STATS = { window_hours: 24, rooms: { kibble: { window_start: '2026-10-26T06:55:00Z', window_end: '2026-10-27T06:55:00Z', jobs: { records: 11975, reposted_share_pct: 18.9 }, outcomes: { with_result_pct: 75.1, with_useful_attestation_pct: 17.2, with_useful_non_result_key_attestation_pct: 11.4 } } } };
 
 async function run(query) {
   const real = globalThis.fetch;
@@ -18,7 +18,7 @@ async function run(query) {
 test('site link: numbers in the description, default card tags replaced, sizes kept', async () => {
   const r = await run({});
   assert.equal(r.s, 200);
-  assert.match(r.b, /<meta property="og:description" content="kibble, verified archive: 11,975 jobs posted, 75% got a result, 17% attested useful, 19% reposted titles/);
+  assert.match(r.b, /<meta property="og:description" content="kibble, 26 Oct 2026 06:55 – 27 Oct 2026 06:55 UTC, signature-checked archive: 11,975 jobs posted, 75% got a result, 17% useful verdict \(any sender\), 11% from a key with no result here, 19% reposted titles/);
   assert.equal((r.b.match(/property="og:title"/g) || []).length, 1, 'the default og:title is replaced, not duplicated');
   assert.match(r.b, /og:image:width/);
 });
@@ -34,4 +34,17 @@ test('malformed case parameters fall back to the site card', async () => {
   const r = await run({ case: '"><script>alert(1)</script>' });
   assert.doesNotMatch(r.b, /<script>alert/);
   assert.match(r.b, /<meta property="og:image" content="https:\/\/proofline-technocore.vercel.app\/api\/card">/);
+});
+
+test('digest preview carries both useful-verdict rates, dates and claim caveats', async () => {
+  const real = globalThis.fetch;
+  globalThis.fetch = async () => ({ok:true,text:async()=>JSON.stringify({days:[{day:'2026-10-26',rooms:{kibble:{full_day:true,from_ts:'2026-10-26T00:00:00Z',to_ts:'2026-10-26T23:59:00Z',jobs:10,with_result_pct:80,with_useful_attestation_pct:60,with_useful_non_result_key_attestation_pct:20,reposted_share_pct:0}}}]})});
+  try {
+    const {describe} = await import('../api/share.js');
+    const d = await describe({view:'digest',day:'2026-10-26'});
+    assert.match(d.description,/60% useful verdict \(any sender\), 20% from a key with no result here/);
+    assert.match(d.description,/26 Oct 2026 00:00 – 26 Oct 2026 23:59 UTC/);
+    assert.match(d.description,/Verdicts are claims; different keys do not prove independent review/);
+    assert.doesNotMatch(d.description,/attested useful|verified archive/i);
+  } finally {globalThis.fetch=real;}
 });

@@ -5,7 +5,7 @@ export const PAGE_LIMIT = 200;
 export function createRoomState(room) {
   return { room, records: new Map(), generation: null, lastSeq: 0, needsFullReload: false, firstTsAll: null, lastTsAll: null,
     evicted: 0, resets: 0, gaps: [], counts: { protocol: 0, malformed: 0, unsupported: 0, ignored: 0 },
-    status: 'loading', error: null, lastOkAt: null };
+    status: 'loading', error: null, lastOkAt: null, roomEmpty: null, emptySince: null };
 }
 // null = fetch the newest PAGE_LIMIT records; a number = records after that seq (server returns the NEWEST page_limit of them).
 export function querySince(state) { return state.needsFullReload || !state.lastSeq ? null : state.lastSeq; }
@@ -25,6 +25,10 @@ export function applyPage(state, page, { since = null, cap = ROOM_CAP } = {}) {
     state.evicted = 0; state.gaps = []; state.counts = { protocol: 0, malformed: 0, unsupported: 0, ignored: 0 };
   }
   if (gen !== undefined) state.generation = gen;
+  // An empty incremental page is not proof of an empty room: last_seq must also be zero.
+  const explicitEmpty = msgs.length === 0 && page?.last_seq != null && Number(page.last_seq) === 0 && (page.count === 0 || since === null);
+  state.roomEmpty = explicitEmpty ? true : msgs.length || Number(page?.last_seq) > 0 ? false : null;
+  if (state.roomEmpty !== true) state.emptySince = null;
   const wasReload = state.needsFullReload; // true right after a reset: this page is a partial view of the new epoch
   if (!wasReload && since !== null && seqs.length) {
     const first = Math.min(...seqs);
@@ -49,7 +53,7 @@ export function applyPage(state, page, { since = null, cap = ROOM_CAP } = {}) {
   }
   return state;
 }
-export function markOk(state, now) { state.status = 'ok'; state.error = null; state.lastOkAt = now; }
+export function markOk(state, now) { state.status = 'ok'; state.error = null; state.lastOkAt = now; if (state.roomEmpty === true && state.emptySince === null) state.emptySince = now; }
 export function markError(state, message, now) { state.status = 'error'; state.error = String(message); state.errorAt = now; }
 export function coverage(state) {
   const recs = [...state.records.values()];
@@ -58,6 +62,6 @@ export function coverage(state) {
   const spanMs = windowStart && state.lastTsAll ? Math.max(0, Date.parse(state.lastTsAll) - Date.parse(windowStart)) : null;
   return { room: state.room, status: state.status, error: state.error, records: recs.length, evicted: state.evicted, resets: state.resets,
     gaps: state.gaps.length, missed: state.gaps.reduce((n, g) => n + g.missed, 0), malformed: state.counts.malformed,
-    unsupported: state.counts.unsupported, ignored: state.counts.ignored, windowStart, windowEnd: state.lastTsAll, spanMs, lastOkAt: state.lastOkAt };
+    unsupported: state.counts.unsupported, ignored: state.counts.ignored, windowStart, windowEnd: state.lastTsAll, spanMs, lastOkAt: state.lastOkAt, roomEmpty: state.roomEmpty, emptySince: state.emptySince };
 }
 export function allRecords(states) { return states.flatMap((s) => [...s.records.values()]); }

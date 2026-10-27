@@ -7,7 +7,8 @@
 //
 //   const index = buildReuseIndex(allRecords);           // once per set of records
 //   const review = reviewCase(caseRecords, { index });   // per case
-export const EVIDENCE_VERSION = '5'; // 5: how each part was found; job IDs with differing postings not checked (review of 20 Oct evening)
+export const EVIDENCE_VERSION = '6'; // 6: JSON/table item shapes; neutral text-check assessments
+// 5: how each part was found; job IDs with differing postings not checked (review of 20 Oct evening)
 // 4: 4: named items looked for by name; stricter 'status' and 'pattern' (from KIBBLE-EXP-001 held-out 1)
 // 3: 3: stricter reading of required parts (items, SQL, hashes), from KIBBLE-EXP-001 development cases
 // 2: 2: off-task by word overlap; no plain-answer check; evidence quality kept out of the class
@@ -71,7 +72,8 @@ export function deliverables(clause) {
       // "3 criteria (latency, persistence, ops complexity)": the items are named, so look for the names.
       const named = /^[^()]{0,40}?\(([^)]{3,160})\)/.exec(clause.slice(m.index + m[0].length));
       const names = named ? named[1].split(/,|;|\band\b|\bor\b|\+/).map((x) => x.trim().toLowerCase().replace(/s$/, '')).filter((x) => x.length >= 3) : [];
-      asked.push({ id: 'items', label: `${n} ${m[3]}`, n, ...(names.length >= 2 ? { names } : {}) }); break;
+      const phrase = /^[a-z]+(?:[ /-]+(?:keys?(?:\/values?)?|values?))?/i.exec(clause.slice(m.index + m[0].length - m[3].length))[0];
+      asked.push({ id: 'items', label: `${n} ${phrase}`, n, ...(names.length >= 2 ? { names } : {}) }); break;
     }
   }
   return asked;
@@ -80,7 +82,37 @@ export function deliverables(clause) {
 function countItems(t) {
   const lines = String(t).split(/\n/).filter((l) => /^\s*([-*•]|\d+[.)])\s+\S/.test(l)).length;
   const inline = (String(t).match(/(?:^|\s)\(?\d{1,2}[.)]\s+\S/g) || []).length;
-  return Math.max(lines, inline);
+  // JSON collections: use the largest collection, never add nested fields together.
+  // A single item with key/value/reason fields remains ONE item.
+  const collectionSize = (v, depth = 0) => {
+    if (!v || typeof v !== 'object' || depth > 20) return 0;
+    if (Array.isArray(v)) return v.reduce((n, x) => Math.max(n, collectionSize(x, depth + 1)), v.length);
+    const entries = Object.entries(v);
+    const nested = entries.reduce((n, [, x]) => Math.max(n, collectionSize(x, depth + 1)), 0);
+    const item = entries.some(([k]) => /^(key|value|reason|name|description)$/i.test(k));
+    if (item) return 1;
+    if (entries.some(([, x]) => Array.isArray(x))) return nested;
+    return Math.max(entries.length, nested);
+  };
+  let json = 0;
+  const source = String(t).trim();
+  const candidates = [source, ...[...source.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi)].map((m) => m[1].trim())];
+  for (const candidate of candidates) { try { json = Math.max(json, collectionSize(JSON.parse(candidate))); } catch { /* not JSON */ } }
+  // Only count data rows in a Markdown table with a header separator; not its headings.
+  const rows = String(t).split('\n').map((s) => s.trim());
+  let table = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const cells = rows[i].replace(/^\|/, '').replace(/\|$/, '').split('|').map((s) => s.trim());
+    if (cells.length < 2 || !cells.every((s) => /^:?-{3,}:?$/.test(s)) || !rows[i - 1].includes('|')) continue;
+    let n = 0;
+    for (let j = i + 1; j < rows.length && rows[j].includes('|'); j++) {
+      const data = rows[j].replace(/^\|/, '').replace(/\|$/, '').split('|').map((s) => s.trim());
+      if (data.length !== cells.length || !data.some(Boolean)) break;
+      n++;
+    }
+    table = Math.max(table, n);
+  }
+  return Math.max(lines, inline, json, table);
 }
 
 // Returns how a part was found: 'list' (enough listed items), 'names' (the named items are all mentioned, which
@@ -179,6 +211,7 @@ export function reviewCase(list, { index = null } = {}) {
   const noSelfVouch = /\bno self-?vouch|\bno self-?attest/i.test(task.text);
   const resultKeys = new Set(results.map((r) => r.keyId).filter(Boolean));
   const violations = list.filter((r) => r.stage !== 0 && banned.includes(r.kind)).map((r) => ({ seq: r.seq, kind: r.kind, why: 'the task says not to post this' }));
+  if (exact) for (const r of results) if ((r.body || '').trim() !== exact) violations.push({ seq: r.seq, kind: r.kind, why: `the task asks for exactly "${exact}"` });
   if (noSelfVouch) for (const a of attests) if (a.keyId && resultKeys.has(a.keyId)) violations.push({ seq: a.seq, kind: a.kind, why: 'the task says no self-vouch, and this key posted a result here' });
 
   const reviewed = results.map((r) => {
@@ -197,7 +230,7 @@ export function reviewCase(list, { index = null } = {}) {
     else if (refusal) { cls = 'insufficient'; reasons.push('A refusal, not a result.'); }
     else if (offTask) { cls = 'noncompliant'; reasons.push(`Written for something else: it shares almost no words with the task (${Math.round(ov.task * 100)}% of the task’s words) and mentions none of its specifics${specs.length ? ` (${specs.slice(0, 4).join(', ')}${specs.length > 4 ? ', …' : ''})` : ''}.`); }
     else if (reusedIn >= 2) { cls = 'insufficient'; }
-    else if (parts.some((p) => !p.present)) { cls = 'insufficient'; reasons.push(`Required by the task but not found: ${parts.filter((p) => !p.present).map((p) => p.label).join(', ')}.`); }
+    else if (parts.some((p) => !p.present)) { cls = 'insufficient'; reasons.push(`Required parts not detected by text checks: ${parts.filter((p) => !p.present).map((p) => p.label).join(', ')}.`); }
     else { cls = 'supported'; reasons.push(asked.length ? `On the task’s subject, and contains every part it requires that can be looked for (${asked.map((p) => p.label).join(', ')}).` : 'On the task’s subject; the task names no parts that can be looked for.'); }
     if (!ev.checkable && !refusal) reasons.push('Gives no detail a reader could re-run or check: no request, link, hash, code or measurements.');
     if (reusedIn >= 2) reasons.push(`The same text was posted under ${reusedIn} other ${reusedIn === 1 ? 'task' : 'tasks'}.`);
@@ -211,8 +244,8 @@ export function reviewCase(list, { index = null } = {}) {
 
   // The three rows, as plain statements.
   let compliance, evidence, assessment;
-  if (violations.length && banned.length) {
-    compliance = { level: 'violated', text: `Violated: the task says not to ${banned.includes('SUBMIT') ? 'respond' : 'post ' + banned.join('/')}, and ${violations.length} ${violations.length === 1 ? 'record does' : 'records do'}` };
+  if (violations.length) {
+    compliance = { level: 'violated', text: `Task instructions not followed by ${violations.length} ${violations.length === 1 ? 'record' : 'records'}` };
   } else if (!reviewed.length) compliance = { level: 'none', text: 'No result to compare' };
   else if (best === 'supported') compliance = { level: 'supported', text: asked.length ? 'Required parts present in at least one result' : 'At least one result addresses the task’s specifics' };
   else if (best === 'insufficient') compliance = { level: 'partial', text: 'Not shown: required parts missing, a refusal, or reused text' };
@@ -224,12 +257,11 @@ export function reviewCase(list, { index = null } = {}) {
   else if (!top.checkable) evidence = { level: 'asserted', text: 'Asserted only: nothing a reader could re-run or check' };
   else evidence = { level: 'checkable', text: `Concrete claims${top.requests.length ? ` (${top.requests.length} ${top.requests.length === 1 ? 'request' : 'requests'} named)` : ''}, not re-run` };
   const reproduction = { level: 'not-performed', text: `Not performed by Proofline${claimsRepro ? ` · ${claimsRepro} ${claimsRepro === 1 ? 'attestation claims' : 'attestations claim'} to have reproduced it (a claim, not checked)` : ''}` };
-  const posNote = positive.length && best !== 'supported' ? ` ${positive.length} ${positive.length === 1 ? 'attestation calls' : 'attestations call'} it useful anyway.` : '';
-  if (compliance.level === 'violated') assessment = `The task asked for no response, and the protocol chain was filled in anyway.${posNote} A complete chain here is the failure, not the success.`;
+  if (compliance.level === 'violated') assessment = 'Task instructions were not followed: ' + violations.map((v) => `#${v.seq} ${v.why}`).join('; ') + '.';
   else if (compliance.level === 'none') assessment = 'There is no result to compare with the task.';
   else if (best === 'supported') assessment = 'At least one result contains what the task asks for, as claims. Nobody’s claims were re-run here, so this shows the result is on point, not that it is correct.';
-  else if (best === 'insufficient') assessment = `The records do not show the task was done.${posNote}`;
-  else assessment = `No result addresses what this task asks.${posNote}`;
+  else if (best === 'insufficient') assessment = 'The text checks did not detect every required part, or found a refusal or reused text. Read the result before concluding; these checks can miss formats or wording.';
+  else assessment = 'The text checks found little overlap with the request. Read the result before concluding; this is not a finding about an attestation.';
 
   return {
     available: true, version: EVIDENCE_VERSION,
@@ -237,4 +269,16 @@ export function reviewCase(list, { index = null } = {}) {
     results: reviewed, violations, positiveAttestations: positive.length,
     summary: { class: compliance.level === 'violated' ? 'noncompliant' : best, compliance, evidence, reproduction, assessment },
   };
+}
+
+// Text-shape checks never justify a red assessment or a claim against an attester.
+export function evidenceAssessment(rv) {
+  const q = rv.requirements, rs = rv.results;
+  if (rv.violations.length) return { tone: 'alert', text: `Task instructions were not followed: ${rv.violations.map((v) => `#${v.seq} ${v.why}`).join('; ')}. This does not establish whether an attestation judged that record.` };
+  if (!rs.length) return { tone: '', text: 'There is no result to compare with the task.' };
+  if (!q.deliverables.length) return { tone: '', text: 'No automatic checks for this task. Read the success line and the results yourself.' };
+  const found = rs.some((r) => r.parts.length && r.parts.every((p) => p.present) && !r.refusal && r.reusedIn < 2);
+  return { tone: '', text: found
+    ? `At least one result passes the detected text checks (${q.deliverables.map((d) => d.label).join(', ')}). These checks detect text shapes or named items, not correctness or task completion. Other requirements may not have been checked; nothing was re-run here.`
+    : 'The text checks did not detect every required part. They can miss formats or wording, so read the result before concluding.' };
 }
