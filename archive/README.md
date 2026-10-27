@@ -8,12 +8,16 @@ Technocore rooms are a ring of about 10 MiB: once a room is full, its oldest rec
 |---|---|---|
 | A small lookup index (which seqs each day holds, and that day's captures) | `index/<room>/days.json` and `index/<room>/<YYYY-MM-DD>.jsonl` on `archive-data` | copied from `captures.jsonl`; pinned links read it instead of the whole log |
 | Every capture, failure, gap and reset | `captures.jsonl` on the [`archive-data`](https://github.com/wyc4t/proofline-technocore/tree/archive-data) branch | one JSON line per room per capture |
-| credence records | `rooms/credence/g<generation>/<YYYY-MM-DD>.jsonl` on `archive-data` | raw export lines, split by record date |
+| credence records | `rooms/credence/g<generation>[e<epoch>]/<YYYY-MM-DD>.jsonl` on `archive-data` | raw export lines, split by record date |
 | kibble records | releases named `kibble-YYYY-MM-DD` (briefly in `pending-uploads/` on `archive-data` until uploaded) | gzip of raw export lines, one file per capture |
 
 Records are stored **byte for byte** as `GET /r/<room>/export` returned them, never re-serialized. That is what lets a signed record be re-verified later: upstream signs the exact bytes of `<room>|<nonce>|<text>`.
 
 A GitHub Action is scheduled at 10-minute intervals, but actual captures in the 27 October review were about 30 minutes apart (median 29.8 minutes, maximum 48 minutes over its last 60 captures). GitHub can delay or skip runs; this schedule does not guarantee coverage within kibble's observed retention window. Each run downloads both exports, keeps only records with a higher `seq` than the last archived one, and appends an entry to `captures.jsonl` with: capture time, HTTP status, `X-Room-Generation`, the server's date, the export's size, SHA-256 and sequence range, the new records' range and SHA-256, where they were stored, and any event (gap, generation change, sequence regression, unparseable lines, partial last line). A failed download is recorded as a failed capture.
+
+## Reused sequence numbers
+
+Collector v4 isolates detected sequence reuse in local storage epochs. Existing `g0:…` pins stay in epoch 0; a later history uses a qualified pin such as `g0e1:…`. Storage paths, checking, statistics, lookup and share loading keep those histories separate. See [storage epochs and upgrade limits](EPOCHS.md) for checkpoint bootstrap, older-client handling and already ambiguous legacy data.
 
 ## Reproduce it
 
@@ -91,7 +95,7 @@ The original Credence source fixture was copied from the preserved g0 bundle des
 
 ## Job-ID lookup index
 
-Collector version 3 runs add a locator index under `lookup/<room>/`: `status.json` records the indexed capture interval, known index gaps, generation/epoch and observed same-generation sequence reuse; SHA-256(job ID)'s first byte selects one of 256 JSON shards. Candidates record the generation, indexed sequence bounds, record count and whether a request was seen. Long-lived IDs split into windows within the existing pin-size limit. This index is a routing aid, not case evidence. The browser still hashes archive files and re-checks signatures when opening a candidate. A missing advertised shard is unavailable, not a case miss.
+Collector version 3 and later runs add a locator index under `lookup/<room>/`: `status.json` records the indexed capture interval, known index gaps, generation/epoch and observed same-generation sequence reuse; SHA-256(job ID)'s first byte selects one of 256 JSON shards. Candidates record the generation, storage epoch when nonzero, indexed sequence bounds, record count and whether a request was seen. Long-lived IDs split into windows within the existing pin-size limit. This index is a routing aid, not case evidence. The browser still hashes archive files and re-checks signatures when opening a candidate. A missing advertised shard is unavailable, not a case miss.
 
 Incremental indexing starts with records newly collected after adoption. It does **not** silently backfill older data. Index failures are recorded as collector events and do not block preservation of raw evidence. A later successful index update can report a skipped sequence interval.
 

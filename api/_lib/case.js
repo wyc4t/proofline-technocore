@@ -26,7 +26,7 @@ export function parseLink(query = {}) {
 export async function loadPinnedCase({ room, id, pin }) {
   if (!pin) return null;
   const res = await loadPinned({
-    room, gen: pin.gen, from: pin.from, to: pin.to,
+    room, gen: pin.gen, epoch: pin.epoch??0, from: pin.from, to: pin.to,
     fetchText: (u) => get(`${u}?t=${Math.floor(Date.now() / 60e3)}`, 'text'),
     fetchBytes: (u) => get(u, 'bytes'),
     assetUrl: (tag, asset) => `https://github.com/${REPO}/releases/download/${tag}/${asset}`,

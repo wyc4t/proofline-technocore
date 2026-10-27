@@ -17,14 +17,15 @@ import { sha256, classify, VERIFIER_VERSION } from './lib/records.mjs';
 import { parseMessage } from '../src/lib/protocol.js';
 import { buildCases } from '../src/lib/cases.js';
 
-export const EXPORT_VERSION = '1';
+import {storageEpoch,archiveGroup} from '../src/lib/archive-epoch.js';
+export const EXPORT_VERSION = '2';
 const here = new URL('.', import.meta.url).pathname;
 const codeHash = (rel) => sha256(readFileSync(join(here, rel)));
 
-export function exportBundle({ data, assets, room, generation = '0', fromSeq, toSeq, allowGaps = false }) {
+export function exportBundle({ data, assets, room, generation = '0', epoch=0, fromSeq, toSeq, allowGaps = false }) {
   const report = check({ data, assets, keepRecords: true });
   if (report.problems.length) throw new Error(`archive integrity problems:\n  ${report.problems.join('\n  ')}`);
-  const gen = `g${generation}`;
+  const gen = archiveGroup(generation,epoch);
   const recs = report.records[room]?.[gen];
   if (!recs?.size) throw new Error(`no archived records for ${room} ${gen}`);
   const seqs = [...recs.keys()].sort((a, b) => a - b);
@@ -59,7 +60,7 @@ export function exportBundle({ data, assets, room, generation = '0', fromSeq, to
   const overlaps = (a, b) => a <= to && b >= from;
   const manifest = {
     format: 'proofline-export', export_version: EXPORT_VERSION,
-    room, generation: String(generation),
+    room, generation: String(generation), storage_epoch:storageEpoch({storage_epoch:epoch}),
     window: { from_seq: from, to_seq: to, first_ts: lines[0]?.rec.ts ?? null, last_ts: lines.at(-1)?.rec.ts ?? null },
     coverage: {
       records_in_window: inWindow.length,
@@ -78,9 +79,10 @@ export function exportBundle({ data, assets, room, generation = '0', fromSeq, to
       'src/lib/cases.js': codeHash('../src/lib/cases.js'),
       'archive/lib/records.mjs': codeHash('lib/records.mjs'),
       'archive/export.mjs': codeHash('export.mjs'),
+      'src/lib/archive-epoch.js':codeHash('../src/lib/archive-epoch.js'),
     },
     archive_inputs: report.captures
-      .filter((c) => c.ok && c.room === room && String(c.generation) === String(generation) && c.new_records && overlaps(c.new_first_seq, c.new_last_seq))
+      .filter((c) => c.ok && c.room === room && String(c.generation) === String(generation) && storageEpoch(c)===epoch && c.new_records && overlaps(c.new_first_seq, c.new_last_seq))
       .map((c) => ({ captured_at: c.captured_at, new_first_seq: c.new_first_seq, new_last_seq: c.new_last_seq, new_sha256: c.new_sha256,
         stored: c.storage.kind === 'release' ? `release ${c.storage.tag}/${c.storage.asset}` : `archive-data ${c.storage.files.join(', ')}` })),
     limits: [
@@ -96,12 +98,12 @@ export function exportBundle({ data, assets, room, generation = '0', fromSeq, to
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { values: v } = parseArgs({ options: {
-    data: { type: 'string' }, assets: { type: 'string' }, room: { type: 'string' }, generation: { type: 'string', default: '0' },
+    data: { type: 'string' }, assets: { type: 'string' }, room: { type: 'string' }, generation: { type: 'string', default: '0' }, epoch: {type:'string',default:'0'},
     'from-seq': { type: 'string' }, 'to-seq': { type: 'string' }, out: { type: 'string' }, 'allow-gaps': { type: 'boolean' },
   } });
   if (!v.data || !v.room || !v.out) { console.error('usage: node archive/export.mjs --data <dir> [--assets <dir>] --room <room> [--from-seq N] [--to-seq M] --out <dir>'); process.exit(2); }
   try {
-    const b = exportBundle({ data: v.data, assets: v.assets, room: v.room, generation: v.generation,
+    const b = exportBundle({ data: v.data, assets: v.assets, room: v.room, generation: v.generation, epoch:Number(v.epoch),
       fromSeq: v['from-seq'] ? Number(v['from-seq']) : undefined, toSeq: v['to-seq'] ? Number(v['to-seq']) : undefined, allowGaps: v['allow-gaps'] });
     mkdirSync(v.out, { recursive: true });
     writeFileSync(join(v.out, 'records.jsonl'), b.rawBytes);

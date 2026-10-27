@@ -13,7 +13,8 @@ import { createHash } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { parseClaims, checkRequest, compareClaim, worthRequesting, CLAIMS_VERSION, HOST } from '../src/lib/claims.js';
 
-export const RUNNER_VERSION = '2'; // 2: deferred records kept for the next run; stale claims not requested
+import {storageEpoch,splitArchiveGroup} from '../src/lib/archive-epoch.js';
+export const RUNNER_VERSION = '3'; // 2: deferred records kept for the next run; stale claims not requested
 export const MAX_REQUESTS = 40;
 const MAX_BYTES = 2 * 1024 * 1024;
 const UA = 'proofline-reproduce/1 (+https://github.com/wyc4t/proofline-technocore)';
@@ -88,8 +89,9 @@ async function credenceRecords(data, assets) {
   const out = [];
   for (const [g, m] of Object.entries(report.records.credence || {})) for (const p of m.values()) {
     const r = parseMessage({ ...p.rec, sigStatus: classify('credence', p) }, 'credence');
-    if (r.ok) out.push({ ...r.record, gen: g.replace(/^g/, '') });
+    if (r.ok) out.push({ ...r.record, gen: splitArchiveGroup(g).generation, storage_epoch:splitArchiveGroup(g).storage_epoch });
   }
+  out.currentCapture=report.captures.filter(c=>c.ok&&c.room==='credence').at(-1);
   return out;
 }
 
@@ -108,7 +110,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const recs = await credenceRecords(v.data, v.assets);
     const items = [];
     for (const h of pre.historical) {
-      const r = recs.find((x) => x.id === h.case && x.seq === h.seq);
+      const r = recs.find((x) => x.id === h.case && x.seq === h.seq && x.gen===String(h.generation??'0') && x.storage_epoch===(h.storage_epoch??0));
       if (!r) { console.error(`not in the archive: ${h.case} #${h.seq}`); continue; }
       items.push({ source: { room: 'credence', case: h.case, seq: h.seq, from: r.source }, claimedAt: r.ts, claims: parseClaims(r.body) });
     }
@@ -125,14 +127,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const statePath = join(dir, 'state.json');
   const state = existsSync(statePath) ? JSON.parse(readFileSync(statePath, 'utf8')) : null;
   const recs = await credenceRecords(v.data, v.assets);
-  const gen = recs.reduce((g, r) => (Number(r.gen) > Number(g) ? r.gen : g), '0');
-  const maxSeq = recs.filter((r) => r.gen === gen).reduce((m, r) => Math.max(m, r.seq), 0);
-  if (!state || state.generation !== gen) {                      // first run: start from now, do not replay history
-    writeFileSync(statePath, JSON.stringify({ generation: gen, last_seq: maxSeq, since: new Date().toISOString() }, null, 1) + '\n');
+  const gen=String(recs.currentCapture?.generation??'unknown'),epoch=storageEpoch(recs.currentCapture);
+  const maxSeq = recs.filter((r) => r.gen === gen && r.storage_epoch===epoch).reduce((m, r) => Math.max(m, r.seq), 0);
+  if (!state || state.generation !== gen || storageEpoch(state)!==epoch) {                      // first run: start from now, do not replay history
+    writeFileSync(statePath, JSON.stringify({ generation: gen, storage_epoch:epoch, last_seq: maxSeq, since: new Date().toISOString() }, null, 1) + '\n');
     console.log(`reproduction starts after credence g${gen} seq ${maxSeq}`); process.exit(0);
   }
-  const fresh = recs.filter((r) => r.gen === gen && r.seq > state.last_seq && (r.stage === 2 || r.stage === 3)).sort((a, b) => a.seq - b.seq);
-  const items = fresh.map((r) => ({ source: { room: 'credence', generation: gen, case: r.id, seq: r.seq, kind: r.kind, from: r.source, sig: r.sigStatus }, claimedAt: r.ts, claims: parseClaims(r.body) })).filter((it) => it.claims.length);
+  const fresh = recs.filter((r) => r.gen === gen && r.storage_epoch===epoch && r.seq > state.last_seq && (r.stage === 2 || r.stage === 3)).sort((a, b) => a.seq - b.seq);
+  const items = fresh.map((r) => ({ source: { room: 'credence', generation: gen, storage_epoch:epoch, case: r.id, seq: r.seq, kind: r.kind, from: r.source, sig: r.sigStatus }, claimedAt: r.ts, claims: parseClaims(r.body) })).filter((it) => it.claims.length);
   let cursor = maxSeq;
   if (items.length && !v['dry-run']) {
     const run = await reproduce(items);

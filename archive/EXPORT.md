@@ -7,6 +7,8 @@ node archive/export.mjs --data <archive-data> --assets <release files> --room ki
   --from-seq 19898626 --to-seq 19923217 --out bundle
 ```
 
+New bundles use export format 2 and explicitly record `storage_epoch`. A plain generation selects storage epoch 0. Add `--epoch N` to export a later local archive history; see [storage epochs](EPOCHS.md). Records are never joined across epochs.
+
 The export refuses a window that contains sequence numbers the archive does not hold, whether from a known gap or from outside what was captured. `--allow-gaps` overrides this, and the manifest then records how many are missing.
 
 ## Files

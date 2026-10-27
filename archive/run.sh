@@ -8,8 +8,15 @@
 # the same records again.
 set -euo pipefail
 
+# On the first v4 run only, obtain the one archived high-water capture needed for
+# each legacy release-room cursor. Other checkpoints are already stored in Git.
+mkdir -p checkpoint-assets
+node code/archive/bootstrap.mjs --data data --list-assets > checkpoint-assets.tsv
+while IFS=$'\t' read -r tag asset; do
+  [ -z "$asset" ] || [ -f "checkpoint-assets/$asset" ] || gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$asset" -D checkpoint-assets || echo "checkpoint unavailable; collector will record the failure" >&2
+done < checkpoint-assets.tsv
 node code/archive/collect.mjs --data data --outbox data/pending-uploads \
-  --rooms credence,kibble,d-proofline --release-rooms kibble
+  --rooms credence,kibble,d-proofline --release-rooms kibble --checkpoint-assets checkpoint-assets
 
 node code/archive/pending.mjs --data data > pending.tsv
 while IFS=$'\t' read -r tag file; do

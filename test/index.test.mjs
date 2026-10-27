@@ -23,7 +23,7 @@ test('the index is built from captures.jsonl once, and kept up to date', () => {
     assert.equal(ensureIndex(dir), false, 'not rebuilt once it exists');
     addToIndex(dir, captures[6]);
     const days = JSON.parse(readFileSync(join(dir, 'index/kibble/days.json'), 'utf8')).days;
-    assert.deepEqual(days, [{ day: '2026-10-20', g: '0', first: 100, last: 299 }, { day: '2026-10-21', g: '0', first: 300, last: 399 }, { day: '2026-10-21', g: '1', first: 1, last: 50 }]);
+    assert.deepEqual(days, [{ day: '2026-10-20', g: '0', storage_epoch:0, first: 100, last: 299 }, { day: '2026-10-21', g: '0', storage_epoch:0, first: 300, last: 399 }, { day: '2026-10-21', g: '1', storage_epoch:0, first: 1, last: 50 }]);
     assert.deepEqual(readdirSync(join(dir, 'index')).sort(), ['credence', 'kibble']);
     const line = JSON.parse(readFileSync(join(dir, 'index/kibble/2026-10-20.jsonl'), 'utf8').split('\n')[0]);
     assert.equal(line.export_sha256, undefined, 'index lines keep only what a reader needs');

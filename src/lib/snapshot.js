@@ -1,35 +1,41 @@
+import {storageEpoch,legacyAmbiguousGenerations} from './archive-epoch.js';
 // Pinned snapshots: load a fixed window of one room from the evidence archive, check it
 // against the archive's own manifest, and hand back the records. Runs in the browser and
 // in Node (WebCrypto, DecompressionStream, fetch); the caller supplies the fetch functions.
 //
-// A pin is "g<generation>:<from seq>-<to seq>", e.g. "g0:19924995-19925140".
+// Old pins select epoch 0: g0:1-3. A later storage epoch is explicit: g0e1:1-3.
 
 export const ARCHIVE_RAW = 'https://raw.githubusercontent.com/wyc4t/proofline-technocore/archive-data/';
 
 export function parsePin(s) {
-  const m = /^g(\d{1,6}):(\d{1,19})-(\d{1,19})$/.exec(String(s ?? ''));
+  const m = /^g(\d{1,6})(?:e(\d{1,6}))?:(\d{1,19})-(\d{1,19})$/.exec(String(s ?? ''));
   if (!m) return null;
-  const from = Number(m[2]), to = Number(m[3]);
+  const from = Number(m[3]), to = Number(m[4]), epoch=Number(m[2]||0);
   if (!Number.isSafeInteger(from) || !Number.isSafeInteger(to) || from > to || to - from > 5_000_000) return null;
-  return { gen: m[1], from, to };
+  return { gen: m[1], from, to, ...(epoch?{epoch}:{}) };
 }
-export const formatPin = (gen, from, to) => `g${gen}:${from}-${to}`;
+export const formatPin = (gen, from, to, epoch=0) => `g${gen}${storageEpoch({storage_epoch:epoch})?`e${epoch}`:''}:${from}-${to}`;
 
 // Successful captures of this room and generation whose new records overlap the window.
 const parseLines = (text) => String(text).split('\n').flatMap((l) => { if (!l.trim()) return []; try { return [JSON.parse(l)]; } catch { return []; } });
-const selectCaptures = (list, room, gen, from, to) => list.filter((c) => c.ok !== false && c.room === room && String(c.generation) === String(gen)
-  && c.new_records && c.new_first_seq <= to && c.new_last_seq >= from);
-export const locateCaptures = (capturesText, room, gen, from, to) => selectCaptures(parseLines(capturesText).filter((c) => c.ok), room, gen, from, to);
+const selectCaptures = (list, room, gen, from, to, epoch=0) => list.filter((c) => c.ok !== false && c.room === room && String(c.generation) === String(gen)
+  && storageEpoch(c)===epoch && c.new_records && c.new_first_seq <= to && c.new_last_seq >= from);
+export function locateCaptures(capturesText, room, gen, from, to, epoch=0){epoch=storageEpoch({storage_epoch:epoch});const list=parseLines(capturesText).filter(c=>c.ok);if(epoch===0&&legacyAmbiguousGenerations(list,room).includes(String(gen)))throw Error('Legacy sequence reuse makes this archive generation ambiguous; recovery is required');return selectCaptures(list,room,gen,from,to,epoch)}
 
 // Same result as locateCaptures, reading only the small index: the room's day list, then the
 // day files that can hold the window. Returns null when the archive has no index yet.
-export async function locateViaIndex({ room, gen, from, to, fetchText, rawBase = ARCHIVE_RAW }) {
-  let days;
-  try { days = JSON.parse(await fetchText(`${rawBase}index/${room}/days.json`)).days; } catch { return null; }
+export async function locateViaIndex({ room, gen, from, to, epoch=0, fetchText, rawBase = ARCHIVE_RAW }) {
+  epoch=storageEpoch({storage_epoch:epoch});
+  const indexBase=`${rawBase}index/${room}/${epoch?`e${epoch}/`:''}`;
+  let index;
+  try { index = JSON.parse(await fetchText(`${indexBase}days.json`)); } catch { return null; }
+  if(index.epoch_format!==1)return null;
+  if(epoch===0&&index.legacy_ambiguous_generations?.includes(String(gen)))throw Error('Legacy sequence reuse makes this archive generation ambiguous; recovery is required');
+  const days=index.days;
   if (!Array.isArray(days)) return null;
-  const wanted = days.filter((d) => String(d.g) === String(gen) && d.first <= to && d.last >= from);
-  const texts = await Promise.all(wanted.map((d) => fetchText(`${rawBase}index/${room}/${d.day}.jsonl`)));
-  return selectCaptures(texts.flatMap(parseLines), room, gen, from, to);
+  const wanted = days.filter((d) => String(d.g) === String(gen) && storageEpoch(d)===epoch && d.first <= to && d.last >= from);
+  const texts = await Promise.all([...new Set(wanted.map(d=>d.day))].map(day => fetchText(`${indexBase}${day}.jsonl`)));
+  return selectCaptures(texts.flatMap(parseLines), room, gen, from, to, epoch);
 }
 
 // Sequence numbers in [from, to] that no capture covers (gaps, or not captured yet).
@@ -65,9 +71,9 @@ function joinLines(lines) {
 // Loads the window. fetchBytes(url) -> Uint8Array; assetUrl(tag, asset) -> URL of a release file.
 // Returns { lines: [Uint8Array], captures: [{ captured_at, range, integrity: 'verified' }], missing }.
 // Every capture used is checked against the manifest; a mismatch rejects the whole load.
-export async function loadPinned({ room, gen, from, to, fetchText, fetchBytes, assetUrl, rawBase = ARCHIVE_RAW }) {
-  const captures = await locateViaIndex({ room, gen, from, to, fetchText, rawBase })
-    ?? locateCaptures(await fetchText(`${rawBase}captures.jsonl`), room, gen, from, to);
+export async function loadPinned({ room, gen, from, to, epoch=0, fetchText, fetchBytes, assetUrl, rawBase = ARCHIVE_RAW }) {
+  const captures = await locateViaIndex({ room, gen, from, to, epoch, fetchText, rawBase })
+    ?? locateCaptures(await fetchText(`${rawBase}captures.jsonl`), room, gen, from, to, epoch);
   const missing = uncovered(captures, from, to);
   if (!captures.length) return { lines: [], captures: [], missing };
   const fileCache = new Map();
@@ -96,6 +102,6 @@ export async function loadPinned({ room, gen, from, to, fetchText, fetchBytes, a
   lines.sort((a, b) => seqOf(a) - seqOf(b));
   // Missing = every seq in the window not actually loaded: not captured, in a gap between captures, or
   // inside one capture (an export that skipped numbers). Technocore numbers every record, so none is optional.
-  const loaded = new Set(lines.map(seqOf));
-  return { lines, captures: used, missing: (to - from + 1) - loaded.size };
+  const loaded = new Map();for(const line of lines){const seq=seqOf(line),prior=loaded.get(seq);if(prior&&(prior.length!==line.length||!prior.every((v,i)=>v===line[i])))throw Error('Conflicting bytes for one sequence number in the selected storage epoch');loaded.set(seq,line)}
+  return { lines:[...loaded.values()], captures: used, missing: (to - from + 1) - loaded.size };
 }
