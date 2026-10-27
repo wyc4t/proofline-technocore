@@ -14,3 +14,4 @@ body.explorer .reading-guide{display:flex;align-items:center;gap:8px;height:64px
 .site-header .site-navigation a{color:#c8d2e0}.site-header .site-navigation a[aria-current=page]{color:#e5ebf2}
 body button{min-height:44px!important;min-width:44px}.site-brand{min-height:44px}.archive-lookup>summary,.population-panel>summary,.case-disclosure>summary,.record>summary,.about-sec>summary{min-height:44px}.cases-note button{min-height:44px}.overview-page a,.daily a,.about-page a,.guide-content a{display:inline-flex;align-items:center;min-height:44px}
 .inspector a{display:inline-flex;align-items:center;min-height:44px}
+a{min-width:44px}input,select{min-height:44px;min-width:44px}
