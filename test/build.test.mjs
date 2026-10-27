@@ -3,6 +3,6 @@ test('committed dist/app.js matches a fresh build of src/', () => { assert.doesN
 test('dist/app.js is a classic script (no import/export) so file:// works', () => { assert.doesNotMatch(fs.readFileSync('dist/app.js', 'utf8'), /^\s*(import|export)\b/m); });
 test('app.html loads app.js as a classic deferred script', () => { const h = fs.readFileSync('dist/app.html', 'utf8'); assert.match(h, /<script src="app\.js" defer/); assert.doesNotMatch(h, /type="module"/); });
 test('about dialog explains every status label and flag the app can show', () => {
-  const h = fs.readFileSync('dist/app.html', 'utf8'); const about = h.slice(h.indexOf('<dialog id="aboutDialog"'), h.indexOf('</dialog>'));
+  const h = fs.readFileSync('dist/app.html', 'utf8'); const about = h.slice(h.indexOf('<dialog id="aboutDialog"'), h.indexOf('</dialog>', h.indexOf('<dialog id="aboutDialog"')));
   for (const t of ['All 4 stages', 'Partial', 'Request not seen', 'Negative', 'Result wording is almost entirely from the request', 'Identical result or attestation text', 'Requester key also posted', 'Unavailable', 'Solid line', 'Dashed line', 'unparsed', 'missed', 'reset', 'delayed']) assert.ok(about.includes(t), `about is missing: ${t}`);
 });
