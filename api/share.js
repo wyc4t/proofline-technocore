@@ -37,7 +37,7 @@ export async function describe(query) {
 export default async function handler(req, res) {
   // The page from this same deployment (production or preview), never a stale or missing copy.
   const host = /^[a-z0-9.-]+\.vercel\.app$|^localhost(:\d+)?$/i.test(String(req.headers?.host || '')) ? `https://${req.headers.host}` : SITE;
-  const path = req.query?.view === 'digest' ? '/daily' : req.query?.case || req.query?.view==='cases' ? '/cases' : '/index';
+  const path = req.query?.view === 'digest' ? '/site-daily' : req.query?.case || req.query?.view==='cases' ? '/site-cases' : '/site-overview';
   const page = await fetch(`${host}${path}`, { headers: { 'user-agent': 'proofline-share' }, signal: AbortSignal.timeout(10_000) })
     .then((r) => (r.ok ? r.text() : null)).catch(() => null);
   if (!page || !page.includes('</head>')) { res.status(302).setHeader('Location', `${host}${path}`); res.end(); return; }

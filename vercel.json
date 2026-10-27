@@ -41,6 +41,18 @@
         }
       ],
       "destination": "/api/share?view=digest"
+    },
+    {
+      "source": "/",
+      "destination": "/site-overview"
+    },
+    {
+      "source": "/cases",
+      "destination": "/site-cases"
+    },
+    {
+      "source": "/daily",
+      "destination": "/site-daily"
     }
   ],
   "redirects": [
