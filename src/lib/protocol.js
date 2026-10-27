@@ -36,12 +36,13 @@ export function parseMessage(message, room) {
   // either as rh:<hash> in its text or as a bare hash field before the verdict: ATTEST v1 | id | <hash> | useful | ...
   const HASH = /^(?:rh:)?([0-9a-f]{64}|[0-9a-f]{16})$/i;
   // Only when a known verdict follows: otherwise a hex-looking third field stays the verdict.
-  const KNOWN_VERDICT = /^(useful|not|not[ _-]?useful|partial(ly useful)?|invalid|valid|rejected?|accepted?)$/i;
+  const KNOWN_VERDICT = /^(useful|not|not[ _-]?useful|partial(ly useful)?|invalid|valid|reject(?:ed)?|fail|accept(?:ed)?)$/i;
   const hashField = stage === 3 && parts.length > 3 && KNOWN_VERDICT.test(String(parts[3] || '').trim()) ? HASH.exec(String(parts[2] || '').trim()) : null;
   const vAt = hashField ? 3 : 2;
-  const verdict = stage === 3 ? String(parts[vAt] || '').toLowerCase() : '';
+  const rawVerdict = stage === 3 ? String(parts[vAt] || '').toLowerCase() : '';
+  const verdict = /^(not|not[ _-]?useful|reject(?:ed)?|invalid|fail)$/.test(rawVerdict) ? 'not' : rawVerdict;
   const arg = stage === null ? String(parts[2] || '') : '';
-  const body = stage === 1 ? '' : parts.slice(stage === 3 ? vAt + 1 : 2).join(' | ');
+  const body = stage === 1 ? '' : text.split('|').slice(stage === 3 ? vAt + 1 : 2).join('|').trim();
   const rh = stage === 3 ? (hashField ? hashField[1] : ((/\brh:([0-9a-f]{64}|[0-9a-f]{16})\b/i.exec(body) || [])[1] || '')).toLowerCase() || null : null;
   // Envelope is not enough: each kind must carry the field it is about (request text, result text, verdict).
   if ((stage === 0 && !String(parts[2] || '')) || (stage === 2 && !body) || (stage === 3 && !verdict) || (stage === null && !arg)) return { ok: false, reason: 'malformed', kind };

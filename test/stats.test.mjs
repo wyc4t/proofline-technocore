@@ -98,8 +98,45 @@ test('daily digest: a day is full only if the archive covers its start and end w
     const index = JSON.parse(readFileSync(join(dir, 'data/stats/daily/index.json'), 'utf8'));
     assert.equal(index.days.length, 1, 'recomputing a day replaces its entry');
     assert.equal(index.days[0].rooms.kibble.full_day, false, 'start not covered, so not a full day');
+    assert.equal(index.days[0].stats_version, '4');
+    assert.deepEqual(index.days[0].rooms.kibble.conflicts,{cases:0,result_text_groups:0});
+    assert.equal(index.days[0].rooms.kibble.population.attestations.records,0);
+    assert.equal(index.days[0].rooms.kibble.with_useful_non_result_key_attestation_pct, 0, 'new metric survives daily-index serialization');
+    assert.equal(index.days[0].rooms.kibble.window_end, new Date(Date.parse(day)+86400e3).toISOString());
     const prev = new Date(Date.parse(`${day}T00:00:00Z`) - 86400e3).toISOString().slice(0, 10);
     computeDay({ data: join(dir, 'data'), day: prev });
     assert.deepEqual(JSON.parse(readFileSync(join(dir, 'data/stats/daily/index.json'), 'utf8')).days.map((x) => x.day), [day, prev], 'newest first');
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('useful verdict rates share a basis and compare all result keys within each generation', () => {
+  const es = [];
+  const add = (id, kind, who, min = 1, gen = '0') => es.push(entry(es.length + 1, min, `${kind} v1 | ${id} | ${kind === 'ATTEST' ? 'useful | claimed' : 'text'}`, who, gen));
+  for (const id of ['self', 'other', 'mixed', 'later', 'none', 'cross']) add(id, 'JOB', A, 0);
+  add('self', 'RESULT', W); add('self', 'ATTEST', W);
+  add('other', 'RESULT', W); add('other', 'ATTEST', V);
+  add('mixed', 'RESULT', W); add('mixed', 'ATTEST', W); add('mixed', 'ATTEST', V); add('mixed', 'ATTEST', V);
+  add('later', 'ATTEST', V, 1); add('later', 'RESULT', V, 2);
+  add('cross', 'RESULT', V, 1, '1'); add('cross', 'ATTEST', V);
+  add('new', 'JOB', A, 190); add('new', 'ATTEST', V, 191);
+  es.push({ rec: { seq: 500, ts: at(1), from: 'nickname', text: 'ATTEST v1 | none | useful | unsigned claim' }, nonceDigits: null, raw: Buffer.from(''), gen: '0' });
+  const o = roomStats('kibble', es, win).outcomes;
+  assert.equal(o.basis_ids, 6);
+  assert.equal(o.with_useful_attestation, 6, 'any-key preserves unsigned claims, explicitly labelled as such');
+  assert.equal(o.with_useful_non_result_key_attestation, 3, 'other, mixed, cross qualify; duplicates do not add jobs');
+  assert.equal(o.with_useful_non_result_key_attestation_pct, 50);
+});
+
+test('negative aliases count in archive statistics, including bare-hash verdicts', () => {
+  const aliases = ['not', 'not-useful', 'not useful', 'not_useful', 'reject', 'rejected', 'invalid', 'fail'];
+  const s = roomStats('kibble', aliases.map((v, i) => entry(i + 1, 1, `ATTEST v1 | neg | 326d2f36ac762e66 | ${v} | reason`, V)), win);
+  assert.equal(s.attestations.negative, aliases.length);
+});
+
+test('UTC daily windows exclude the ending midnight and include the starting midnight', () => {
+  const midnight = Date.parse('2026-10-20T00:00:00Z');
+  const es = [entry(1, -360, 'JOB v1 | start | task', A), entry(2, 1080, 'JOB v1 | end | task', A)];
+  const s = roomStats('kibble', es, { fromMs: midnight, toMs: midnight + 86400e3 });
+  assert.equal(s.jobs.records, 1);
+  assert.equal(s.to_ts, '2026-10-20T00:00:00.000Z');
 });

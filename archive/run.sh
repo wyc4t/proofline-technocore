@@ -31,7 +31,7 @@ node code/archive/reproduce.mjs --data data --new || echo "reproduction skipped 
 # Hourly: recompute the headline statistics (stats/latest.json) from the archive. A failure
 # here never blocks the capture itself: a missing file makes the statistics say they are
 # incomplete, and a failed calculation keeps the previous statistics file.
-if node -e 'try{const s=JSON.parse(require("fs").readFileSync("data/stats/latest.json"));process.exit(Date.now()-Date.parse(s.generated_at)>55*60e3?0:1)}catch{process.exit(0)}'; then
+if node --input-type=module -e 'import {readFileSync} from "node:fs"; import {STATS_VERSION} from "./code/archive/stats.mjs"; try{const s=JSON.parse(readFileSync("data/stats/latest.json"));process.exit(s.stats_version!==STATS_VERSION||Date.now()-Date.parse(s.generated_at)>55*60e3?0:1)}catch{process.exit(0)}'; then
   (
     mkdir -p assets
     node code/archive/stats.mjs --data data --list-assets > needed.tsv

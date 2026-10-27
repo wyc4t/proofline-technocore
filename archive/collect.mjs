@@ -15,9 +15,10 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { parseArgs } from 'node:util';
 import { sha256, splitExport } from './lib/records.mjs';
+import {addLookup} from './lib/lookup.mjs';
 import { addToIndex, ensureIndex } from './lib/index.mjs';
 
-export const COLLECTOR_VERSION = '1';
+export const COLLECTOR_VERSION = '3';
 const NL = Buffer.from('\n');
 
 // Pure step: given the previous state of one room and one export body, decide what is new
@@ -35,6 +36,12 @@ export function ingest({ room, body, generation, serverDate, capturedAt, httpSta
   };
   if (unparseable.length) events.push({ type: 'unparseable_lines', count: unparseable.length, sha256: unparseable });
   if (partialTail) events.push({ type: 'partial_tail', bytes: partialTail });
+  // Only a completely empty body is an empty export. Malformed/truncated bytes are unknown.
+  const exportEmpty = body.length === 0;
+  const sameGeneration = !prev || generation == null || prev.generation == null || String(generation) === String(prev.generation);
+  const emptySince = exportEmpty ? (sameGeneration && prev?.export_empty === true ? prev.empty_observed_since : null) || capturedAt : null;
+  if (exportEmpty) events.push({ type: 'empty_export', first_observed_at: emptySince, archived_last_seq: sameGeneration ? prev?.last_seq ?? null : null });
+
   for (let i = 1; i < parsed.length; i++) {
     const a = parsed[i - 1].rec.seq, b = parsed[i].rec.seq;
     if (b !== a + 1) events.push(b > a + 1 ? { type: 'internal_gap', from: a + 1, to: b - 1 } : { type: 'non_monotonic', after: a, seq: b });
@@ -42,13 +49,11 @@ export function ingest({ room, body, generation, serverDate, capturedAt, httpSta
 
   let since = null; // highest seq already archived in this generation
   if (!prev) events.push({ type: 'first_capture' });
-  else if (generation !== null && prev.generation !== null && String(generation) !== String(prev.generation)) {
+  else if (generation != null && prev.generation != null && String(generation) !== String(prev.generation)) {
     events.push({ type: 'generation_change', from: prev.generation, to: generation });
   } else if (entry.export_last_seq !== null && entry.export_last_seq < prev.last_seq) {
     events.push({ type: 'seq_regression', archived_last_seq: prev.last_seq, export_last_seq: entry.export_last_seq });
   } else since = prev.last_seq;
-  // A room whose export is empty although this generation already has archived records: deleted or emptied upstream.
-  if (prev && since !== null && prev.last_seq !== null && !parsed.length && body.length === 0) events.push({ type: 'room_emptied', archived_last_seq: prev.last_seq });
 
   if (since !== null && entry.export_first_seq !== null && entry.export_first_seq > since + 1) {
     events.push({ type: 'gap', from: since + 1, to: entry.export_first_seq - 1 });
@@ -67,6 +72,9 @@ export function ingest({ room, body, generation, serverDate, capturedAt, httpSta
     generation: generation ?? prev?.generation ?? null,
     last_seq: newLines.length ? entry.new_last_seq : (since ?? null),
     last_capture: capturedAt,
+    export_empty: exportEmpty ? true : parsed.length ? false : null,
+    empty_observed_since: emptySince,
+    observed_export_last_seq: entry.export_last_seq,
   };
   return { entry, newLines, newBytes, nextState };
 }
@@ -137,6 +145,7 @@ async function main() {
       const r = ingest({ room, ...got, capturedAt, prev: state.rooms[room] });
       entry = r.entry;
       store({ data, outbox: values.outbox, room, mode: releaseRooms.has(room) ? 'release' : 'git', ...r });
+      try { addLookup(join(data,'lookup'),entry,r.newLines); } catch (err) { entry.events.push({type:'lookup_index_error',error:String(err.message||err)}); }
       state.rooms[room] = r.nextState;
       if (values.import) entry.source = 'import';
     } catch (err) {

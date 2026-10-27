@@ -61,11 +61,12 @@ test('crowded stages keep drawn controls clear of the heading and each other', (
     selected: { id: 'crowded', status: 'all-stages', stages: [0,1,2,3].map(stage => Array.from({length:7}, (_,i) => ({seq:stage*10+i,kind:'record'}))), links: [] },
     STATUS_LABEL: { 'all-stages':'ALL 4 STAGES' }, STAGE_NAMES:['REQUEST','WORKER','RESULT','ATTESTATION'], MAX_NODES:7 };
   vm.createContext(context);vm.runInContext(graph+'\ndrawGraph()',context);
-  assert.equal(s.circles.length,20,'five nodes per stage fit; remaining records stay in the list');
-  for(const [x,y] of s.circles){assert.ok(y-22>112);assert.ok(y+28<458-46);}
+  assert.equal(s.circles.length,28,'moving the legend into HTML leaves room for seven nodes per stage at this canvas size');
+  for(const [x,y] of s.circles){assert.ok(y-22>28);assert.ok(y+28<458-8);}
   const ys=s.circles.filter(([x])=>x===70).map(([,y])=>y);
   for(let i=1;i<ys.length;i++)assert.ok(ys[i]-ys[i-1]>=50,'50px controls do not overlap');
-  assert.equal(s.labels.filter(([label])=>label==='+2 more · see records').length,4);
+  assert.equal(s.labels.filter(([label])=>label==='?').length,7,'neutral attestation circles carry claim marks');
+  assert.ok(!s.labels.some(([label])=>label.startsWith('Solid:')),'legend lives in wrapping HTML');
 });
 
 test('archived example loading and failure never show live or selection instructions', () => {

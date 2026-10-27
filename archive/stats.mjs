@@ -4,7 +4,7 @@
 //   node archive/stats.mjs --data <archive-data> [--assets <dir>] [--hours 24] [--out stats.json]
 //
 // Every number is computed from archived records whose signatures were re-verified, over a
-// stated window, and says whether the archive covers that window without gaps. Jobs are
+// half-open window [start, end), and says whether the archive covers that window without gaps. Jobs are
 // counted per room and job ID, as the app does. Outcome rates only count jobs posted at
 // least OUTCOME_GRACE_MIN minutes before the window's end, so recent jobs are not counted
 // as unanswered merely because they are recent.
@@ -14,9 +14,10 @@ import { parseArgs } from 'node:util';
 import { check } from './check.mjs';
 import { classify, sha256, VERIFIER_VERSION } from './lib/records.mjs';
 import { parseMessage } from '../src/lib/protocol.js';
-import { NEGATIVE } from '../src/lib/cases.js';
+import {roomPopulation} from '../src/lib/population.js';
+import { NEGATIVE,describeAttestations,conflictingVerdicts } from '../src/lib/cases.js';
 
-export const STATS_VERSION = '2'; // 2: reposted requires identical text; jobs grouped by generation; stricter gap rule
+export const STATS_VERSION = '4'; // 4: separate conflict cases and text-frequency denominators
 export const OUTCOME_GRACE_MIN = 30;
 const here = new URL('.', import.meta.url).pathname;
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -28,14 +29,14 @@ const maxOf = (xs) => { let m = -Infinity; for (const x of xs) if (x > m) m = x;
 export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable = 0 }) {
   // entries: [{ rec, nonceDigits, raw, gen }] for this room, already verified by check(). Jobs are grouped by
   // generation and ID: sequence numbers and IDs restart with a new generation, so they are never joined across one.
-  const inWindow = entries.filter((p) => { const t = Date.parse(p.rec.ts); return t >= fromMs && t <= toMs; });
+  const inWindow = entries.filter((p) => { const t = Date.parse(p.rec.ts); return t >= fromMs && t < toMs; });
   const sig = { valid: 0, invalid: 0, no_sig: 0, unsigned: 0 };
   const recs = [];
   for (const p of inWindow) {
     const st = classify(room, p);
     sig[st]++;
     const r = parseMessage({ ...p.rec, sigStatus: st }, room);
-    if (r.ok) recs.push({ ...r.record, gen: String(p.gen ?? '0') });
+    if (r.ok) recs.push({ ...r.record, resultHash:r.record.stage===2?sha256(r.record.body):null, gen: String(p.gen ?? '0') });
   }
   const byId = new Map();
   for (const r of recs) { const k = `${r.gen}:${r.id}`; (byId.get(k) || byId.set(k, []).get(k)).push(r); }
@@ -44,9 +45,12 @@ export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable 
   const active = new Set(recs.map((r) => r.keyId).filter(Boolean));
   let repostedIds = 0, repostedJobRecords = 0;
   const cutoff = toMs - OUTCOME_GRACE_MIN * 60e3;
-  const o = { basis_ids: 0, with_claim: 0, with_result: 0, with_attestation: 0, with_useful_attestation: 0 };
+  const o = { basis_ids: 0, with_claim: 0, with_result: 0, with_attestation: 0, with_useful_attestation: 0, with_useful_non_result_key_attestation: 0 };
   const firstResult = [];
+  const conflicts={cases:0,result_text_groups:0};
   for (const list of byId.values()) {
+    const groups=conflictingVerdicts(describeAttestations(list.filter(r=>r.stage===3),list.filter(r=>r.stage===2)));
+    if(groups.length){conflicts.cases++;conflicts.result_text_groups+=groups.length}
     const js = list.filter((r) => r.stage === 0);
     if (!js.length) continue;
     // Reposted: identical JOB text under one ID from two or more verified keys.
@@ -63,6 +67,10 @@ export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable 
     if (results.length) { o.with_result++; firstResult.push((minOf(results.map((r) => Date.parse(r.ts))) - t0) / 1000); }
     if (attests.length) o.with_attestation++;
     if (attests.some((a) => a.verdict === 'useful')) o.with_useful_attestation++;
+    // Compare against ALL result keys in this job's window, including results after the verdict.
+    // Only signature-checked keys can qualify. This is a key-role comparison, not independence.
+    const resultKeys = new Set(list.filter((r) => r.stage === 2).map((r) => r.keyId).filter(Boolean));
+    if (attests.some((a) => a.verdict === 'useful' && a.keyId && !resultKeys.has(a.keyId))) o.with_useful_non_result_key_attestation++;
   }
   const attests = recs.filter((r) => r.stage === 3);
   const ts = inWindow.map((p) => Date.parse(p.rec.ts));
@@ -82,9 +90,11 @@ export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable 
       ...o, posted_before: new Date(cutoff).toISOString(),
       with_claim_pct: pct(o.with_claim, o.basis_ids), with_result_pct: pct(o.with_result, o.basis_ids),
       with_attestation_pct: pct(o.with_attestation, o.basis_ids), with_useful_attestation_pct: pct(o.with_useful_attestation, o.basis_ids),
+      with_useful_non_result_key_attestation_pct: pct(o.with_useful_non_result_key_attestation, o.basis_ids),
       median_first_result_seconds: median(firstResult),
     },
     attestations: { records: attests.length, negative: attests.filter((a) => NEGATIVE.has(a.verdict)).length },
+    conflicts,population:roomPopulation(recs),
     active_keys: active.size,
     ids_without_job: [...byId.values()].filter((l) => !l.some((r) => r.stage === 0)).length,
   };
@@ -95,12 +105,14 @@ export function computeStats({ data, assets, hours = 24, rooms = ['kibble', 'cre
   const report = check({ data, assets, keepRecords: true });
   if (report.problems.length) throw new Error(`archive integrity problems:\n  ${report.problems.join('\n  ')}`);
   const out = { format: 'proofline-stats', stats_version: STATS_VERSION, generated_at: new Date(now).toISOString(), window_hours: hours, rooms: {},
-    code: { verifier_version: VERIFIER_VERSION, 'src/lib/protocol.js': sha256(readFileSync(join(here, '../src/lib/protocol.js'))), 'archive/stats.mjs': sha256(readFileSync(join(here, 'stats.mjs'))) },
+    code: { verifier_version: VERIFIER_VERSION, 'src/lib/protocol.js': sha256(readFileSync(join(here, '../src/lib/protocol.js'))), 'archive/stats.mjs': sha256(readFileSync(join(here, 'stats.mjs'))), 'src/lib/cases.js':sha256(readFileSync(join(here,'../src/lib/cases.js'))), 'src/lib/population.js':sha256(readFileSync(join(here,'../src/lib/population.js'))) },
     notes: [
-      'Counts are per room and job ID, over archived records whose signatures were re-verified.',
+      'Counts are per room and job ID, over archived records whose signatures were re-verified, in the half-open window [start, end).',
       `Outcome rates count jobs posted at least ${OUTCOME_GRACE_MIN} minutes before the window ends.`,
       'A reposted ID is a job ID under which two or more verified keys posted identical JOB text.',
       'Jobs are grouped by room generation and job ID.',
+      'Useful verdict rates share the eligible job-ID basis; the narrower rate requires a verified attester key with no result record in that job in this window. Different keys do not prove independent parties; verdicts need not name a result.',
+      'Conflict cases count observed generation/ID groups with opposite verdicts targeting the same result text by hash, including cases whose request is absent. Text frequencies count records, ignoring case and whitespace, within this room/window.',
       'These describe records, not whether any work was correct or useful.',
     ] };
   for (const room of rooms) {

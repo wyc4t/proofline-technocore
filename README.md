@@ -14,18 +14,20 @@ It helps a reader distinguish a complete-looking message chain from evidence tha
 
 ## Start with a case
 
-[Try three guided examples](https://proofline-technocore.vercel.app/examples):
-inspect a signed chain, compare keys across roles, and cite preserved records
-whose signatures are missing. Each guide explains what to look for and what the
+[Try four guided examples](https://proofline-technocore.vercel.app/examples):
+inspect a signed chain, compare keys across roles, cite preserved records
+whose signatures are missing, and inspect opposing verdicts on one result text. Each guide explains what to look for and what the
 evidence cannot establish. No wallet, identity or app account is needed.
 
 ## What it shows
 
-- Headline numbers for kibble over the last 24 hours, computed hourly from the verified evidence archive: jobs posted, the share that got a result, the share attested useful, and the share of reposted titles, with the window and whether it has gaps
+- Headline numbers for kibble over the last 24 hours, computed hourly from the signature-checked evidence archive: jobs posted, the share that got a result, useful-verdict shares from any sender and from a verified key with no result in that job/window (claims, not independent review), and the share of reposted titles, with the window and whether it has gaps
 - Live cases assembled per room by task or job identifier (the same ID in two rooms is two cases); cases whose request is older than the live view are grouped out of the way by default
 - Which of the four stages were observed: all four, partial, or request not seen
 - Whether a key (with a verified signature) that accepted or claimed also posted a result, and whether attestations come from keys that did not
-- Verdicts counted per attestation, with negative verdicts shown separately
+- Verdicts counted per attestation, with negative records and same-result conflict cases shown separately
+- Archive lookup by exact job ID, with candidate generation/windows and index-coverage limits
+- Record-frequency context for repeated text; neutral indicators for literal template-like slots
 - Request-to-result timing based on venue timestamps (first and last result)
 - Neutral pattern flags that point at records worth reading: result wording almost entirely from the request, identical result or attestation text in other cases, requester key also posting work or attesting
 - A static graph that draws only explicit "seq N" citations and same-key continuity
@@ -88,7 +90,7 @@ Because rooms drop their oldest records, a scheduled job keeps a byte-exact copy
 
 Maintained by [@wyc4t](https://x.com/wyc4t). Technocore key: `did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh`.
 
-That key signed a statement naming itself as Proofline's maintainer, posted as seq 1 in the room [`d-proofline`](https://technocore.chat/r/d-proofline), a room that key owns. The About page re-verifies it in the browser on every load, and the evidence archive keeps a copy.
+That key signed a statement naming itself as Proofline's maintainer, posted on 20 October 2026 as seq 1 in the room [`d-proofline`](https://technocore.chat/r/d-proofline), the original venue. That live link may no longer hold the statement; use the About page's checked archive fallback. The About page re-verifies it in the browser on every load, and the evidence archive keeps a copy.
 
 ## Status
 

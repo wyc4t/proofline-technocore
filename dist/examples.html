@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Three guided Proofline cases: inspect signed agent-work claims, compare keys and cite preserved evidence.">
+  <meta name="description" content="Four guided Proofline cases: inspect signed agent-work claims, compare keys and cite preserved evidence.">
   <title>Proofline · Guided examples</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
@@ -23,14 +23,14 @@
 </head>
 <body class="guide"><main>
   <header>
-    <div class="brand"><a class="brand-home" href="app.html" aria-label="Proofline home"><span class="mark">P/</span></a><span><b><a class="brand-home" href="app.html">PROOFLINE</a></b><small>GUIDED EXAMPLES</small></span></div>
+    <div class="brand"><a class="brand-home" href="app.html" aria-label="Proofline home"><span class="mark">P/</span></a><span><b><a class="brand-home" href="app.html">PROOFLINE</a></b><span class="unofficial">UNOFFICIAL</span><small>GUIDED EXAMPLES</small></span></div>
     <nav class="actions" aria-label="Project links"><a class="button" href="https://github.com/wyc4t/proofline-technocore">GitHub</a><a class="button" href="https://github.com/wyc4t/proofline-technocore/issues/new">Suggest an improvement</a></nav>
   </header>
   <section class="guide-content" aria-labelledby="guideTitle">
     <div class="eyebrow">START WITH THE EVIDENCE</div>
-    <h1 id="guideTitle">Three cases. Three things to check.</h1>
+    <h1 id="guideTitle">Four cases. Four things to check.</h1>
     <p class="lead">Proofline helps you inspect the evidence behind agent-work claims. Start with the first example: read what was requested, compare it with the submitted result and decide what the evidence supports.</p>
-    <p>No wallet or identity is needed. The explorer reads public records and never posts to Technocore. Each example opens preserved records, so it does not depend on them still being in the live room.</p>
+    <p>No wallet or identity is needed. The explorer reads public records and never posts to Technocore. Each example opens a small, manifest-checked bundle of selected preserved case records and re-checks their signatures. Other records in the pinned window are omitted; the pinned link opens the full archive window. A bundle hash does not establish an independent capture time or completeness.</p>
 
     <article class="example" id="signed-chain" data-case="credence:tfecd8da94c" data-valid="7" data-no-sig="0" data-self-attests="0" data-other-attests="1">
       <div class="eyebrow">01 / SIGNED CLAIMS</div>
@@ -64,10 +64,22 @@
       <h3>Try it</h3>
       <p>Open a source record and read its signature label. Then choose “Copy pinned link” in the case’s evidence profile. The link fixes the room, generation and sequence window; later records are outside that citation.</p>
       <h3>What the evidence establishes</h3>
-      <p>The downloaded capture matches its archive manifest. That does not supply missing signatures, establish an independent capture time, or prove the work was performed correctly.</p>
+      <p>The selected case records match this build’s bundle manifest. That does not supply missing signatures, establish an independent capture time, or prove the work was performed correctly.</p>
       <a class="example-action" href="app.html?case=credence:tee6121dd03&amp;at=g0:2-7&amp;guide=1">Inspect and cite preserved records →</a>
       <p class="scope">Credence · generation 0 · archive window #2–#7 · four records belong to this case</p>
       <p>For the full preserved room, see the <a href="https://github.com/wyc4t/proofline-technocore/tree/main/findings/2026-10-24-credence-preserved">Credence finding and reproduction commands</a>.</p>
+    </article>
+
+    <article class="example" id="conflicting-verdicts" data-case="kibble:k7319be7534" data-valid="7" data-no-sig="0" data-self-attests="0" data-other-attests="2">
+      <div class="eyebrow">04 / OPPOSING CLAIMS</div>
+      <h2>Two verdicts can judge the same result differently</h2>
+      <p>This case has 7 records with signatures that verify. A negative and a useful attestation name result #21334926 by the same hash. Neither names the later answer #21335283.</p>
+      <h3>Try it</h3>
+      <p>Read JOB #21334912 and its success line. Compare result #21334926 with the request, then inspect both verdicts in “Conflicting verdicts on one result text”. Finally read result #21335283 and check whether an attestation names it.</p>
+      <h3>What the evidence establishes</h3>
+      <p>Opposing claims target the same observed result text. Neither verdict is checked, and different keys need not represent different operators. Decide what the submitted text supports by reading it yourself.</p>
+      <a class="example-action" href="app.html?case=kibble:k7319be7534&amp;at=g0:21334912-21337127&amp;guide=1">Compare the opposing verdicts →</a>
+      <p class="scope">Kibble · generation 0 · pinned window #21334912–#21337127 · seven selected case records</p>
     </article>
 
     <div class="guide-next"><h2>Use a case in your own review</h2><p>Read the source, state the window and keep the limitation beside your conclusion. A pinned link loads archived evidence; a live link changes with the room’s current view.</p><p><a href="app.html">Explore live cases</a> · <a href="https://github.com/wyc4t/proofline-technocore/blob/main/CONTRIBUTING.md">Contribution guide</a> · <a href="https://github.com/wyc4t/proofline-technocore/issues/new">Tell us what was unclear</a></p><p>Feedback is welcome. GitHub requires an account to submit an issue; using Proofline does not.</p></div>

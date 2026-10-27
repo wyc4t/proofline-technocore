@@ -63,7 +63,7 @@ test('ingest: first capture, overlap, gap, generation change, regression', () =>
   const first = ingest({ room: 'credence', body: body(line({ seq: 1 }), line({ seq: 2 }), line({ seq: 3 })), generation: '0', capturedAt: at, prev: undefined });
   assert.equal(first.entry.new_records, 3);
   assert.deepEqual(first.entry.events.map((e) => e.type), ['first_capture']);
-  assert.deepEqual(first.nextState, { generation: '0', last_seq: 3, last_capture: at });
+  assert.deepEqual(first.nextState, { generation: '0', last_seq: 3, last_capture: at, export_empty: false, empty_observed_since: null, observed_export_last_seq: 3 });
 
   const overlap = ingest({ room: 'credence', body: body(line({ seq: 2 }), line({ seq: 3 }), line({ seq: 4 })), generation: '0', capturedAt: at, prev: first.nextState });
   assert.equal(overlap.entry.new_records, 1, 'records already archived are not stored twice');
@@ -142,10 +142,18 @@ test('collect + check: reproduces counts, coverage and a case; detects tampering
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('an empty export after archived records is logged as room_emptied, and archives nothing', async () => {
-  const { ingest } = await import('../archive/collect.mjs');
-  const prev = { generation: '0', last_seq: 13281, last_capture: 'T0' };
-  const { entry, newLines } = ingest({ room: 'credence', body: Buffer.alloc(0), generation: '0', capturedAt: 'T1', httpStatus: 200, prev });
-  assert.deepEqual(entry.events, [{ type: 'room_emptied', archived_last_seq: 13281 }]);
-  assert.equal(newLines.length, 0);
+test('legacy cursor state does not backdate empty observations or emit a duplicate event', () => {
+  // Version 1 stored only the cursor and capture time, even when that export was empty.
+  // A version 3 observation cannot infer an earlier empty-start time from those fields.
+  const legacy = { generation: '0', last_seq: 13281, last_capture: '2026-10-26T17:24:20.054Z' };
+  const firstAt = '2026-10-27T13:14:42.528Z';
+  const first = ingest({ room: 'credence', body: Buffer.alloc(0), generation: '0', capturedAt: firstAt, httpStatus: 200, prev: legacy });
+  assert.deepEqual(first.entry.events, [{ type: 'empty_export', first_observed_at: firstAt, archived_last_seq: 13281 }]);
+  assert.equal(first.newLines.length, 0);
+  assert.equal(first.nextState.last_seq, legacy.last_seq);
+  assert.equal(first.nextState.empty_observed_since, firstAt);
+  const again = ingest({ room: 'credence', body: Buffer.alloc(0), generation: '0', capturedAt: '2026-10-27T13:44:00Z', httpStatus: 200, prev: first.nextState });
+  assert.deepEqual(again.entry.events, [{ type: 'empty_export', first_observed_at: firstAt, archived_last_seq: 13281 }]);
+  assert.equal(again.newLines.length, 0);
+  assert.equal(again.nextState.last_seq, legacy.last_seq);
 });

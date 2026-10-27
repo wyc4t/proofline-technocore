@@ -13,19 +13,23 @@ import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { computeStats, neededAssetsBetween } from './stats.mjs';
 
-const pick = (r) => r && ({
+export const summarizeDayRoom = (r) => r && ({
   full_day: !!(r.covers_window_start && r.covers_window_end && r.complete),
   covers_window_start: r.covers_window_start, covers_window_end: r.covers_window_end, complete: r.complete,
   from_ts: r.from_ts, to_ts: r.to_ts, records: r.records,
   jobs: r.jobs.records, job_ids: r.jobs.ids, requester_keys: r.jobs.requester_keys, reposted_share_pct: r.jobs.reposted_share_pct,
   with_result_pct: r.outcomes.with_result_pct, with_useful_attestation_pct: r.outcomes.with_useful_attestation_pct,
+  with_useful_non_result_key_attestation_pct: r.outcomes.with_useful_non_result_key_attestation_pct,
+  window_start: r.window_start, window_end: r.window_end,
   median_first_result_seconds: r.outcomes.median_first_result_seconds,
+  conflicts:r.conflicts,population:r.population,
   attestations: r.attestations.records, negative_attestations: r.attestations.negative, active_keys: r.active_keys,
 });
 
 export function dayWindow(day) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error('day must be YYYY-MM-DD');
   const fromMs = Date.parse(`${day}T00:00:00Z`);
+  if (!Number.isFinite(fromMs) || new Date(fromMs).toISOString().slice(0,10) !== day) throw new Error('day must be a real UTC calendar date');
   return { fromMs, toMs: fromMs + 86400e3 };
 }
 
@@ -37,7 +41,7 @@ export function computeDay({ data, assets, day }) {
   const indexPath = join(dir, 'index.json');
   const index = existsSync(indexPath) ? JSON.parse(readFileSync(indexPath, 'utf8')) : { format: 'proofline-daily', days: [] };
   index.days = index.days.filter((d) => d.day !== day);
-  index.days.push({ day, generated_at: s.generated_at, stats_version: s.stats_version, rooms: Object.fromEntries(Object.entries(s.rooms).map(([k, r]) => [k, pick(r)])) });
+  index.days.push({ day, generated_at: s.generated_at, stats_version: s.stats_version, rooms: Object.fromEntries(Object.entries(s.rooms).map(([k, r]) => [k, summarizeDayRoom(r)])) });
   index.days.sort((a, b) => (a.day < b.day ? 1 : -1));
   writeFileSync(indexPath, JSON.stringify(index, null, 1) + '\n');
   return s;
@@ -50,7 +54,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (v['list-assets']) { console.log(neededAssetsBetween(readFileSync(join(v.data, 'captures.jsonl'), 'utf8'), w.fromMs, w.toMs).join('\n')); process.exit(0); }
   const s = computeDay({ data: v.data, assets: v.assets, day: v.day });
   for (const [room, r] of Object.entries(s.rooms)) {
-    const p = pick(r);
+    const p = summarizeDayRoom(r);
     console.log(`${v.day} ${room}: ${p.full_day ? 'full day' : `partial (start ${p.covers_window_start ? 'covered' : 'not covered'}, end ${p.covers_window_end ? 'covered' : 'not covered'}, ${p.complete ? 'no gaps' : 'gaps'})`} · jobs ${p.jobs} · result ${p.with_result_pct}% · useful ${p.with_useful_attestation_pct}% · reposted ${p.reposted_share_pct}%`);
   }
 }
