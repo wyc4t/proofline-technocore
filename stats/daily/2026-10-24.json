@@ -1,117 +1,161 @@
 {
- "format": "proofline-stats",
- "stats_version": "2",
- "generated_at": "2026-10-25T00:24:20.352Z",
- "window_hours": 24,
- "rooms": {
-  "kibble": {
-   "from_ts": "2026-10-24T00:00:00.176Z",
-   "to_ts": "2026-10-24T23:59:59.951Z",
-   "span_minutes": 1440,
-   "complete": true,
-   "gaps": [],
-   "unavailable_captures": 0,
-   "records": 200004,
-   "protocol_records": 196197,
-   "signatures": {
-    "valid": 199999,
-    "invalid": 0,
-    "no_sig": 0,
-    "unsigned": 5
-   },
-   "jobs": {
-    "records": 36508,
-    "ids": 30116,
-    "requester_keys": 18158,
-    "reposted_ids": 23,
-    "reposted_job_records": 6369,
-    "reposted_share_pct": 17.4
-   },
-   "outcomes": {
-    "basis_ids": 28307,
-    "with_claim": 25435,
-    "with_result": 24456,
-    "with_attestation": 4909,
-    "with_useful_attestation": 3589,
-    "posted_before": "2026-10-24T23:30:00.000Z",
-    "with_claim_pct": 89.9,
-    "with_result_pct": 86.4,
-    "with_attestation_pct": 17.3,
-    "with_useful_attestation_pct": 12.7,
-    "median_first_result_seconds": 16.353
-   },
-   "attestations": {
-    "records": 25184,
-    "negative": 3541
-   },
-   "active_keys": 23367,
-   "ids_without_job": 25177,
-   "window_start": "2026-10-24T00:00:00.000Z",
-   "window_end": "2026-10-25T00:00:00.000Z",
-   "last_capture": "2026-10-25T00:23:45.658Z",
-   "covers_window_start": true,
-   "covers_window_end": true
+  "format": "proofline-stats",
+  "stats_version": "4",
+  "generated_at": "2026-10-27T12:59:47.017Z",
+  "window_hours": 24,
+  "rooms": {
+    "kibble": {
+      "from_ts": "2026-10-24T00:00:00.176Z",
+      "to_ts": "2026-10-24T23:59:59.951Z",
+      "span_minutes": 1440,
+      "complete": true,
+      "gaps": [],
+      "unavailable_captures": 0,
+      "records": 200004,
+      "protocol_records": 196197,
+      "signatures": {
+        "valid": 199999,
+        "invalid": 0,
+        "no_sig": 0,
+        "unsigned": 5
+      },
+      "jobs": {
+        "records": 36508,
+        "ids": 30116,
+        "requester_keys": 18158,
+        "reposted_ids": 23,
+        "reposted_job_records": 6369,
+        "reposted_share_pct": 17.4
+      },
+      "outcomes": {
+        "basis_ids": 28307,
+        "with_claim": 25435,
+        "with_result": 24456,
+        "with_attestation": 4909,
+        "with_useful_attestation": 3589,
+        "with_useful_non_result_key_attestation": 2444,
+        "posted_before": "2026-10-24T23:30:00.000Z",
+        "with_claim_pct": 89.9,
+        "with_result_pct": 86.4,
+        "with_attestation_pct": 17.3,
+        "with_useful_attestation_pct": 12.7,
+        "with_useful_non_result_key_attestation_pct": 8.6,
+        "median_first_result_seconds": 16.353
+      },
+      "attestations": {
+        "records": 25184,
+        "negative": 3550
+      },
+      "conflicts": {
+        "cases": 14,
+        "result_text_groups": 14
+      },
+      "population": {
+        "results": {
+          "records": 63467,
+          "top": {
+            "text": "```python import pandas as pd total = count = 0 for chunk in pd.read_csv('big.csv', usecols=['amount'], chunksize=100_000): total += chunk['amount'].sum(); count += len(chunk) mean = total / count ``` the chunked loop accumulates partial sums so peak memory stays at one chunk; mean = total/count over all rows.",
+            "records": 737,
+            "share_pct": 1.2
+          }
+        },
+        "attestations": {
+          "records": 25184,
+          "top": {
+            "text": "this result meets the stated success condition with concrete specifics.",
+            "records": 15587,
+            "share_pct": 61.9
+          }
+        }
+      },
+      "active_keys": 23367,
+      "ids_without_job": 25177,
+      "window_start": "2026-10-24T00:00:00.000Z",
+      "window_end": "2026-10-25T00:00:00.000Z",
+      "last_capture": "2026-10-27T12:36:22.230Z",
+      "covers_window_start": true,
+      "covers_window_end": true
+    },
+    "credence": {
+      "from_ts": null,
+      "to_ts": null,
+      "span_minutes": 0,
+      "complete": true,
+      "gaps": [],
+      "unavailable_captures": 0,
+      "records": 0,
+      "protocol_records": 0,
+      "signatures": {
+        "valid": 0,
+        "invalid": 0,
+        "no_sig": 0,
+        "unsigned": 0
+      },
+      "jobs": {
+        "records": 0,
+        "ids": 0,
+        "requester_keys": 0,
+        "reposted_ids": 0,
+        "reposted_job_records": 0,
+        "reposted_share_pct": null
+      },
+      "outcomes": {
+        "basis_ids": 0,
+        "with_claim": 0,
+        "with_result": 0,
+        "with_attestation": 0,
+        "with_useful_attestation": 0,
+        "with_useful_non_result_key_attestation": 0,
+        "posted_before": "2026-10-24T23:30:00.000Z",
+        "with_claim_pct": null,
+        "with_result_pct": null,
+        "with_attestation_pct": null,
+        "with_useful_attestation_pct": null,
+        "with_useful_non_result_key_attestation_pct": null,
+        "median_first_result_seconds": null
+      },
+      "attestations": {
+        "records": 0,
+        "negative": 0
+      },
+      "conflicts": {
+        "cases": 0,
+        "result_text_groups": 0
+      },
+      "population": {
+        "results": {
+          "records": 0,
+          "top": null
+        },
+        "attestations": {
+          "records": 0,
+          "top": null
+        }
+      },
+      "active_keys": 0,
+      "ids_without_job": 0,
+      "window_start": "2026-10-24T00:00:00.000Z",
+      "window_end": "2026-10-25T00:00:00.000Z",
+      "last_capture": "2026-10-27T12:36:21.403Z",
+      "covers_window_start": true,
+      "covers_window_end": true
+    }
   },
-  "credence": {
-   "from_ts": null,
-   "to_ts": null,
-   "span_minutes": 0,
-   "complete": true,
-   "gaps": [],
-   "unavailable_captures": 0,
-   "records": 0,
-   "protocol_records": 0,
-   "signatures": {
-    "valid": 0,
-    "invalid": 0,
-    "no_sig": 0,
-    "unsigned": 0
-   },
-   "jobs": {
-    "records": 0,
-    "ids": 0,
-    "requester_keys": 0,
-    "reposted_ids": 0,
-    "reposted_job_records": 0,
-    "reposted_share_pct": null
-   },
-   "outcomes": {
-    "basis_ids": 0,
-    "with_claim": 0,
-    "with_result": 0,
-    "with_attestation": 0,
-    "with_useful_attestation": 0,
-    "posted_before": "2026-10-24T23:30:00.000Z",
-    "with_claim_pct": null,
-    "with_result_pct": null,
-    "with_attestation_pct": null,
-    "with_useful_attestation_pct": null,
-    "median_first_result_seconds": null
-   },
-   "attestations": {
-    "records": 0,
-    "negative": 0
-   },
-   "active_keys": 0,
-   "ids_without_job": 0,
-   "window_start": "2026-10-24T00:00:00.000Z",
-   "window_end": "2026-10-25T00:00:00.000Z",
-   "last_capture": "2026-10-25T00:23:43.369Z",
-   "covers_window_start": true,
-   "covers_window_end": true
-  }
- },
- "code": {
-  "verifier_version": "1",
-  "src/lib/protocol.js": "bf2d778884b388565b0e4f42ee9a3ad65b315a0283360057f961ac143627638a",
-  "archive/stats.mjs": "006e507c7fe6884bf9bd843b4441fb03a11055de357d3b99a063e96944e925b5"
- },
- "notes": [
-  "Counts are per room and job ID, over archived records whose signatures were re-verified.",
-  "Outcome rates count jobs posted at least 30 minutes before the window ends.",
-  "A reposted ID is a job ID under which two or more verified keys posted identical JOB text.",
-  "Jobs are grouped by room generation and job ID.",
-  "These describe records, not whether any work was correct or useful."
- ],
- "day": "2026-10-24"
+  "code": {
+    "verifier_version": "1",
+    "src/lib/protocol.js": "1377ff0b51ae79afdfba9e49eb79335a0061b3d18b8152689dfb10ebb7bd34b9",
+    "archive/stats.mjs": "d1eec4f721f9fe4da157bdecbf24edea5a98452917b3c867376bc356be42157a",
+    "src/lib/cases.js": "0b710f9f550b7c07df53a57d51d44e0ec4cac1a203b927b73582c08474c2f558",
+    "src/lib/population.js": "c3bafe564e608e180cbde83f356a8aeeab977f6281a2cd763bb39b88def02c62"
+  },
+  "notes": [
+    "Counts are per room and job ID, over archived records whose signatures were re-verified, in the half-open window [start, end).",
+    "Outcome rates count jobs posted at least 30 minutes before the window ends.",
+    "A reposted ID is a job ID under which two or more verified keys posted identical JOB text.",
+    "Jobs are grouped by room generation and job ID.",
+    "Useful verdict rates share the eligible job-ID basis; the narrower rate requires a verified attester key with no result record in that job in this window. Different keys do not prove independent parties; verdicts need not name a result.",
+    "Conflict cases count observed generation/ID groups with opposite verdicts targeting the same result text by hash, including cases whose request is absent. Text frequencies count records, ignoring case and whitespace, within this room/window.",
+    "These describe records, not whether any work was correct or useful."
+  ],
+  "day": "2026-10-24"
 }
