@@ -3,23 +3,23 @@
   "credence": {
    "generation": "0",
    "last_seq": 13281,
-   "last_capture": "2026-10-27T19:55:18.721Z",
+   "last_capture": "2026-10-27T20:24:21.947Z",
    "export_empty": true,
    "empty_observed_since": "2026-10-27T13:14:42.528Z",
    "observed_export_last_seq": null
   },
   "kibble": {
    "generation": "0",
-   "last_seq": 21663621,
-   "last_capture": "2026-10-27T19:55:19.933Z",
+   "last_seq": 21666653,
+   "last_capture": "2026-10-27T20:24:22.598Z",
    "export_empty": false,
    "empty_observed_since": null,
-   "observed_export_last_seq": 21663621
+   "observed_export_last_seq": 21666653
   },
   "d-proofline": {
    "generation": "1",
    "last_seq": 1,
-   "last_capture": "2026-10-27T19:55:22.457Z",
+   "last_capture": "2026-10-27T20:24:24.700Z",
    "export_empty": true,
    "empty_observed_since": "2026-10-27T13:14:45.442Z",
    "observed_export_last_seq": null
