@@ -63,7 +63,7 @@ test('ingest: first capture, overlap, gap, generation change, regression', () =>
   const first = ingest({ room: 'credence', body: body(line({ seq: 1 }), line({ seq: 2 }), line({ seq: 3 })), generation: '0', capturedAt: at, prev: undefined });
   assert.equal(first.entry.new_records, 3);
   assert.deepEqual(first.entry.events.map((e) => e.type), ['first_capture']);
-  assert.deepEqual(first.nextState, { generation: '0', last_seq: 3, last_capture: at });
+  assert.deepEqual(first.nextState, { generation: '0', last_seq: 3, last_capture: at, export_empty: false, empty_observed_since: null, observed_export_last_seq: 3 });
 
   const overlap = ingest({ room: 'credence', body: body(line({ seq: 2 }), line({ seq: 3 }), line({ seq: 4 })), generation: '0', capturedAt: at, prev: first.nextState });
   assert.equal(overlap.entry.new_records, 1, 'records already archived are not stored twice');

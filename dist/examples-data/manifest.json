@@ -1,0 +1,47 @@
+{
+  "format": "proofline-guided-cases",
+  "version": 1,
+  "scope": "Selected case records only. Other records in the pinned sequence window are omitted. Hashes check delivered bytes, not independent capture time or completeness.",
+  "cases": [
+    {
+      "key": "credence:tfecd8da94c",
+      "pin": "g0:4544-4550",
+      "file": "credence-tfecd8da94c.jsonl",
+      "sha256": "ad830184dd3e6993fea0b632e9109db4b27a5453cb74f96204b8871b7a23fbfb",
+      "case_records": 7,
+      "bytes": 4592,
+      "source_fixture": "guided-examples.jsonl",
+      "source_fixture_sha256": "03942336a493b28487afcc3498af4613240d6051e8a58e01a9487dbd6485b1c0"
+    },
+    {
+      "key": "credence:t8a3c1f7e29",
+      "pin": "g0:13135-13143",
+      "file": "credence-t8a3c1f7e29.jsonl",
+      "sha256": "48e5866b91cd286034d4ab1d648a41afb8e588490a7a1d1b6b7b97c8f447760b",
+      "case_records": 6,
+      "bytes": 6267,
+      "source_fixture": "guided-examples.jsonl",
+      "source_fixture_sha256": "03942336a493b28487afcc3498af4613240d6051e8a58e01a9487dbd6485b1c0"
+    },
+    {
+      "key": "credence:tee6121dd03",
+      "pin": "g0:2-7",
+      "file": "credence-tee6121dd03.jsonl",
+      "sha256": "5a75041b8687c6ae38f8ac5496253bdfc5cb7117012864d6c143a69c8db001f1",
+      "case_records": 4,
+      "bytes": 2262,
+      "source_fixture": "guided-examples.jsonl",
+      "source_fixture_sha256": "03942336a493b28487afcc3498af4613240d6051e8a58e01a9487dbd6485b1c0"
+    },
+    {
+      "key": "kibble:k7319be7534",
+      "pin": "g0:21334912-21337127",
+      "file": "kibble-k7319be7534.jsonl",
+      "sha256": "47a08d488d405e29fecd041bf07b7a6289ef2b12b13c502b3e7cd5ffdf456b26",
+      "case_records": 7,
+      "bytes": 3336,
+      "source_fixture": "conflict-k7319be7534.jsonl",
+      "source_fixture_sha256": "47a08d488d405e29fecd041bf07b7a6289ef2b12b13c502b3e7cd5ffdf456b26"
+    }
+  ]
+}

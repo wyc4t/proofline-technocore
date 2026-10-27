@@ -1,4 +1,5 @@
-# Evidence archive: every 10 minutes, keep the Technocore records that are new since the
+# Evidence archive: scheduled every 10 minutes (actual captures may be delayed or skipped),
+# keep the Technocore records that are new since the
 # last capture. credence is committed to the archive-data branch; kibble is uploaded as
 # compressed files to a daily release (kibble-YYYY-MM-DD). Every capture, failure and gap
 # is recorded in captures.jsonl on archive-data. Nothing here touches main or the site.
