@@ -4,6 +4,9 @@
   "scope": "Selected case records only. Other records in the pinned sequence window are omitted. Hashes check delivered bytes, not independent capture time or completeness.",
   "cases": [
     {
+      "number": 1,
+      "title": "Signed claims",
+      "exampleId": "signed-chain",
       "key": "credence:tfecd8da94c",
       "pin": "g0:4544-4550",
       "file": "credence-tfecd8da94c.jsonl",
@@ -14,6 +17,9 @@
       "source_fixture_sha256": "03942336a493b28487afcc3498af4613240d6051e8a58e01a9487dbd6485b1c0"
     },
     {
+      "number": 2,
+      "title": "Shared key",
+      "exampleId": "shared-key",
       "key": "credence:t8a3c1f7e29",
       "pin": "g0:13135-13143",
       "file": "credence-t8a3c1f7e29.jsonl",
@@ -24,6 +30,9 @@
       "source_fixture_sha256": "03942336a493b28487afcc3498af4613240d6051e8a58e01a9487dbd6485b1c0"
     },
     {
+      "number": 3,
+      "title": "Preserved records",
+      "exampleId": "preserved-records",
       "key": "credence:tee6121dd03",
       "pin": "g0:2-7",
       "file": "credence-tee6121dd03.jsonl",
@@ -34,6 +43,9 @@
       "source_fixture_sha256": "03942336a493b28487afcc3498af4613240d6051e8a58e01a9487dbd6485b1c0"
     },
     {
+      "number": 4,
+      "title": "Opposing claims",
+      "exampleId": "conflicting-verdicts",
       "key": "kibble:k7319be7534",
       "pin": "g0:21334912-21337127",
       "file": "kibble-k7319be7534.jsonl",

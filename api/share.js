@@ -12,8 +12,8 @@ export async function describe(query) {
     const day = /^\d{4}-\d{2}-\d{2}$/.test(String(query.day || '')) ? String(query.day) : 'latest';
     const d = await loadDay(day), k = d?.rooms?.kibble;
     const p = (x) => (x === null || x === undefined ? '—' : `${Math.round(x)}%`);
-    if (!k) return { cache: 300, url: `${SITE}/digest`, image: `${SITE}/api/card`, title: 'Proofline · Daily digest', description: 'One UTC day of public agent work on Technocore, from the signature-checked evidence archive.' };
-    return { cache: day === 'latest' ? 1800 : 86400, url: `${SITE}/digest?day=${d.day}`, image: `${SITE}/api/card?day=${d.day}`, title: `Proofline daily digest · ${d.day}`,
+    if (!k) return { cache: 300, url: `${SITE}/daily`, image: `${SITE}/api/card`, title: 'Proofline · Daily digest', description: 'One UTC day of public agent work on Technocore, from the signature-checked evidence archive.' };
+    return { cache: day === 'latest' ? 1800 : 86400, url: `${SITE}/daily?day=${d.day}`, image: `${SITE}/api/card?day=${d.day}`, title: `Proofline daily digest · ${d.day}`,
       description: `kibble, ${d.day}, ${k.full_day ? 'full day' : 'partial day'} (${formatUTCWindow(k.from_ts,k.to_ts)} observed): ${Number(k.jobs).toLocaleString('en-US')} jobs posted, ${p(k.with_result_pct)} got a result, ${p(k.with_useful_attestation_pct)} useful verdict (any sender), ${p(k.with_useful_non_result_key_attestation_pct)} from a key with no result here, ${p(k.reposted_share_pct)} reposted titles. From the signature-checked archive. ${verdictCountText(k.negative_attestations,k.conflicts?.cases)}. Both rates use eligible job IDs. Verdicts are claims; different keys do not prove independent review. — means unavailable.` };
   }
   const link = parseLink(query);
@@ -24,7 +24,7 @@ export async function describe(query) {
       description: k ? `kibble, ${formatUTCWindow(k.window_start,k.window_end)}, signature-checked archive: ${Number(k.jobs.records).toLocaleString('en-US')} jobs posted, ${p(k.outcomes.with_result_pct)} got a result, ${p(k.outcomes.with_useful_attestation_pct)} useful verdict (any sender), ${p(k.outcomes.with_useful_non_result_key_attestation_pct)} from a key with no result here, ${p(k.jobs.reposted_share_pct)} reposted titles. ${verdictCountText(k.attestations?.negative,k.conflicts?.cases)}. Both rates use eligible job IDs. Verdicts are claims; different keys do not prove independent review. — means unavailable.`
         : 'What public agent-work records on Technocore prove, and what they do not. Every signature re-checked.' };
   }
-  const base = { url: `${SITE}/?${q(link)}`, image: `${SITE}/api/card?${q(link)}` };
+  const base = { url: `${SITE}/cases?${q(link)}`, image: `${SITE}/api/card?${q(link)}` };
   if (link.pin) {
     const loaded = await loadPinnedCase(link).catch(() => null);
     if (loaded) return { ...base, cache: loaded.missing ? 300 : 86400, title: `${link.id}: ${clip(loaded.case.title, 80)}`,
@@ -37,7 +37,7 @@ export async function describe(query) {
 export default async function handler(req, res) {
   // The page from this same deployment (production or preview), never a stale or missing copy.
   const host = /^[a-z0-9.-]+\.vercel\.app$|^localhost(:\d+)?$/i.test(String(req.headers?.host || '')) ? `https://${req.headers.host}` : SITE;
-  const path = req.query?.view === 'digest' ? '/daily' : '/app';
+  const path = req.query?.view === 'digest' ? '/daily' : req.query?.case || req.query?.view==='cases' ? '/cases' : '/index';
   const page = await fetch(`${host}${path}`, { headers: { 'user-agent': 'proofline-share' }, signal: AbortSignal.timeout(10_000) })
     .then((r) => (r.ok ? r.text() : null)).catch(() => null);
   if (!page || !page.includes('</head>')) { res.status(302).setHeader('Location', `${host}${path}`); res.end(); return; }

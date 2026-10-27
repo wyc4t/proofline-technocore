@@ -21,7 +21,18 @@
       "destination": "/api/share"
     },
     {
-      "source": "/digest",
+      "source": "/cases",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(Twitterbot|facebookexternalhit|Slackbot|Discordbot|LinkedInBot|TelegramBot|WhatsApp|Mastodon|Bluesky|Cardyb|Embedly|redditbot|Applebot|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/share?view=cases"
+    },
+    {
+      "source": "/daily",
       "has": [
         {
           "type": "header",
@@ -30,14 +41,29 @@
         }
       ],
       "destination": "/api/share?view=digest"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "case"
+        }
+      ],
+      "destination": "/cases",
+      "permanent": false
+    },
+    {
+      "source": "/app",
+      "destination": "/cases",
+      "permanent": false
     },
     {
       "source": "/digest",
-      "destination": "/daily"
-    },
-    {
-      "source": "/",
-      "destination": "/app"
+      "destination": "/daily",
+      "permanent": false
     }
   ]
 }

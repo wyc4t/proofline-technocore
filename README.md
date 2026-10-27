@@ -99,3 +99,9 @@ Community research prototype. Not an official FLOP Labs product.
 ## License
 
 Apache-2.0
+
+## Pages and shared navigation
+
+`/` is Overview; `/cases`, `/examples`, `/daily` and `/about` are the other public pages. Legacy `/?case=…`, `/app?case=…`, `/digest` and `/#about` links remain supported.
+
+Edit HTML templates in `src/pages/`. `scripts/layout.mjs` supplies the single shared header/footer; `npm run build` generates the page HTML and browser scripts in `dist/`. Do not hand-edit generated page headers. Live controls belong to Cases. The home page fetches archive figures once and reads only room status once per minute.

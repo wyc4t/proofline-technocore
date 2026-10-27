@@ -37,7 +37,7 @@ test('duplicate result text retains all hash targets without claiming a unique r
 });
 test('excerpts preserve source wording and explicitly distinguish shortened from full text',()=>{
  assert.deepEqual(storyPreview('<script>unsafe</script>'),{text:'<script>unsafe</script>',truncated:false});
- assert.deepEqual(storyPreview('A complete long source',10),{text:'A complete…',truncated:true});
+ assert.deepEqual(storyPreview('A complete long source',10),{text:'A complet…',truncated:true});
  assert.equal(storyPreview('a'.repeat(300)).truncated,false);
 });
 test('missing stages remain empty observations without inferred relationships',()=>{

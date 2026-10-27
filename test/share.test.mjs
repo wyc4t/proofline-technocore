@@ -27,7 +27,7 @@ test('live case link: escaped, with its own card image and canonical URL', async
   const r = await run({ case: 'kibble:k123abc' });
   assert.match(r.b, /<title>k123abc · kibble case · Proofline<\/title>/);
   assert.match(r.b, /<meta property="og:image" content="https:\/\/proofline-technocore.vercel.app\/api\/card\?case=kibble:k123abc">/);
-  assert.match(r.b, /<meta property="og:url" content="https:\/\/proofline-technocore.vercel.app\/\?case=kibble:k123abc">/);
+  assert.match(r.b, /<meta property="og:url" content="https:\/\/proofline-technocore.vercel.app\/cases\?case=kibble:k123abc">/);
 });
 
 test('malformed case parameters fall back to the site card', async () => {

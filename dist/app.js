@@ -69,6 +69,13 @@ function verdictCountText(negative,conflicts){
  return `${n(negative)} negative verdict records · ${n(conflicts)} same-result conflict cases`;
 }
 
+/* src/lib/navigation.js */
+// Preserve every legacy parameter, including unknown future parameters and fragments.
+function legacyDestination(url){const u=new URL(url,'https://proofline.test');if((u.pathname==='/'||/^\/app(?:\.html)?$/.test(u.pathname))&&u.searchParams.has('case'))return '/cases'+u.search+u.hash;if(u.pathname==='/'&&u.hash==='#about')return '/about';if(/^\/app(?:\.html)?$/.test(u.pathname))return '/cases'+u.search+u.hash;return null}
+function archiveEmptySince(captures,room){let since=null;for(const c of captures.filter(c=>c.room===room).sort((a,b)=>Date.parse(a.captured_at)-Date.parse(b.captured_at))){if(!c.ok||c.export_records!==0||c.export_bytes!==0){since=null;continue}if(!Number.isFinite(Date.parse(c.captured_at))){since=null;continue}since??=c.captured_at}return since}
+function emptyRoomText(room,since){const d=new Date(since||NaN);if(!Number.isFinite(d.getTime()))return `${room}: empty on last read`;return `${room}: empty since ${d.getUTCDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()]} ${d.toISOString().slice(11,16)} UTC`}
+function compactRoomText(c,since,now=Date.now()){if(c.status==='error')return `${c.room}: read delayed`;if(!c.lastOkAt)return `${c.room}: loading`;if(c.roomEmpty)return emptyRoomText(c.room,since);const age=Math.max(0,Math.floor((now-Date.parse(c.windowEnd))/1000));return Number.isFinite(age)?`${c.room}: last ${age<90?age+' s':age<7200?Math.floor(age/60)+' min':Math.floor(age/3600)+' h'}`:`${c.room}: no record in view`}
+
 /* src/lib/signature.js */
 // Signature checks, following technocore.chat SIGNING: Ed25519 over the UTF-8 bytes of
 // `<room>|<nonce>|<text>`, with the key taken from the sender's did:key. Uses WebCrypto, so
@@ -354,10 +361,10 @@ function parseMessage(message, room) {
 
 
 const GUIDED_CASES = [
-  { key: 'credence:tfecd8da94c', pin: 'g0:4544-4550', fixture: 'guided-examples.jsonl' },
-  { key: 'credence:t8a3c1f7e29', pin: 'g0:13135-13143', fixture: 'guided-examples.jsonl' },
-  { key: 'credence:tee6121dd03', pin: 'g0:2-7', fixture: 'guided-examples.jsonl' },
-  { key: 'kibble:k7319be7534', pin: 'g0:21334912-21337127', fixture: 'conflict-k7319be7534.jsonl' },
+  { key: 'credence:tfecd8da94c', pin: 'g0:4544-4550', fixture: 'guided-examples.jsonl', number: 1, exampleId: 'signed-chain', title: 'Signed claims' },
+  { key: 'credence:t8a3c1f7e29', pin: 'g0:13135-13143', fixture: 'guided-examples.jsonl', number: 2, exampleId: 'shared-key', title: 'Shared key' },
+  { key: 'credence:tee6121dd03', pin: 'g0:2-7', fixture: 'guided-examples.jsonl', number: 3, exampleId: 'preserved-records', title: 'Preserved records' },
+  { key: 'kibble:k7319be7534', pin: 'g0:21334912-21337127', fixture: 'conflict-k7319be7534.jsonl', number: 4, exampleId: 'conflicting-verdicts', title: 'Opposing claims' },
 ];
 async function loadGuidedCase({ key, pin, base, fetchText, fetchBytes }) {
   const known = GUIDED_CASES.find((c) => c.key === key && c.pin === pin);
@@ -375,7 +382,7 @@ async function loadGuidedCase({ key, pin, base, fetchText, fetchBytes }) {
     seqs.add(m.seq);
   }
   if (!lines.length || lines.length !== e.case_records || !bytes.length || bytes.at(-1) !== 10) throw new Error('Guided-case bundle is incomplete or malformed');
-  return { lines, curated: true, missing: null, captures: [], bundle: { file, sha256: e.sha256, bytes: bytes.length, records: lines.length } };
+  return { lines, curated: true, missing: null, captures: [], bundle: { example:{number:e.number,title:e.title,exampleId:e.exampleId}, file, sha256: e.sha256, bytes: bytes.length, records: lines.length } };
 }
 
 /* src/lib/lookup.js */
@@ -953,9 +960,12 @@ function storylineLinks(c) {
   return c.links.filter(l=>l.type==='same-key'||l.type==='hash'&&c.attestationDetails.some(a=>a.seq===l.from&&a.state==='matched'&&a.matches.includes(l.to)));
 }
 function storyPreview(text,limit=300) {
-  const raw=String(text||'');return {text:raw.length>limit?raw.slice(0,limit).trimEnd()+'…':raw,truncated:raw.length>limit};
+  const raw=String(text||'');return {text:raw.length>limit?raw.slice(0,limit-1).trimEnd()+'…':raw,truncated:raw.length>limit};
 }
-function mountStoryline(host,c,{onSelect,expanded=new Set()}={}) {
+function caseBadgeLabels(c){const count=c.stages.filter(s=>s.length).length;return [count===4?'ALL 4 STAGES':`${count} OF 4 STAGES OBSERVED`,...(c.conflicts.length?['CONFLICTING VERDICTS']:[])]}
+function resultStatus(item){return item.conflict?`${item.conflict.useful.length+item.conflict.negative.length} OPPOSITE VERDICTS`:item.namedBy.length?`Named by ${item.namedBy.length} attestation${item.namedBy.length===1?'':'s'}`:'No attestation names this result'}
+function hiddenConnectionCount(c,stage,limit=3){const hidden=new Set(c.stages[stage].slice(limit).map(r=>r.seq));return storylineLinks(c).filter(l=>hidden.has(l.from)||hidden.has(l.to)).length}
+function mountStoryline(host,c,{onSelect,expanded=new Set(),highlight=[],guided=false}={}) {
   const doc=host.ownerDocument,make=(tag,cls,text)=>{const n=doc.createElement(tag);n.className=cls||'';if(text!==undefined)n.textContent=text;return n};
   host.replaceChildren();host.className='storyline';host.setAttribute('aria-label','Case storyline: columns are stages, not causes');
   const ns='http://www.w3.org/2000/svg',svg=doc.createElementNS(ns,'svg');svg.classList.add('story-links');svg.setAttribute('aria-hidden','true');host.append(svg);
@@ -963,25 +973,25 @@ function mountStoryline(host,c,{onSelect,expanded=new Set()}={}) {
   for(const group of storylineModel(c)){
     const section=make('section',`story-column stage-${group.stage}`),heading=make('h3','',`${labels[group.stage]} · ${group.records.length}`),body=make('div','story-records');section.setAttribute('aria-label',`${labels[group.stage]} records`);section.append(heading,body);host.append(section);
     const appendCard=item=>{
-      const {record:r,stage,target,relations,conflict,success,echo}=item,card=make('button',`story-card${stage===1?' worker-chip':''}${conflict?' has-conflict':''}`);card.type='button';card.dataset.record=String(r.seq);card.setAttribute('aria-haspopup','dialog');
-      card.append(make('span','story-record-id',`${r.kind} #${r.seq}`));
-      if(stage===3)card.append(make('span','story-verdict',`${r.verdict==='useful'?'U · Useful':r.verdict==='not'?'N · Negative':`? · ${r.verdict}`} · claim`));
-      if(conflict)card.append(make('span','story-conflict',`${conflict.useful.length+conflict.negative.length} opposite verdict claims · same text`));
-      const content=stage===1?null:stage===0?(r.kind==='JOB'?r.text.split('|')[3]?.trim():r.body)||r.body:stage===3?r.body.replace(/^rh:[0-9a-f]{16,64}\s*\|\s*/i,''):r.body;
-      if(content){const preview=storyPreview(content,stage===0?240:300);card.append(make('span','story-text',preview.text));if(preview.truncated)card.append(make('span','story-full','Excerpt · open full source ↗'))}
-      if(success)card.append(make('span','story-success',`SUCCESS LINE\n${storyPreview(success,200).text}`));
-      if(echo)card.append(make('span','story-pattern','Pattern: wording almost entirely from the request.'));
-      for(const relation of relations){const readable=target?.state==='matched'&&relation===relations[0]?`Names ${target.matches.length===1?'result':'identical result text at'} ${target.matches.map(n=>'#'+n).join(', ')} by hash.`:relation;const p=storyPreview(readable,180);card.append(make('span',target?.state==='matched'?'story-relation hash-match':'story-relation',p.text));if(p.truncated)card.append(make('span','story-full','Open source for all connections ↗'))}
-      const t=Date.parse(r.ts),first=Date.parse(c.stages[0][0]?.ts),dt=Number.isFinite(t)&&Number.isFinite(first)?Math.round((t-first)/1000):null;
-      card.append(make('span','story-time',`${r.sigStatus==='valid'?'Signature verified':r.sigStatus==='invalid'?'SIGNATURE FAILS':r.sigStatus==='no_sig'?'No signature':r.sigStatus==='unchecked'?'Signature unchecked':'Self-asserted sender'}${stage===2&&dt!==null?` · venue ${dt<0?'time order invalid':`+${dt} s`}`:''}`));
+      const {record:r,stage,target,relations,conflict,success,echo}=item,card=make('button',`story-card${stage===1?' worker-chip':''}${conflict?' has-conflict':''}${guided&&highlight.includes(r.seq)?' guide-highlight':''}`);card.type='button';card.dataset.record=String(r.seq);card.setAttribute('aria-haspopup','dialog');card.title=relations.join(' ');
+      const pattern=c.flags.some(f=>f.seqs.includes(r.seq)),id=make('span','story-record-id',`${r.kind} #${r.seq}${r.sigStatus==='invalid'?' · SIGNATURE FAILS':''}`);
+      if(stage===1){id.textContent+=item.sameKey.length?' · same key as '+item.sameKey.map(l=>'result #'+l.to).join(', '):'';card.append(id)}else{
+        if(stage===2&&pattern)id.append(make('small','pattern-tag','Pattern'));card.append(id);
+        if(stage===3)card.append(make('span','story-verdict',`${r.verdict==='useful'?'U · Useful':r.verdict==='not'?'N · Negative':`? · ${r.verdict}`} · claim`));
+        const raw=stage===0?(r.text.split('|')[3]?.trim()||r.body):stage===3?r.body.replace(/^rh:[0-9a-f]{16,64}\s*\|\s*/i,''):r.body;
+        const preview=storyPreview(raw,stage===0?160:140),text=make('span','story-text',preview.text);if(preview.truncated)text.append(make('small','story-full','Excerpt · open source'));card.append(text);
+        if(stage===0&&success){const p=storyPreview(success,160),line=make('span','story-success','SUCCESS LINE\n'+p.text);if(p.truncated)line.append(make('small','story-full','Excerpt · open source'));card.append(line)}
+        if(stage===2)card.append(make('span',conflict?'story-conflict':'story-relation',resultStatus(item)));
+        if(stage===3){const label=target?.state==='matched'?`Names ${target.matches.length===1?'result':'identical text at'} ${target.matches.map(n=>'#'+n).join(', ')} by hash`:target?.state==='unnamed'?'Names no result by hash':target?.state==='ambiguous'?'Target ambiguous · open source':target?.state==='unchecked'?'Target not checked · open source':'Target not in these records';card.append(make('span',target?.state==='matched'?'story-relation hash-match':'story-relation',label))}
+      }
       card.onclick=()=>onSelect(r.seq);body.append(card);
     };
     if(!group.records.length)body.append(make('p','story-absent','Not seen in these records. May be outside this window, not yet posted, or absent.'));
     const limit=expanded.has(group.stage)?group.records.length:3;group.records.slice(0,limit).forEach(appendCard);
     if(group.records.length>3){
       const more=make('button','story-more');more.type='button';
-      const label=()=>{const full=expanded.has(group.stage);more.textContent=full?`Show first 3 ${labels[group.stage].toLowerCase()} records`:`Show all ${group.records.length} ${labels[group.stage].toLowerCase()} records (${group.records.length-3} more)`;more.setAttribute('aria-expanded',String(full))};label();
-      more.onclick=()=>{if(expanded.has(group.stage)){expanded.delete(group.stage);[...body.querySelectorAll('.story-card')].slice(3).forEach(n=>n.remove());body.append(more);label();more.focus()}else{expanded.add(group.stage);group.records.slice(3).forEach(appendCard);body.append(more);label();body.querySelectorAll('.story-card')[3]?.focus()}schedule()};body.append(more);
+      const label=()=>{const full=expanded.has(group.stage);more.textContent=full?`Show first 3 ${labels[group.stage].toLowerCase()} records`:`Show all ${group.records.length} ${labels[group.stage].toLowerCase()} records (${group.records.length-3} more)`;more.setAttribute('aria-expanded',String(full));const notice=section.querySelector('.hidden-connections');if(notice)notice.hidden=full};label();
+      more.onclick=()=>{if(expanded.has(group.stage)){expanded.delete(group.stage);[...body.querySelectorAll('.story-card')].slice(3).forEach(n=>n.remove());body.append(more);label();more.focus()}else{expanded.add(group.stage);group.records.slice(3).forEach(appendCard);body.append(more);label();body.querySelectorAll('.story-card')[3]?.focus()}schedule()};body.append(more);const count=hiddenConnectionCount(c,group.stage);if(count){const notice=make('p','hidden-connections',`${count} connections go to records hidden here · `),show=make('button','','Show all');show.type='button';show.onclick=()=>more.click();notice.append(show);notice.hidden=expanded.has(group.stage);section.append(notice)}
     }
   }
   function draw(){
@@ -990,7 +1000,7 @@ function mountStoryline(host,c,{onSelect,expanded=new Set()}={}) {
     for(const link of storylineLinks(c)){
       let a=host.querySelector(`[data-record="${link.from}"]`),b=host.querySelector(`[data-record="${link.to}"]`);if(!a||!b)continue;
       let ar=a.getBoundingClientRect(),br=b.getBoundingClientRect();if(ar.left>br.left)[ar,br]=[br,ar];
-      const x=ar.right-box.left,y=ar.top+ar.height/2-box.top,x2=br.left-box.left,y2=br.top+br.height/2-box.top,path=doc.createElementNS(ns,'path');
+      const leftHeader=(ar.left===a.getBoundingClientRect().left?a:b).querySelector('.story-record-id').getBoundingClientRect(),rightHeader=(ar.left===a.getBoundingClientRect().left?b:a).querySelector('.story-record-id').getBoundingClientRect();const x=ar.right-box.left,y=leftHeader.top+leftHeader.height/2-box.top,x2=br.left-box.left,y2=rightHeader.top+rightHeader.height/2-box.top,path=doc.createElementNS(ns,'path');
       path.setAttribute('d',`M${x},${y} C${(x+x2)/2},${y} ${(x+x2)/2},${y2} ${x2},${y2}`);path.setAttribute('class',link.type==='hash'?'hash-line':'key-line');svg.append(path);
     }
   }
@@ -1012,6 +1022,7 @@ function mountStoryline(host,c,{onSelect,expanded=new Set()}={}) {
 
 
 
+
 const SOURCES=['credence','kibble'];
 const rooms=SOURCES.map(createRoomState);
 const SIG_LABEL={valid:'SIGNATURE VERIFIED',invalid:'SIGNATURE DOES NOT VERIFY',no_sig:'KEY NAMED, NO SIGNATURE · NOT RE-VERIFIABLE',unsigned:'NOT A KEY · SELF-ASSERTED NAME',unchecked:'SIGNATURE NOT CHECKED IN THIS BROWSER'};
@@ -1019,7 +1030,7 @@ const STATUS_LABEL={'all-stages':'ALL 4 STAGES','partial':'PARTIAL','no-request'
 const FETCH_TIMEOUT_MS=10000,LIST_STEP=80;
 let cases=[],selected=null,filter='seen',stats=null,busy=false,paused=false,frozenAt=0,lastInspKey=null,listLimit=LIST_STEP,detailOpener=null;
 const uiSig={list:'',insp:''};
-const isNarrow=()=>matchMedia('(max-width:700px)').matches;
+const isNarrow=()=>matchMedia('(max-width:767px)').matches;
 const protocolTotal=()=>rooms.reduce((n,r)=>n+r.counts.protocol,0);
 const $=s=>document.querySelector(s);
 // Case links: ?case=<room>:<id> selects a live case; adding &at=g<gen>:<from>-<to> loads exactly that
@@ -1031,7 +1042,7 @@ let guidedCase=linkParams.get('guide')==='1'?wantedKey:null;
 const assetBase=location.protocol==='file:'?SITE:'';
 // Colons are kept readable in links: room:id and g0:from-to.
 const q=(key,pin)=>`?case=${encodeURIComponent(key).replace(/%3A/gi,':')}${pin?`&at=${encodeURIComponent(pin).replace(/%3A/gi,':')}`:''}`;
-function caseUrl(key,pin){return (location.protocol==='file:'?`${SITE}/`:location.origin+location.pathname)+q(key,pin)}
+function caseUrl(key,pin){return (location.protocol==='file:'?`${SITE}/`:location.origin+'/cases')+q(key,pin)}
 function setUrl(key,pin){try{history.replaceState(history.state,'',location.pathname+(key?q(key,pin)+(guidedCase===key?'&guide=1':''):'')+location.hash)}catch{}}
 
 function el(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node}
@@ -1092,16 +1103,12 @@ async function findArchivedCase(event){
   }catch(e){if(token===lookupRequest)host.replaceChildren(el('p','',`Archive lookup unavailable: ${e.message}. The index may not have been generated for this archive yet. Guided examples and existing pinned links still work.`))}
   finally{if(token===lookupRequest)button.disabled=false}
 }
-function syncOverview(){
-  $('#overviewToggle').setAttribute('aria-expanded',String($('#overview').open));
-}
-$('#overview').open=false;
-$('#overviewToggle').onclick=()=>{$('#overview').open=!$('#overview').open;syncOverview()};
-$('#overview').addEventListener('toggle',syncOverview);
-$('#menuToggle').onclick=()=>{const open=!document.body.classList.contains('menu-open');document.body.classList.toggle('menu-open',open);$('#menuToggle').setAttribute('aria-expanded',String(open))};
 $('#casesToggle').onclick=()=>setCasesCollapsed(true);
 $('#casesShow').onclick=()=>setCasesCollapsed(!document.body.classList.contains('cases-collapsed'));
 function setCasesCollapsed(collapsed){document.body.classList.toggle('cases-collapsed',collapsed);$('#casesShow').setAttribute('aria-expanded',String(!collapsed));$('#casesToggle').setAttribute('aria-expanded',String(!collapsed));if(collapsed)$('#casesShow').focus();else $('#search').focus()}
+$('#live').onclick=()=>$('#statusDialog').showModal();$('#statusClose').onclick=()=>$('#statusDialog').close();
+let emptyDates={};
+async function refreshEmptyDates(){try{const r=await fetch(ARCHIVE_RAW+'captures.jsonl',{cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error('Unavailable');const cs=(await r.text()).split('\n').filter(Boolean).map(JSON.parse);emptyDates=Object.fromEntries(SOURCES.map(room=>[room,archiveEmptySince(cs,room)]));updateStatus()}catch{emptyDates={}}}
 $('#lookupForm').onsubmit=findArchivedCase;
 function renderList(){
   const host=$('#caseList');host.replaceChildren();const visible=visibleCases();
@@ -1170,9 +1177,9 @@ function recordDisclosure(record,flagged){
   d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s);if($('#inspector .reading-guide'))d.append(back);d.append(source,p);const target=selected?.attestationDetails.find(a=>a.seq===record.seq);if(target)d.append(el('p','attestation-target',attestationTargetText(target)));return d;
 }
 let recordSelection=null,sourceOpener=null;
-function openSourceRecord(seq){
-  const c=recordSelection?.c||selected,r=c?.list.find(r=>r.seq===seq);if(!r)return;
-  const dialog=$('#recordDialog');if(!dialog.open)sourceOpener=document.activeElement;
+function openSourceRecord(seq,sourceCase=selected){
+  const c=sourceCase,r=c?.list.find(r=>r.seq===seq);if(!r)return;
+  const dialog=$('#recordDialog');if(!dialog.open||document.activeElement?.matches('[data-record]'))sourceOpener=document.activeElement;
   recordSelection={c,seq};$('#recordTitle').textContent=`${r.kind} #${r.seq}`;
   const content=$('#recordContent');content.replaceChildren();
   content.append(el('p',`source sig-${r.sigStatus}`,`${SIG_LABEL[r.sigStatus]} · ${shortDid(r.source)}`),el('p','record-venue',`Venue timestamp: ${r.ts||'unavailable'} · not signed. Sequence #${r.seq} is not signed.`),el('pre','raw-source',r.text));
@@ -1182,22 +1189,21 @@ function openSourceRecord(seq){
   for(const f of c.flags.filter(f=>f.seqs.includes(seq)))content.append(el('p','source-pattern',`Pattern: ${f.label}. ${f.detail}`));
   if(guidedCase===c.key){const back=el('button','','Back to the guide');back.onclick=()=>{sourceOpener=$('#inspector .reading-guide button');dialog.close();returnToGuide()};content.append(back)}
   const index=c.list.indexOf(r);$('#recordPrev').disabled=index===0;$('#recordNext').disabled=index===c.list.length-1;
-  if(!dialog.open)dialog.showModal();else $('#recordTitle').focus();
+  if(!dialog.open){const wide=matchMedia('(min-width:1200px)').matches;dialog.classList.toggle('non-modal',wide);dialog.setAttribute('aria-modal',String(!wide));wide?dialog.show():dialog.showModal()}else $('#recordTitle').focus();
   $('#recordTitle').tabIndex=-1;
 }
 $('#recordClose').onclick=()=>$('#recordDialog').close();
 $('#recordDialog').addEventListener('click',e=>{if(e.target===$('#recordDialog')){const b=e.target.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)e.target.close()}});
 $('#recordDialog').addEventListener('close',()=>{const target=sourceOpener?.isConnected?sourceOpener:document.querySelector(`[data-record="${recordSelection?.seq}"]`);target?.focus({preventScroll:true});recordSelection=null});
-for(const [id,step] of [['#recordPrev',-1],['#recordNext',1]])$(id).onclick=()=>{const c=recordSelection?.c,i=c?.list.findIndex(r=>r.seq===recordSelection.seq);if(c?.list[i+step])openSourceRecord(c.list[i+step].seq)};
+for(const [id,step] of [['#recordPrev',-1],['#recordNext',1]])$(id).onclick=()=>{const c=recordSelection?.c,i=c?.list.findIndex(r=>r.seq===recordSelection.seq);if(c?.list[i+step])openSourceRecord(c.list[i+step].seq,c)};
 let guideStep=0,guideKey=null;
 function readingGuide(c){
   if(guideKey!==c.key){guideStep=0;guideKey=c.key}
   const box=el('section','reading-guide');box.setAttribute('aria-label','Read this case step by step');
   const stages=[0,2,3,null],questions=['What work was requested? Read the success line.','What was submitted? Compare it with the request.','Which result does each verdict name, and what does the attester claim?','Does the result meet the request? Decide yes, no or unsure. What evidence is missing?'];
-  box.append(el('h3','',`Step ${guideStep+1} of 4 · ${['Request','Results','Attestations','Your assessment'][guideStep]}`),el('p','',questions[guideStep]));
-  const stage=stages[guideStep];if(stage!==null){for(const r of c.stages[stage].slice(0,3)){const b=el('button','',`Read ${r.kind} #${r.seq}`);b.type='button';b.onclick=()=>openSourceRecord(r.seq);box.append(b)}if(c.stages[stage].length>3)box.append(el('p','',`${c.stages[stage].length-3} more records are available under Show all in that storyline stage, or All source records.`));if(!c.stages[stage].length)box.append(el('p','','No record for this stage in this window. This step cannot be checked from these records.'))}
-  else box.append(el('p','','A signature or attestation alone does not establish that the work was correct. Proofline does not collect or save your assessment.'));
-  const nav=el('div','guide-nav');for(const [text,delta] of [['Previous step',-1],['Next step',1]]){const b=el('button','',text);b.disabled=guideStep+delta<0||guideStep+delta>3;b.type='button';b.onclick=()=>{guideStep+=delta;render(true);$('#inspector .reading-guide h3')?.focus({preventScroll:true})};nav.append(b)}box.append(nav);box.querySelector('h3').tabIndex=-1;
+  box.append(el('h3','',`Step ${guideStep+1} of 4 · ${questions[guideStep]}`));
+  const stage=stages[guideStep];if(stage!==null){for(const r of c.stages[stage].slice(0,2)){const b=el('button','',`Read ${r.kind} #${r.seq}`);b.type='button';b.onclick=()=>openSourceRecord(r.seq);box.append(b)}if(!c.stages[stage].length)box.append(el('span','','No record in this window.'))}
+  const nav=el('div','guide-nav');for(const [text,delta] of [['Previous',-1],['Next',1]]){const b=el('button','',text);b.disabled=guideStep+delta<0||guideStep+delta>3;b.type='button';b.onclick=()=>{guideStep+=delta;render(true);$('#inspector .reading-guide h3')?.focus({preventScroll:true})};nav.append(b)}box.append(nav);box.querySelector('h3').tabIndex=-1;
   return {box};
 }
 let storyCleanup=null,storyExpanded=new Set(),storyKey=null;
@@ -1211,9 +1217,9 @@ function renderInspector(){
   if(!snapshot&&wantedMissing){host.append(el('h1','',wantedKey),el('p','','This case is not in the held live view. Use an archived case or a pinned link to inspect older records.'));return}
   if(!selected){host.append(el('h1','','Inspect the evidence behind a claim.'),el('p','','Choose a case to compare the request with the result, see which result each verdict names, and cite the archive.'));const a=el('a','','Try a guided example');a.href='examples.html';host.append(a);return}
   const c=selected,present=c.stages.filter(s=>s.length).length;
+  if(guidedCase===c.key){const meta=snapshot?.bundle?.example||GUIDED_CASES.find(e=>e.key===c.key);if(meta){const breadcrumb=el('a','case-breadcrumb',`Examples › ${meta.number}. ${meta.title}`);breadcrumb.href='/examples#'+meta.exampleId;host.append(breadcrumb)}}
   const context=el('div','case-context');context.append(el('span','eyebrow',snapshot?snapshot.curated?'ARCHIVED · GUIDED CASE BUNDLE':'ARCHIVED SNAPSHOT':'HELD LIVE VIEW'));if(snapshot){const exit=el('button','text-button','Back to live cases');exit.onclick=()=>{snapshot=null;selected=null;guidedCase=null;setUrl(null);render(true)};context.append(exit)}const heading=storyPreview(c.title,180);host.append(context,el('h1','case-heading',heading.text));if(heading.truncated)host.append(el('p','title-excerpt','Request title excerpt · open the request card for the complete source.'));
-  const meta=el('div','case-heading-meta');meta.append(el('span','',c.id),el('span','badge',`${present} OF 4 STAGES OBSERVED`));
-  if(c.conflicts.length)meta.append(el('span','badge',`${c.conflicts.length} RESULT TEXT${c.conflicts.length===1?'':'S'} WITH OPPOSITE VERDICTS`));
+  const meta=el('div','case-heading-meta');meta.append(el('span','',c.id));for(const label of caseBadgeLabels(c))meta.append(el('span','badge',label));
   if(c.disputed)meta.append(el('span','badge','DISPUTED · CLAIM'));
   host.append(meta,el('p','case-scope',`${c.room} · ${formatUTCWindow(c.list[0]?.ts,c.list.at(-1)?.ts)} · ${c.list.filter(r=>r.sigStatus==='valid').length} of ${c.list.length} signatures verified`));
   host.append(el('p','case-caveat',"Signed records show which key posted what. They don't show the work is correct, that different keys are different operators, or that anything was paid."));
@@ -1226,7 +1232,7 @@ function renderInspector(){
   if(c.list.some(r=>r.sigStatus==='invalid'))host.append(el('p','archive-warning','Signature failure: one or more records do not verify. Open the affected cards before comparing their claims.'));
   if(guide)host.append(guide.box);
   const intro=el('div','story-heading');intro.append(el('h2','','Case storyline'));const keyNote=el('p','');keyNote.append(el('span','story-key-wide','Stages, not causes · green line: checked result-hash match · dashed: same verified key. Open a card for its full source. Connections are also written on each card.'),el('span','story-key-narrow','Open a card for its full source. Stages are categories, not causes; targets are named on the cards.'));intro.append(keyNote);host.append(intro);
-  const story=el('div','');host.append(story);const key=`${c.key}|${snapshot?.pin||c.liveEpoch}`;if(storyKey!==key){storyExpanded=new Set();storyKey=key}storyCleanup=mountStoryline(story,c,{onSelect:openSourceRecord,expanded:storyExpanded});
+  const story=el('div','');host.append(story);const key=`${c.key}|${snapshot?.pin||c.liveEpoch}`;if(storyKey!==key){storyExpanded=new Set();storyKey=key}storyCleanup=mountStoryline(story,c,{onSelect:openSourceRecord,expanded:storyExpanded,highlight:c.stages[[0,2,3][guideStep]]?.map(r=>r.seq)||[] ,guided:!!guide});
   if(present<4)host.append(el('p','case-caveat','An empty stage means no record was seen in this window. It does not establish that the stage never happened.'));
   if(c.verdicts.useful&&c.verdicts.not&&!c.conflicts.length)host.append(el('p','case-caveat','Useful and negative claims are present, but a checked hash match does not place them on the same result text. Read the targets on each attestation.'));
   const checks=el('div','case-checks');host.append(checks);
@@ -1257,6 +1263,7 @@ function renderCaseChecks(checks,c){
     const show=(target,f)=>finding(target,f.label,`${f.seqs.length} ${f.seqs.length===1?'record':'records'}`,`${f.detail} Seq ${f.seqs.slice(0,6).map(s=>'#'+s).join(', ')}${f.seqs.length>6?'…':''}. A pattern, not a verdict.`);
     for(const f of rest)show(host,f);if(repeated.length){const d=el('details','pattern-details');d.dataset.seq='reuse-patterns';const summary=el('summary','',`Repeated-text patterns (${repeated.length})`);summary.dataset.seq='reuse-patterns';d.append(summary,el('p','','Comparison set: this room’s live records plus this selected case if retained. Archived snapshots compare only the records loaded.'));for(const f of repeated)show(d,f);host.append(d)}
   }
+  const limits=disclosure(checks,'Cannot be known from these records','limits');limits.append(el('p','','Whether the work was correct or useful, who holds a key, whether different keys are different parties, what caused what, or whether anything was paid.'));
   host=disclosure(checks,`All source records · ${c.list.length}`,'all-sources');
   const flagged=new Set(c.flags.flatMap(f=>f.seqs));for(const r of c.list)host.append(recordDisclosure(r,flagged.has(r.seq)));
 }
@@ -1340,11 +1347,11 @@ function choose(item){selected=selected?.key===item.key&&selected.liveEpoch===it
 function setDetailInert(on){for(const sel of ['.cases'])document.querySelector(sel)?.toggleAttribute('inert',on);const i=$('#inspector');if(on){i.setAttribute('role','region');i.setAttribute('aria-label','Case detail')}else{i.removeAttribute('role');i.removeAttribute('aria-label')}}
 function exitDetail(){if(!document.body.classList.contains('detail'))return;document.body.classList.remove('detail');setDetailInert(false);const k=selected?.key,target=(k&&$('#caseList').querySelector(`[data-key="${CSS.escape(k)}"]`))||detailOpener;target?.focus?.({preventScroll:true})}
 function closeDetail(){if(history.state?.detail)history.back();else exitDetail()}
-matchMedia('(max-width:700px)').addEventListener('change',()=>{if(isNarrow()&&snapshot)openDetailIfNarrow();setDetailInert(isNarrow()&&document.body.classList.contains('detail'))});
+matchMedia('(max-width:767px)').addEventListener('change',()=>{if(isNarrow()&&snapshot)openDetailIfNarrow();setDetailInert(isNarrow()&&document.body.classList.contains('detail'))});
 addEventListener('popstate',exitDetail);
-addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('detail')&&!document.querySelector('dialog[open]'))closeDetail()});
+addEventListener('keydown',e=>{if(e.defaultPrevented)return;if(e.key==='Escape'&&$('#recordDialog').open&&$('#recordDialog').classList.contains('non-modal')){e.preventDefault();$('#recordDialog').close();return}if(e.key==='Escape'&&document.body.classList.contains('detail')&&!document.querySelector('dialog[open]'))closeDetail()});
 function fmtSpan(ms){if(ms===null)return 'no data';const s=Math.round(ms/1000);if(s<90)return `${s}s`;const m=Math.round(s/60);if(m<120)return `${m}m`;const h=Math.round(m/60);return h<48?`${h}h`:`${Math.round(h/24)}d`}
-function coverageLine(c){const bits=[liveRoomText(c),`${c.records} protocol records`];if(c.status==='error')bits.push(`delayed · last ok ${clock(c.lastOkAt)}`);if(c.gaps)bits.push(`${c.missed} missed`);if(c.resets)bits.push(`${c.resets} reset`);if(c.malformed+c.unsupported)bits.push(`${c.malformed+c.unsupported} unparsed`);const inv=[...rooms.find(r=>r.room===c.room).records.values()].filter(r=>r.sigStatus==='invalid').length;if(inv)bits.push(`${inv} signature ${inv===1?'fails':'fail'}`);return bits.join(' · ')}
+function coverageLine(c){const bits=[compactRoomText(c,emptyDates[c.room]),`${c.records} protocol records`];if(c.status==='error')bits.push(`delayed · last ok ${clock(c.lastOkAt)}`);if(c.gaps)bits.push(`${c.missed} missed`);if(c.resets)bits.push(`${c.resets} reset`);if(c.malformed+c.unsupported)bits.push(`${c.malformed+c.unsupported} unparsed`);const inv=[...rooms.find(r=>r.room===c.room).records.values()].filter(r=>r.sigStatus==='invalid').length;if(inv)bits.push(`${inv} signature ${inv===1?'fails':'fail'}`);return bits.join(' · ')}
 async function pollRoom(state){
   const params=new URLSearchParams({format:'json',limit:String(PAGE_LIMIT)});const since=querySince(state);if(since!==null)params.set('since',String(since));
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),FETCH_TIMEOUT_MS);
@@ -1358,8 +1365,9 @@ async function pollRoom(state){
 function updateStatus(){
   const cov=rooms.map(coverage),bad=cov.filter(c=>c.status==='error'),gaps=cov.reduce((n,c)=>n+c.gaps,0);
   $('#live').className=`live ${bad.length===cov.length?'error':bad.length||gaps||paused?'warn':'ready'}`;
-  $('#live span').textContent=paused?`PAUSED · ${Math.max(0,protocolTotal()-frozenAt)} NEW`:bad.length===cov.length?'LIVE READ DELAYED':bad.length?`PARTIAL · ${bad.map(c=>c.room.toUpperCase()).join(', ')} DELAYED`:`LIVE VIEW · ${cov.map(c=>liveRoomText(c,Date.now(),true)).join(' · ')}${gaps?' · GAPS':''}`;
-  $('#freshness').textContent=(paused?'View paused; background reads continue. ':'')+cov.map(c=>liveRoomText(c)).join(' | ');
+  const full=[...cov].sort((a,b)=>(a.room==='kibble'?-1:1)-(b.room==='kibble'?-1:1)).map(c=>compactRoomText(c,emptyDates[c.room])).join(' · ');
+  $('#live span').textContent=`${paused?'PAUSED':'LIVE'} · ${full}`;$('#live').title=full;
+  $('#freshness').textContent=(paused?'View paused; background reads continue. ':'')+cov.map(c=>compactRoomText(c,emptyDates[c.room])).join(' | ');
   $('#sourceStatus').textContent=cov.map(coverageLine).join('  |  ')+(signatureSupport()===false?'  |  this browser cannot check signatures, so keys are not compared':'');$('#sourceStatus').title=bad.map(c=>c.error).join('\n');
   const b=$('#pause');b.setAttribute('aria-pressed',String(paused));b.querySelector('.ico').textContent=paused?'▶':'⏸';b.querySelector('.lbl').textContent=paused?`Resume · ${Math.max(0,protocolTotal()-frozenAt)} new`:'Pause updates';b.setAttribute('aria-label',paused?'Resume live updates':'Pause live updates');
 }
@@ -1401,16 +1409,9 @@ async function checkMaintainer(){
   else show('the signature does not verify.','bad');
 }
 checkMaintainer();
-const about=$('#aboutDialog');
-function openAbout(){if(typeof about.showModal==='function'&&!about.open)about.showModal()}
-$('#about').onclick=openAbout;$('#aboutClose').onclick=()=>about.close();
-about.addEventListener('click',e=>{if(e.target===about)about.close()});
-about.addEventListener('close',()=>{try{if(location.hash==='#about')history.replaceState(null,'',location.pathname+location.search)}catch{}});
-document.addEventListener('click',e=>{if(e.target.closest?.('.about-link')){e.preventDefault();openAbout()}});
-if(location.hash==='#about')openAbout();
 if(wantedKey&&linkParams.get('at')){openSnapshot(wantedKey,linkParams.get('at'));wantedKey=null}
-refreshArchiveState();setInterval(refreshArchiveState,120000);refreshStats();setInterval(refreshStats,600000);
-$('#refresh').onclick=()=>refresh();$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};$('#search').oninput=e=>{query=e.target.value.trim().toLowerCase();listLimit=LIST_STEP;render(true)};refresh();setInterval(refresh,15000);
+refreshArchiveState();setInterval(refreshArchiveState,120000);refreshEmptyDates();setInterval(refreshEmptyDates,120000);
+$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};$('#search').oninput=e=>{query=e.target.value.trim().toLowerCase();listLimit=LIST_STEP;render(true)};refresh();setInterval(refresh,15000);
 if(document.modelContext?.registerTool)document.modelContext.registerTool({name:'inspect_evidence_cases',title:'Inspect evidence cases',description:'Return structural observations for live Technocore work chains already loaded in Proofline.',inputSchema:{type:'object',properties:{status:{type:'string',enum:['all','all-stages','partial','no-request','negative']}},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:({status='all'}={})=>({observed_at:new Date().toISOString(),cases:cases.filter(c=>status==='all'||(status==='negative'?c.negative:c.status===status)).slice(0,20).map(c=>({room:c.room,id:c.id,status:c.status,stages:c.stages.map(s=>s.length),verdicts:c.verdicts,flags:c.flags.map(f=>f.id),records:c.list.length}))})});
 
 })();

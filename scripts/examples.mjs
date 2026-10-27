@@ -16,7 +16,7 @@ export function exampleOutputs(root = new URL('../', import.meta.url)) {
     });
     const bytes = raw.join('\n')+'\n', file = `${room}-${id}.jsonl`;
     outputs.set(`dist/examples-data/${file}`, bytes);
-    cases.push({key:item.key,pin:item.pin,file,sha256:sha(bytes),case_records:raw.length,bytes:Buffer.byteLength(bytes),source_fixture:item.fixture,source_fixture_sha256:sha(source)});
+    cases.push({number:item.number,title:item.title,exampleId:item.exampleId,key:item.key,pin:item.pin,file,sha256:sha(bytes),case_records:raw.length,bytes:Buffer.byteLength(bytes),source_fixture:item.fixture,source_fixture_sha256:sha(source)});
   }
   outputs.set('dist/examples-data/manifest.json', JSON.stringify({format:'proofline-guided-cases',version:1,scope:'Selected case records only. Other records in the pinned sequence window are omitted. Hashes check delivered bytes, not independent capture time or completeness.',cases},null,2)+'\n');
   return outputs;

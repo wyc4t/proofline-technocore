@@ -97,7 +97,7 @@ button:disabled{opacity:.5;cursor:default}
  .case-checks{grid-template-columns:minmax(0,1fr)}
 }
 @media(max-width:1100px){body.explorer>main>header .live{display:none}body.explorer main>.freshness{display:block;padding:6px 20px;font:10px/1.6 'DM Mono',monospace}body.explorer .workspace{grid-template-columns:250px minmax(0,1fr)}body.explorer .inspector{padding:22px}}
-@media(max-width:700px){
+@media(max-width:767px){
  body.explorer>main>header{min-height:64px;padding:10px 14px;gap:8px;flex-wrap:wrap;position:relative}
  body.explorer .brand{gap:8px;margin-right:auto}body.explorer .brand b{font-size:12px}body.explorer .brand .unofficial{font-size:8px;padding:4px 6px}
  body.explorer .mark{height:30px;width:30px;font-size:13px}
@@ -127,7 +127,7 @@ body.explorer .case-actions{margin:14px 0 6px}
 body.explorer .inspector>.case-scope{font:11px/1.6 'DM Mono',monospace;color:var(--muted);margin:10px 0}
 body.explorer .inspector>.case-caveat{font:13px/1.65 Manrope,sans-serif;margin:10px 0 14px}
 @container (max-width:899px){.story-key-wide{display:none}.story-key-narrow{display:inline}}
-@media(max-width:700px){
+@media(max-width:767px){
  body.explorer.detail main>.freshness{display:none}
  body.explorer .guide-label-wide{display:none}.guide-label-short{display:inline}
  body.explorer .case-actions .guide-toggle{flex:0 0 auto;min-width:110px;white-space:nowrap}
