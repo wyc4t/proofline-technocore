@@ -43,7 +43,8 @@ export default async function handler(req, res) {
   if (!page || !page.includes('</head>')) { res.status(302).setHeader('Location', `${host}${path}`); res.end(); return; }
   let html = page, cache = 300;
   try {
-    const d = await describe(req.query || {});
+    const metadata = await describe(req.query || {});
+    const d = { ...metadata, url:metadata.url.replace(SITE,host), image:metadata.image.replace(SITE,host) };
     cache = d.cache;
     const tags = [
       ['og:url', d.url], ['og:title', d.title], ['og:description', d.description], ['og:image', d.image],
