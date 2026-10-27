@@ -141,3 +141,19 @@ test('collect + check: reproduces counts, coverage and a case; detects tampering
     assert.equal(check({ data, assets: outbox }).problems.length, 1);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('legacy cursor state does not backdate empty observations or emit a duplicate event', () => {
+  // Version 1 stored only the cursor and capture time, even when that export was empty.
+  // A version 3 observation cannot infer an earlier empty-start time from those fields.
+  const legacy = { generation: '0', last_seq: 13281, last_capture: '2026-10-26T17:24:20.054Z' };
+  const firstAt = '2026-10-27T13:14:42.528Z';
+  const first = ingest({ room: 'credence', body: Buffer.alloc(0), generation: '0', capturedAt: firstAt, httpStatus: 200, prev: legacy });
+  assert.deepEqual(first.entry.events, [{ type: 'empty_export', first_observed_at: firstAt, archived_last_seq: 13281 }]);
+  assert.equal(first.newLines.length, 0);
+  assert.equal(first.nextState.last_seq, legacy.last_seq);
+  assert.equal(first.nextState.empty_observed_since, firstAt);
+  const again = ingest({ room: 'credence', body: Buffer.alloc(0), generation: '0', capturedAt: '2026-10-27T13:44:00Z', httpStatus: 200, prev: first.nextState });
+  assert.deepEqual(again.entry.events, [{ type: 'empty_export', first_observed_at: firstAt, archived_last_seq: 13281 }]);
+  assert.equal(again.newLines.length, 0);
+  assert.equal(again.nextState.last_seq, legacy.last_seq);
+});

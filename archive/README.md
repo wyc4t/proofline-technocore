@@ -93,7 +93,7 @@ The original Credence source fixture was copied from the preserved g0 bundle des
 
 Collector version 3 runs add a locator index under `lookup/<room>/`: `status.json` records the indexed capture interval, known index gaps, generation/epoch and observed same-generation sequence reuse; SHA-256(job ID)'s first byte selects one of 256 JSON shards. Candidates record the generation, indexed sequence bounds, record count and whether a request was seen. Long-lived IDs split into windows within the existing pin-size limit. This index is a routing aid, not case evidence. The browser still hashes archive files and re-checks signatures when opening a candidate. A missing advertised shard is unavailable, not a case miss.
 
-Incremental indexing starts with records newly collected after adoption. It does **not** silently backfill older data. Index failures are recorded as collector events and do not block preservation of raw evidence. A later successful index update can report a skipped sequence interval. Published index data and deployment have not been changed by this local work.
+Incremental indexing starts with records newly collected after adoption. It does **not** silently backfill older data. Index failures are recorded as collector events and do not block preservation of raw evidence. A later successful index update can report a skipped sequence interval.
 
 An explicit offline rebuild can read the available archive bytes, check their hashes/signatures, and write a **new** output directory:
 
