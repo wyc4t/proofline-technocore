@@ -5,6 +5,7 @@ import {join} from 'node:path';
 import {parseArgs} from 'node:util';
 import {check} from './check.mjs';
 import {addLookup} from './lib/lookup.mjs';
+import {storageEpoch,archiveGroup} from '../src/lib/archive-epoch.js';
 export function rebuildLookup({data,assets,out,now=new Date().toISOString()}){
   if(existsSync(out))throw Error('Lookup output already exists; choose a fresh destination');
   const report=check({data,assets,keepRecords:true});
@@ -14,8 +15,8 @@ export function rebuildLookup({data,assets,out,now=new Date().toISOString()}){
   const lowerBound=(xs,seq)=>{let a=0,b=xs.length;while(a<b){const m=(a+b)>>1;if(xs[m].rec.seq<seq)a=m+1;else b=m}return a};
   for(const line of readFileSync(join(data,'captures.jsonl'),'utf8').split('\n')){
     if(!line.trim())continue;const c=JSON.parse(line);if(!c.ok)continue;
-    const key=`${c.room}:${c.generation??'unknown'}`;
-    if(!available.has(key))available.set(key,[...(report.records[c.room]?.[`g${c.generation??'unknown'}`]||new Map()).values()].sort((a,b)=>a.rec.seq-b.rec.seq));
+    const key=`${c.room}:${archiveGroup(c.generation,storageEpoch(c))}`;
+    if(!available.has(key))available.set(key,[...(report.records[c.room]?.[archiveGroup(c.generation,storageEpoch(c))]||new Map()).values()].sort((a,b)=>a.rec.seq-b.rec.seq));
     const records=available.get(key),lines=[];
     if(c.new_records)for(let i=lowerBound(records,c.new_first_seq);i<records.length&&records[i].rec.seq<=c.new_last_seq;i++)lines.push(records[i]);
     addLookup(out,c,lines);

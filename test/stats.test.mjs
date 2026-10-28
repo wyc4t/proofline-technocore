@@ -98,7 +98,7 @@ test('daily digest: a day is full only if the archive covers its start and end w
     const index = JSON.parse(readFileSync(join(dir, 'data/stats/daily/index.json'), 'utf8'));
     assert.equal(index.days.length, 1, 'recomputing a day replaces its entry');
     assert.equal(index.days[0].rooms.kibble.full_day, false, 'start not covered, so not a full day');
-    assert.equal(index.days[0].stats_version, '4');
+    assert.equal(index.days[0].stats_version, '5');
     assert.deepEqual(index.days[0].rooms.kibble.conflicts,{cases:0,result_text_groups:0});
     assert.equal(index.days[0].rooms.kibble.population.attestations.records,0);
     assert.equal(index.days[0].rooms.kibble.with_useful_non_result_key_attestation_pct, 0, 'new metric survives daily-index serialization');

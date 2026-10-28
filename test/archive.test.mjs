@@ -5,7 +5,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync, readdirSync } from 'n
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { parseLine, splitExport, classify } from '../archive/lib/records.mjs';
+import { parseLine, splitExport, classify, sha256 } from '../archive/lib/records.mjs';
 import { ingest } from '../archive/collect.mjs';
 import { check } from '../archive/check.mjs';
 import { exportBundle } from '../archive/export.mjs';
@@ -63,7 +63,7 @@ test('ingest: first capture, overlap, gap, generation change, regression', () =>
   const first = ingest({ room: 'credence', body: body(line({ seq: 1 }), line({ seq: 2 }), line({ seq: 3 })), generation: '0', capturedAt: at, prev: undefined });
   assert.equal(first.entry.new_records, 3);
   assert.deepEqual(first.entry.events.map((e) => e.type), ['first_capture']);
-  assert.deepEqual(first.nextState, { generation: '0', last_seq: 3, last_capture: at, export_empty: false, empty_observed_since: null, observed_export_last_seq: 3 });
+  assert.deepEqual(first.nextState, { generation: '0', storage_epoch:0, last_record_sha256:sha256(Buffer.from(line({seq:3}))), last_seq: 3, last_capture: at, export_empty: false, empty_observed_since: null, observed_export_last_seq: 3 });
 
   const overlap = ingest({ room: 'credence', body: body(line({ seq: 2 }), line({ seq: 3 }), line({ seq: 4 })), generation: '0', capturedAt: at, prev: first.nextState });
   assert.equal(overlap.entry.new_records, 1, 'records already archived are not stored twice');

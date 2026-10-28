@@ -210,7 +210,7 @@ function renderInspector(){
     if(snapshot.error){host.append(el('h2','',snapshot.id||'Pinned case'),el('p','',snapshot.error),exit);return}
     const b=el('div','snapshot-banner');
     if(snapshot.curated)b.append(el('b','',`GUIDED CASE BUNDLE · ${snapshot.room}`),el('p','',`${snapshot.records} selected case records, checked against this build's bundle manifest. Other records in window #${snapshot.from}–#${snapshot.to} are omitted. Signatures were re-checked in your browser. This bundle does not establish independent capture time or completeness of the surrounding window.`),exit);
-    else b.append(el('b','',`ARCHIVED SNAPSHOT · ${snapshot.room} · seq ${snapshot.from}–${snapshot.to}`),
+    else b.append(el('b','',`ARCHIVED SNAPSHOT · ${snapshot.room} · seq ${snapshot.from}–${snapshot.to}${snapshot.epoch?` · storage epoch ${snapshot.epoch}`:''}`),
       el('p','',`The archive holds ${snapshot.records} ${snapshot.room} records in this window, from ${snapshot.captures.length} ${snapshot.captures.length===1?'capture':'captures'}, each checked against the archive's manifest${snapshot.missing?`. ${snapshot.missing} sequence numbers in the window are not in the archive`:''}. Signatures were re-checked in your browser. Later records of this case are not included.`),exit);
     host.append(b);
   }
@@ -261,6 +261,11 @@ function citeBlock(c){
   const archived=!!snapshot||(st&&String(st.generation)===gen&&st.last_seq>=to);
   const button=(label,url,primary)=>{const b=el('button',`copy${primary?' primary':''}`,label);b.type='button';
     b.onclick=async()=>{try{await navigator.clipboard.writeText(url);b.textContent='Copied ✓'}catch{b.textContent='Copy failed'}setTimeout(()=>{b.textContent=label},1600)};return b};
+  if(!snapshot&&(!st||Number(st.storage_epoch||0)>0||rooms.find(r=>r.room===c.room)?.resets>0||(rooms.find(r=>r.room===c.room)?.lastSeq>0&&st.last_seq>rooms.find(r=>r.room===c.room).lastSeq))){
+    row.append(button('Copy live link',caseUrl(c.key),false));
+    box.append(row,el('p','cite-note','An archive storage epoch has not been established for this live case. Use Find an archived case to choose an epoch-qualified, checked copy.'));
+    return box;
+  }
   row.append(button('🔗 Copy pinned link',caseUrl(c.key,pin),true));
   if(!snapshot)row.append(button('Copy live link',caseUrl(c.key),false));
   const note=el('p','cite-note'),a=el('a','','Pinned link');a.href=caseUrl(c.key,pin);
@@ -279,12 +284,12 @@ async function openSnapshot(key,pinText){
     const fetchBytes=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(`an archive file returned ${r.status}`);return new Uint8Array(await r.arrayBuffer())};
     const bundleBase=location.protocol==='file:'?SITE+'/':new URL('.',location.href).href;
     const res=(guidedCase===key?await loadGuidedCase({key,pin:pinText,base:bundleBase,fetchText,fetchBytes}):null)
-      ?? await loadPinned({room,gen:pin.gen,from:pin.from,to:pin.to,fetchText,fetchBytes,assetUrl:(t,a)=>`${assetBase}/api/asset?tag=${encodeURIComponent(t)}&asset=${encodeURIComponent(a)}`});
+      ?? await loadPinned({room,gen:pin.gen,epoch:pin.epoch??0,from:pin.from,to:pin.to,fetchText,fetchBytes,assetUrl:(t,a)=>`${assetBase}/api/asset?tag=${encodeURIComponent(t)}&asset=${encodeURIComponent(a)}`});
     snapshot={...snapshot,progress:'Records downloaded. Checking signatures…'};render(true);
     const dec=new TextDecoder(),msgs=res.lines.map(l=>parseRoomPage(dec.decode(l)));await annotateSignatures(room,msgs);await annotateContentHashes(msgs);
     const recs=msgs.map(m=>parseMessage(m,room)).filter(p=>p.ok).map(p=>p.record).filter(r=>r.id===id);
     const c=buildCases(recs)[0]||null;
-    snapshot={key,room,id,pin:pinText,gen:pin.gen,from:pin.from,to:pin.to,loading:false,case:c,captures:res.captures,missing:res.missing,records:res.lines.length,curated:!!res.curated,bundle:res.bundle,
+    snapshot={key,room,id,pin:pinText,gen:pin.gen,epoch:pin.epoch??0,from:pin.from,to:pin.to,loading:false,case:c,captures:res.captures,missing:res.missing,records:res.lines.length,curated:!!res.curated,bundle:res.bundle,
       error:c?null:res.lines.length?'The evidence archive has records in that window, but none of this case.':'That window is not in the evidence archive yet.'};
   }catch(e){snapshot={...snapshot,loading:false,error:`The archive could not be loaded or checked: ${e?.message||e}.`}}
   render(true);
@@ -298,7 +303,7 @@ function inspectorSignature(){
   if(wantedMissing)return `missing|${wantedKey}`;
   if(!selected)return 'none';
   const to=Math.max(...selected.list.map(r=>r.seq)),st=archiveState?.rooms?.[selected.room];
-  return `${selected.key}|${selected.liveEpoch}|${selected.retained}|${selected.epochChanged}|${visibleCases().some(c=>c.key===selected.key)}|${selected.fingerprint}|${st?(st.last_seq>=to?'archived':'pending'):'unknown'}`;
+  return `${selected.key}|${selected.liveEpoch}|${selected.retained}|${selected.epochChanged}|${visibleCases().some(c=>c.key===selected.key)}|${selected.fingerprint}|${st?(st.last_seq>=to?'archived':'pending'):'unknown'}|${st?.storage_epoch??0}`;
 }
 // Re-render only what changed, and put back scroll position, open records and keyboard focus. Selecting another case starts fresh.
 function render(force=false){

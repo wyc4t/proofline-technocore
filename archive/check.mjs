@@ -17,6 +17,7 @@ import { gunzipSync } from 'node:zlib';
 import { parseArgs } from 'node:util';
 import { sha256, splitExport, classify, VERIFIER_VERSION } from './lib/records.mjs';
 import { parseMessage } from '../src/lib/protocol.js';
+import {storageEpoch,archiveGroup,legacyAmbiguousGenerations} from '../src/lib/archive-epoch.js';
 
 const here = new URL('.', import.meta.url).pathname;
 
@@ -53,19 +54,22 @@ export function check({ data, assets, caseRef, keepRecords = false }) {
   const problems = [];
   const room = (name, gen) => {
     rooms[name] ??= {};
-    return (rooms[name][`g${gen}`] ??= {
+    return (rooms[name][gen] ??= {
       captures: 0, failed_captures: [], unavailable: [], records: new Map(), events: [], first_capture: null, last_ok_capture: null,
     });
   };
 
+  const ambiguous=new Map();
+  for(const name of new Set(captures.map(c=>c.room))){const gens=legacyAmbiguousGenerations(captures,name);ambiguous.set(name,new Set(gens));for(const gen of gens)problems.push(`${name} g${gen}: legacy sequence reuse requires recovery; records are ambiguous`);}
+
   for (const c of captures) {
-    if (!c.ok) { room(c.room, 'unknown').failed_captures.push({ at: c.captured_at, error: c.error }); continue; }
-    const g = room(c.room, c.generation ?? 'unknown');
+    if (!c.ok) { room(c.room, 'gunknown').failed_captures.push({ at: c.captured_at, error: c.error }); continue; }
+    const g = room(c.room, archiveGroup(c.generation, storageEpoch(c)));
     g.captures++;
     g.first_capture ??= c.captured_at;
     g.last_ok_capture = c.captured_at;
     for (const e of c.events || []) if (!['first_capture'].includes(e.type)) g.events.push({ at: c.captured_at, ...e });
-    if (!c.new_records) continue;
+    if (!c.new_records || g.conflicting || storageEpoch(c)===0&&ambiguous.get(c.room)?.has(String(c.generation??'unknown'))) continue;
     let lines;
     if (c.storage?.kind === 'release') {
       const p = assetPaths.get(c.storage.asset);
@@ -82,7 +86,7 @@ export function check({ data, assets, caseRef, keepRecords = false }) {
       problems.push(`${c.room} capture ${c.captured_at}: stored bytes do not match manifest (seq ${c.new_first_seq}..${c.new_last_seq})`);
       continue;
     }
-    for (const p of lines) g.records.set(p.rec.seq, p);
+    for (const p of lines) { const old=g.records.get(p.rec.seq); if(old&&!old.raw.equals(p.raw)){problems.push(`${c.room}: conflicting bytes for seq ${p.rec.seq} in one storage epoch`);g.records.clear();g.conflicting=true;break} g.records.set(p.rec.seq, p); }
   }
 
   const report = { verifier_version: VERIFIER_VERSION, parser_sha256: sha256(readFileSync(join(here, '../src/lib/protocol.js'))), problems, rooms: {} };

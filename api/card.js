@@ -40,7 +40,7 @@ function pinnedCard(link, loaded) {
       stageRow,
       h({ fontSize: 24, color: s.sig.invalid ? '#ff6678' : '#c3cdd9', marginTop: 28 }, s.text),
       loaded.missing ? h({ fontSize: 22, color: C.amber, marginTop: 12 }, `Partial: ${loaded.missing} ${loaded.missing === 1 ? 'record' : 'records'} in this window ${loaded.missing === 1 ? 'is' : 'are'} not in the archive`) : null],
-    `records #${Math.min(...seqs)}–#${Math.max(...seqs)} · checked against the archive`);
+    `${link.pin.epoch?`storage epoch ${link.pin.epoch} · `:''}records #${Math.min(...seqs)}–#${Math.max(...seqs)} · checked against the archive`);
 }
 
 function liveCard(link) {

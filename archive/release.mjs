@@ -52,7 +52,7 @@ export function releasePlan({data,assets,fromDay,throughDay,rooms=['kibble','cre
  for(const [room,gens] of Object.entries(report.rooms))if(rooms.includes(room))for(const [gen,g] of Object.entries(gens)){
    if(g.known_gaps.length||g.unknown.not_available_to_this_check.length)warnings.push({room,generation:gen,known_gaps:g.known_gaps.length,unavailable_captures:g.unknown.not_available_to_this_check.length});
  }
- const code={};for(const p of ['archive/release.mjs','archive/stats.mjs','archive/daily.mjs','archive/lookup.mjs','archive/lib/lookup.mjs','src/lib/cases.js','src/lib/population.js','src/lib/protocol.js'])code[p]=sha256(fs.readFileSync(new URL(p,codeRoot)));
+ const code={};for(const p of ['archive/bootstrap.mjs','archive/release.mjs','archive/stats.mjs','archive/daily.mjs','archive/lookup.mjs','archive/lib/lookup.mjs','src/lib/cases.js','src/lib/population.js','src/lib/protocol.js','src/lib/archive-epoch.js'])code[p]=sha256(fs.readFileSync(new URL(p,codeRoot)));
  return {format:'proofline-release-plan',version:1,generated_at:new Date(now).toISOString(),mode:'offline-plan-only',stats_version:STATS_VERSION,
    source:{data:resolve(data),assets:assets?resolve(assets):null,captures_sha256:sha256(capturesText),daily_index_sha256:fs.existsSync(join(data,'stats/daily/index.json'))?sha256(fs.readFileSync(join(data,'stats/daily/index.json'))):null,first_capture:new Date(first).toISOString(),last_capture:new Date(last).toISOString(),rooms:roomStatus},
    selection:{rooms,days,rolling_hours:24,max_snapshot_age_hours:maxAgeHours},code,inventory,

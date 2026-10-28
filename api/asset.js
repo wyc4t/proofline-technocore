@@ -9,7 +9,7 @@
 
 export const REPO = 'wyc4t/proofline-technocore';
 const TAG = /^([a-z0-9][a-z0-9_-]{0,47})-(\d{4}-\d{2}-\d{2})$/;
-const ASSET = /^([a-z0-9][a-z0-9_-]{0,47})-g(\d{1,6})-(\d{1,19})-(\d{1,19})\.jsonl\.gz$/;
+const ASSET = /^([a-z0-9][a-z0-9_-]{0,47})-g(\d{1,6})(?:-e(\d{1,6}))?-(\d{1,19})-(\d{1,19})\.jsonl\.gz$/;
 const MAX_BYTES = 4_400_000; // Vercel's response limit is 4.5 MB
 
 export function validate(tag, asset) {

@@ -15,9 +15,10 @@ import { check } from './check.mjs';
 import { classify, sha256, VERIFIER_VERSION } from './lib/records.mjs';
 import { parseMessage } from '../src/lib/protocol.js';
 import {roomPopulation} from '../src/lib/population.js';
+import {splitArchiveGroup} from '../src/lib/archive-epoch.js';
 import { NEGATIVE,describeAttestations,conflictingVerdicts } from '../src/lib/cases.js';
 
-export const STATS_VERSION = '4'; // 4: separate conflict cases and text-frequency denominators
+export const STATS_VERSION = '5'; // 5: storage epochs isolate reused sequence numbers and job IDs
 export const OUTCOME_GRACE_MIN = 30;
 const here = new URL('.', import.meta.url).pathname;
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -36,10 +37,10 @@ export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable 
     const st = classify(room, p);
     sig[st]++;
     const r = parseMessage({ ...p.rec, sigStatus: st }, room);
-    if (r.ok) recs.push({ ...r.record, resultHash:r.record.stage===2?sha256(r.record.body):null, gen: String(p.gen ?? '0') });
+    if (r.ok) recs.push({ ...r.record, resultHash:r.record.stage===2?sha256(r.record.body):null, gen: String(p.gen ?? '0'), storage_epoch:p.storage_epoch??0 });
   }
   const byId = new Map();
-  for (const r of recs) { const k = `${r.gen}:${r.id}`; (byId.get(k) || byId.set(k, []).get(k)).push(r); }
+  for (const r of recs) { const k = `${r.gen}:${r.storage_epoch}:${r.id}`; (byId.get(k) || byId.set(k, []).get(k)).push(r); }
   const jobs = recs.filter((r) => r.stage === 0);
   const requesters = new Set(jobs.map((r) => r.keyId).filter(Boolean));
   const active = new Set(recs.map((r) => r.keyId).filter(Boolean));
@@ -83,7 +84,7 @@ export function roomStats(room, entries, { fromMs, toMs, gaps = [], unavailable 
     gaps, unavailable_captures: unavailable,
     records: inWindow.length, protocol_records: recs.length, signatures: sig,
     jobs: {
-      records: jobs.length, ids: new Set(jobs.map((r) => r.id)).size, requester_keys: requesters.size,
+      records: jobs.length, ids: new Set(jobs.map((r) => `${r.gen}:${r.storage_epoch}:${r.id}`)).size, requester_keys: requesters.size,
       reposted_ids: repostedIds, reposted_job_records: repostedJobRecords, reposted_share_pct: pct(repostedJobRecords, jobs.length),
     },
     outcomes: {
@@ -105,12 +106,13 @@ export function computeStats({ data, assets, hours = 24, rooms = ['kibble', 'cre
   const report = check({ data, assets, keepRecords: true });
   if (report.problems.length) throw new Error(`archive integrity problems:\n  ${report.problems.join('\n  ')}`);
   const out = { format: 'proofline-stats', stats_version: STATS_VERSION, generated_at: new Date(now).toISOString(), window_hours: hours, rooms: {},
-    code: { verifier_version: VERIFIER_VERSION, 'src/lib/protocol.js': sha256(readFileSync(join(here, '../src/lib/protocol.js'))), 'archive/stats.mjs': sha256(readFileSync(join(here, 'stats.mjs'))), 'src/lib/cases.js':sha256(readFileSync(join(here,'../src/lib/cases.js'))), 'src/lib/population.js':sha256(readFileSync(join(here,'../src/lib/population.js'))) },
+    code: { verifier_version: VERIFIER_VERSION, 'src/lib/protocol.js': sha256(readFileSync(join(here, '../src/lib/protocol.js'))), 'archive/stats.mjs': sha256(readFileSync(join(here, 'stats.mjs'))), 'src/lib/cases.js':sha256(readFileSync(join(here,'../src/lib/cases.js'))), 'src/lib/population.js':sha256(readFileSync(join(here,'../src/lib/population.js'))), 'src/lib/archive-epoch.js':sha256(readFileSync(join(here,'../src/lib/archive-epoch.js'))) },
     notes: [
       'Counts are per room and job ID, over archived records whose signatures were re-verified, in the half-open window [start, end).',
       `Outcome rates count jobs posted at least ${OUTCOME_GRACE_MIN} minutes before the window ends.`,
       'A reposted ID is a job ID under which two or more verified keys posted identical JOB text.',
-      'Jobs are grouped by room generation and job ID.',
+      'Jobs are grouped by room generation, storage epoch and job ID.',
+      'Storage epochs separate observed counter regressions or conflicting checkpoint bytes; they do not prove an upstream reset cause or distinct real-world tasks.',
       'Useful verdict rates share the eligible job-ID basis; the narrower rate requires a verified attester key with no result record in that job in this window. Different keys do not prove independent parties; verdicts need not name a result.',
       'Conflict cases count observed generation/ID groups with opposite verdicts targeting the same result text by hash, including cases whose request is absent. Text frequencies count records, ignoring case and whitespace, within this room/window.',
       'These describe records, not whether any work was correct or useful.',
@@ -119,7 +121,7 @@ export function computeStats({ data, assets, hours = 24, rooms = ['kibble', 'cre
     const gens = report.records[room] || {};
     const lastCapture = Object.values(report.rooms[room] || {}).map((g) => Date.parse(g.unknown.after_last_successful_capture || 0)).reduce((a, b) => Math.max(a, b), 0);
     const toMs = window ? window.toMs : (lastCapture || now), fromMs = window ? window.fromMs : toMs - hours * 3600e3;
-    const entries = Object.entries(gens).flatMap(([g, m]) => [...m.values()].map((p) => ({ ...p, gen: g.replace(/^g/, '') })));
+    const entries = Object.entries(gens).flatMap(([g, m]) => [...m.values()].map((p) => ({ ...p, gen: splitArchiveGroup(g).generation, storage_epoch:splitArchiveGroup(g).storage_epoch })));
     // A known gap can only be ruled out of the window if it lies entirely before an archived record dated before
     // the window: seq and ts both increase, so everything below that record is older. Any later gap may hold
     // records from inside the window, and makes the window incomplete.
@@ -129,7 +131,7 @@ export function computeStats({ data, assets, hours = 24, rooms = ['kibble', 'cre
       let before = -Infinity;
       for (const p of (gens[g] || new Map()).values()) if (Date.parse(p.rec.ts) < fromMs && p.rec.seq > before) before = p.rec.seq;
       if (before > -Infinity) anyBefore = true;
-      for (const x of info.known_gaps) if (x.to > before) gaps.push({ generation: g.replace(/^g/, ''), from: x.from, to: x.to });
+      for (const x of info.known_gaps) if (x.to > before) gaps.push({ generation: splitArchiveGroup(g).generation, storage_epoch:splitArchiveGroup(g).storage_epoch, from: x.from, to: x.to });
       for (const u of info.unknown.not_available_to_this_check) if (u.to > before) unavailable.push(u);
     }
     out.rooms[room] = { ...roomStats(room, entries, { fromMs, toMs, gaps, unavailable: unavailable.length }),
