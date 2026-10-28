@@ -59,7 +59,7 @@ export function mountStoryline(host,c,{onSelect,expanded=new Set(),highlight=[],
     }
   }
   function draw(){
-    svg.replaceChildren();if(!host.isConnected||host.clientWidth<900)return;
+    svg.replaceChildren();const columns=host.querySelectorAll('.story-column');if(!host.isConnected||columns.length<2||columns[0].getBoundingClientRect().left===columns[1].getBoundingClientRect().left)return;
     const box=host.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${box.width} ${box.height}`);
     for(const link of storylineLinks(c)){
       let a=host.querySelector(`[data-record="${link.from}"]`),b=host.querySelector(`[data-record="${link.to}"]`);if(!a||!b)continue;

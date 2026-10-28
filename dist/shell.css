@@ -49,3 +49,11 @@ body.explorer .worker-chip .story-record-id{white-space:normal;overflow:visible;
  body.explorer .case-toolbar #casesToggle{display:none}body.explorer .case-toolbar #filter{width:128px;font-size:11px}
  body.explorer .case-live-controls #live{font-size:11px}.record-dialog:not(.non-modal){max-width:100vw}
 }
+
+/* Keep the desktop stages together while the source uses its own column. */
+body.explorer .case-toolbar #filter{width:128px;min-width:128px}
+@media(min-width:1200px){
+ body.explorer.record-panel-open .inspector{container-type:normal;padding:20px 20px 32px;scroll-padding-top:80px}
+ body.explorer.record-panel-open .storyline{gap:24px;padding:16px}
+ body.explorer.record-panel-open .story-card{padding:12px;font-size:12px}
+}

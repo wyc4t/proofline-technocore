@@ -1000,7 +1000,7 @@ function mountStoryline(host,c,{onSelect,expanded=new Set(),highlight=[],guided=
     }
   }
   function draw(){
-    svg.replaceChildren();if(!host.isConnected||host.clientWidth<900)return;
+    svg.replaceChildren();const columns=host.querySelectorAll('.story-column');if(!host.isConnected||columns.length<2||columns[0].getBoundingClientRect().left===columns[1].getBoundingClientRect().left)return;
     const box=host.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${box.width} ${box.height}`);
     for(const link of storylineLinks(c)){
       let a=host.querySelector(`[data-record="${link.from}"]`),b=host.querySelector(`[data-record="${link.to}"]`);if(!a||!b)continue;
@@ -1054,7 +1054,7 @@ function el(tag,className,text){const node=document.createElement(tag);if(classN
 function formatDuration(ms){if(ms===null||!Number.isFinite(ms))return 'Unavailable';if(ms<0)return 'Invalid ordering';const s=Math.round(ms/1000);if(s<60)return `${s}s`;const m=Math.floor(s/60);if(m<60)return `${m}m ${s%60}s`;return `${Math.floor(m/60)}h ${m%60}m`}
 function shortDid(did){if(!did)return 'unknown sender';return did.startsWith('did:key:')?`${did.slice(8,18)}…${did.slice(-5)}`:did.slice(0,24)}
 const clock=ms=>ms?new Date(ms).toLocaleTimeString([],{hour12:false}):'never';
-const FILTER_LABEL={seen:'Request in view','all-stages':'All 4 stages',partial:'Partial',negative:'Negative verdict',conflicts:'Conflicting verdicts',disputed:'Disputed','no-request':'Request not seen',all:'All cases'};
+const FILTER_LABEL={seen:'Request seen','all-stages':'All 4 stages',partial:'Partial',negative:'Negative',conflicts:'Conflicts',disputed:'Disputed','no-request':'No request',all:'All'};
 const matches=(c,f)=>f==='all'||(f==='seen'?c.status!=='no-request':f==='negative'?c.negative:f==='conflicts'?!!c.conflicts.length:f==='disputed'?c.disputed:c.status===f);
 // Search: job ID, sender key (any part of it) or text, over the live view.
 let query='';
@@ -1109,7 +1109,8 @@ async function findArchivedCase(event){
 $('#showHidden').onclick=()=>{filter='all';$('#filter').value='all';render(true)};
 $('#casesToggle').onclick=()=>setCasesCollapsed(true);
 $('#casesShow').onclick=()=>setCasesCollapsed(!document.body.classList.contains('cases-collapsed'));
-function setCasesCollapsed(collapsed){document.body.classList.toggle('cases-collapsed',collapsed);$('#casesShow').setAttribute('aria-expanded',String(!collapsed));$('#casesToggle').setAttribute('aria-expanded',String(!collapsed));if(collapsed)$('#casesShow').focus();else $('#search').focus()}
+let casesManuallyCollapsed=document.body.classList.contains('cases-collapsed');
+function setCasesCollapsed(collapsed,{manual=true,focus=true}={}){if(manual){casesManuallyCollapsed=collapsed;if(!collapsed&&document.body.classList.contains('record-panel-open'))$('#recordDialog').close()}collapsed=casesManuallyCollapsed||document.body.classList.contains('record-panel-open');document.body.classList.toggle('cases-collapsed',collapsed);$('#casesShow').setAttribute('aria-expanded',String(!collapsed));$('#casesToggle').setAttribute('aria-expanded',String(!collapsed));if(focus){if(collapsed)$('#casesShow').focus();else $('#search').focus()}}
 $('#live').onclick=()=>$('#statusDialog').showModal();$('#statusClose').onclick=()=>$('#statusDialog').close();
 let emptyDates={};
 async function refreshEmptyDates(){try{const r=await fetch(ARCHIVE_RAW+'captures.jsonl',{cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error('Unavailable');const cs=(await r.text()).split('\n').filter(Boolean).map(JSON.parse);emptyDates=Object.fromEntries(SOURCES.map(room=>[room,archiveEmptySince(cs,room)]));updateStatus()}catch{emptyDates={}}}
@@ -1195,12 +1196,13 @@ function openSourceRecord(seq,sourceCase=selected){
   const index=c.list.indexOf(r);$('#recordPrev').disabled=index===0;$('#recordNext').disabled=index===c.list.length-1;
   if(!dialog.open){const wide=matchMedia('(min-width:1200px)').matches;applyDrawerLayout(wide);wide?dialog.show():dialog.showModal()}else $('#recordTitle').focus();
   $('#recordTitle').tabIndex=-1;
+  requestAnimationFrame(()=>{const inspector=$('#inspector'),card=inspector.querySelector(`[data-record="${seq}"]`);card?.scrollIntoView({block:'nearest',inline:'nearest'});const story=card?.closest('.storyline');if(document.body.classList.contains('record-panel-open')&&story&&story.getBoundingClientRect().height<=inspector.clientHeight-80)story.scrollIntoView({block:'nearest',inline:'nearest'})});
 }
-function applyDrawerLayout(wide){const d=$('#recordDialog');d.classList.toggle('non-modal',wide);d.setAttribute('aria-modal',String(!wide));document.body.classList.toggle('record-panel-open',wide)}
+function applyDrawerLayout(wide){const d=$('#recordDialog');d.classList.toggle('non-modal',wide);d.setAttribute('aria-modal',String(!wide));document.body.classList.toggle('record-panel-open',wide);setCasesCollapsed(casesManuallyCollapsed,{manual:false,focus:false})}
 matchMedia('(min-width:1200px)').addEventListener('change',event=>{const d=$('#recordDialog');if(!d.open)return;const focus=document.activeElement;d.close();applyDrawerLayout(event.matches);event.matches?d.show():d.showModal();focus?.focus?.({preventScroll:true})});
 $('#recordClose').onclick=()=>$('#recordDialog').close();
 $('#recordDialog').addEventListener('click',e=>{if(e.target===$('#recordDialog')){const b=e.target.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)e.target.close()}});
-$('#recordDialog').addEventListener('close',()=>{if($('#recordDialog').open)return;document.body.classList.remove('record-panel-open');const target=sourceOpener?.isConnected?sourceOpener:document.querySelector(`[data-record="${recordSelection?.seq}"]`);target?.focus({preventScroll:true});recordSelection=null});
+$('#recordDialog').addEventListener('close',()=>{if($('#recordDialog').open)return;applyDrawerLayout(false);const target=sourceOpener?.isConnected?sourceOpener:document.querySelector(`[data-record="${recordSelection?.seq}"]`);target?.focus({preventScroll:true});recordSelection=null});
 for(const [id,step] of [['#recordPrev',-1],['#recordNext',1]])$(id).onclick=()=>{const c=recordSelection?.c,i=c?.list.findIndex(r=>r.seq===recordSelection.seq);if(c?.list[i+step])openSourceRecord(c.list[i+step].seq,c)};
 let guideStep=0,guideKey=null;
 function readingGuide(c){
