@@ -69,6 +69,16 @@ function verdictCountText(negative,conflicts){
  return `${n(negative)} negative verdict records · ${n(conflicts)} same-result conflict cases`;
 }
 
+/* src/lib/navigation.js */
+// Preserve every legacy parameter, including unknown future parameters and fragments.
+function legacyDestination(url){const u=new URL(url,'https://proofline.test');if((u.pathname==='/'||/^\/app(?:\.html)?$/.test(u.pathname))&&u.searchParams.has('case'))return '/cases'+u.search+u.hash;if(u.pathname==='/'&&u.hash==='#about')return '/about';if(/^\/app(?:\.html)?$/.test(u.pathname))return '/cases'+u.search+u.hash;return null}
+function archiveEmptySince(captures,room){let since=null;for(const c of captures.filter(c=>c.room===room).sort((a,b)=>Date.parse(a.captured_at)-Date.parse(b.captured_at))){if(!c.ok||c.export_records!==0||c.export_bytes!==0){since=null;continue}if(!Number.isFinite(Date.parse(c.captured_at))){since=null;continue}since??=c.captured_at}return since}
+function emptyRoomText(room,since){const d=new Date(since||NaN);if(!Number.isFinite(d.getTime()))return `${room}: empty on last read`;return `${room}: empty since ${d.getUTCDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()]} ${d.toISOString().slice(11,16)} UTC`}
+function compactRoomText(c,since,now=Date.now()){if(c.status==='error')return `${c.room}: read delayed`;if(!c.lastOkAt)return `${c.room}: loading`;if(c.roomEmpty)return emptyRoomText(c.room,since);const age=Math.max(0,Math.floor((now-Date.parse(c.windowEnd))/1000));return Number.isFinite(age)?`${c.room}: last ${age<90?age+' s':age<7200?Math.floor(age/60)+' min':Math.floor(age/3600)+' h'}`:`${c.room}: no record in view`}
+
+// Sidebar-sized status; the full archived date and coverage stay in the status dialog.
+function caseListStatus(captures,now=Date.now()){return [...captures].sort((a,b)=>(a.room==='kibble'?-1:1)-(b.room==='kibble'?-1:1)).map(c=>{if(c.status==='error')return c.room+' delayed';if(!c.lastOkAt)return c.room+' loading';if(c.roomEmpty)return c.room+' empty';const age=Math.floor((now-Date.parse(c.windowEnd))/1000);if(!Number.isFinite(age))return c.room+' no data';if(age<0)return c.room+' clock+';return c.room+' '+(age<90?age+' s':age<7200?Math.floor(age/60)+' min':Math.floor(age/3600)+' h')}).join(' · ')}
+
 /* src/lib/signature.js */
 // Signature checks, following technocore.chat SIGNING: Ed25519 over the UTF-8 bytes of
 // `<room>|<nonce>|<text>`, with the key taken from the sender's did:key. Uses WebCrypto, so
@@ -354,10 +364,10 @@ function parseMessage(message, room) {
 
 
 const GUIDED_CASES = [
-  { key: 'credence:tfecd8da94c', pin: 'g0:4544-4550', fixture: 'guided-examples.jsonl' },
-  { key: 'credence:t8a3c1f7e29', pin: 'g0:13135-13143', fixture: 'guided-examples.jsonl' },
-  { key: 'credence:tee6121dd03', pin: 'g0:2-7', fixture: 'guided-examples.jsonl' },
-  { key: 'kibble:k7319be7534', pin: 'g0:21334912-21337127', fixture: 'conflict-k7319be7534.jsonl' },
+  { key: 'credence:tfecd8da94c', pin: 'g0:4544-4550', fixture: 'guided-examples.jsonl', number: 1, exampleId: 'signed-chain', title: 'Signed claims' },
+  { key: 'credence:t8a3c1f7e29', pin: 'g0:13135-13143', fixture: 'guided-examples.jsonl', number: 2, exampleId: 'shared-key', title: 'Shared key' },
+  { key: 'credence:tee6121dd03', pin: 'g0:2-7', fixture: 'guided-examples.jsonl', number: 3, exampleId: 'preserved-records', title: 'Preserved records' },
+  { key: 'kibble:k7319be7534', pin: 'g0:21334912-21337127', fixture: 'conflict-k7319be7534.jsonl', number: 4, exampleId: 'conflicting-verdicts', title: 'Opposing claims' },
 ];
 async function loadGuidedCase({ key, pin, base, fetchText, fetchBytes }) {
   const known = GUIDED_CASES.find((c) => c.key === key && c.pin === pin);
@@ -375,7 +385,7 @@ async function loadGuidedCase({ key, pin, base, fetchText, fetchBytes }) {
     seqs.add(m.seq);
   }
   if (!lines.length || lines.length !== e.case_records || !bytes.length || bytes.at(-1) !== 10) throw new Error('Guided-case bundle is incomplete or malformed');
-  return { lines, curated: true, missing: null, captures: [], bundle: { file, sha256: e.sha256, bytes: bytes.length, records: lines.length } };
+  return { lines, curated: true, missing: null, captures: [], bundle: { example:{number:e.number,title:e.title,exampleId:e.exampleId}, file, sha256: e.sha256, bytes: bytes.length, records: lines.length } };
 }
 
 /* src/lib/lookup.js */
@@ -929,23 +939,83 @@ function coverage(state) {
 }
 function allRecords(states) { return states.flatMap((s) => [...s.records.values()]); }
 
-/* src/lib/canvas.js */
-// The bitmap must follow the final CSS box, including layout changes that do not
-// trigger window.resize (font loading, flex layout and panels becoming visible).
-function fitCanvas(canvas, ctx, pixelRatio = 1) {
-  const { width, height } = canvas.getBoundingClientRect();
-  if (!(width > 0 && height > 0)) return null;
-  const scale = Math.min(Number.isFinite(pixelRatio) && pixelRatio > 0 ? pixelRatio : 1, 2);
-  const bitmapWidth = Math.max(1, Math.round(width * scale));
-  const bitmapHeight = Math.max(1, Math.round(height * scale));
-  if (canvas.width !== bitmapWidth) canvas.width = bitmapWidth;
-  if (canvas.height !== bitmapHeight) canvas.height = bitmapHeight;
-  // Account for fractional CSS pixels and the integer bitmap dimensions.
-  ctx.setTransform(bitmapWidth / width, 0, 0, bitmapHeight / height, 0, 0);
-  return { width, height };
+/* src/lib/storyline.js */
+
+// Presentation only: relationships come from verified-key comparisons and checked
+// hash targets. Stage order is never used to infer a connection.
+function storylineModel(c) {
+  const resultLabel=seq=>`result #${seq}`;
+  return c.stages.map((records,stage)=>({stage,records:records.map(record=>{
+    const target=c.attestationDetails.find(a=>a.seq===record.seq);
+    const namedBy=c.attestationDetails.filter(a=>a.state==='matched'&&a.matches.includes(record.seq));
+    const conflict=c.conflicts.find(g=>g.results.includes(record.seq));
+    const sameKey=c.links.filter(l=>l.type==='same-key'&&(l.from===record.seq||l.to===record.seq));
+    const success=stage===0?/\bSuccess\s*:\s*([\s\S]*)/i.exec(record.body)?.[1]?.trim():null;
+    const relations=[];
+    if(target)relations.push(target.state==='unnamed'?`${target.kind} #${target.seq} names no result by hash.`:attestationTargetText(target));
+    if(stage===2)relations.push(namedBy.length?`Named by ${namedBy.map(a=>`#${a.seq} (${a.verdict==='not'?'negative':a.verdict} claim)`).join(', ')} by hash.`:'No attestation in these records names this result by a checked hash.');
+    if(sameKey.length)relations.push(`Same verified key as ${sameKey.map(link=>{const other=link.from===record.seq?link.to:link.from;return link.from===record.seq?resultLabel(other):`worker #${other}`}).join(', ')}.`);
+    const citations=c.links.filter(l=>l.type==='cites'&&l.from===record.seq);if(citations.length)relations.push(`Text cites ${citations.map(l=>'#'+l.to).join(', ')}; a citation alone does not verify a relationship.`);
+    return {record,stage,target,namedBy,conflict,sameKey,success,relations,echo:c.flags.some(f=>f.id==='wording-from-request'&&f.seqs.includes(record.seq))};
+  })}));
+}
+function storylineLinks(c) {
+  return c.links.filter(l=>l.type==='same-key'||l.type==='hash'&&c.attestationDetails.some(a=>a.seq===l.from&&a.state==='matched'&&a.matches.includes(l.to)));
+}
+function storyPreview(text,limit=300) {
+  const raw=String(text||'');return {text:raw.length>limit?raw.slice(0,limit-1).trimEnd()+'…':raw,truncated:raw.length>limit};
+}
+function caseBadgeLabels(c){const count=c.stages.filter(s=>s.length).length;return [count===4?'ALL 4 STAGES':`${count} OF 4 STAGES OBSERVED`,...(c.conflicts.length?['CONFLICTING VERDICTS']:[])]}
+function resultStatus(item){return item.conflict?`${item.conflict.useful.length+item.conflict.negative.length} OPPOSITE VERDICTS`:item.namedBy.length?`Named by ${item.namedBy.length} attestation${item.namedBy.length===1?'':'s'}`:'No attestation names this result'}
+function hiddenConnectionCount(c,stage,limit=3){const hidden=new Set(c.stages[stage].slice(limit).map(r=>r.seq));return storylineLinks(c).filter(l=>hidden.has(l.from)||hidden.has(l.to)).length}
+function workerChipLabel(record,links){const short=n=>String(n).length>4?'#…'+String(n).slice(-3):'#'+n;const targets=[...new Set(links.map(l=>l.to))];return `${record.kind} ${short(record.seq)}${targets.length?' · same key as '+(targets.length>2?targets.length+' results':targets.map(n=>'result '+short(n)).join(', ')):''}${record.sigStatus==='invalid'?' · SIGNATURE FAILS':''}`}
+function workerChipAria(record,links){return `${record.kind} #${record.seq}${links.length?' · same verified key as '+[...new Set(links.map(l=>l.to))].map(n=>'result #'+n).join(', '):''}${record.sigStatus==='invalid'?' · SIGNATURE FAILS':''}`}
+function mountStoryline(host,c,{onSelect,expanded=new Set(),highlight=[],guided=false}={}) {
+  const doc=host.ownerDocument,make=(tag,cls,text)=>{const n=doc.createElement(tag);n.className=cls||'';if(text!==undefined)n.textContent=text;return n};
+  host.replaceChildren();host.className='storyline';host.setAttribute('aria-label','Case storyline: columns are stages, not causes');
+  const ns='http://www.w3.org/2000/svg',svg=doc.createElementNS(ns,'svg');svg.classList.add('story-links');svg.setAttribute('aria-hidden','true');host.append(svg);
+  const labels=['Request','Worker','Result','Attestation'];
+  for(const group of storylineModel(c)){
+    const section=make('section',`story-column stage-${group.stage}`),heading=make('h3','',`${labels[group.stage]} · ${group.records.length}`),body=make('div','story-records');section.setAttribute('aria-label',`${labels[group.stage]} records`);section.append(heading,body);host.append(section);
+    const appendCard=item=>{
+      const {record:r,stage,target,relations,conflict,success,echo}=item,card=make('button',`story-card${stage===1?' worker-chip':''}${conflict?' has-conflict':''}${guided&&highlight.includes(r.seq)?' guide-highlight':''}`);card.type='button';card.dataset.record=String(r.seq);card.setAttribute('aria-haspopup','dialog');card.title=relations.join(' ');
+      const pattern=c.flags.some(f=>f.seqs.includes(r.seq)),id=make('span','story-record-id',`${r.kind} #${r.seq}${r.sigStatus==='invalid'?' · SIGNATURE FAILS':''}`);
+      if(stage===1){id.textContent=workerChipLabel(r,item.sameKey);card.setAttribute('aria-label',workerChipAria(r,item.sameKey));card.append(id)}else{
+        if(stage===2&&pattern)id.append(make('small','pattern-tag','Pattern'));card.append(id);
+        if(stage===3)card.append(make('span','story-verdict',`${r.verdict==='useful'?'U · Useful':r.verdict==='not'?'N · Negative':`? · ${r.verdict}`} · claim`));
+        const raw=stage===0?(r.text.split('|')[3]?.trim()||r.body):stage===3?r.body.replace(/^rh:[0-9a-f]{16,64}\s*\|\s*/i,''):r.body;
+        const preview=storyPreview(raw,stage===0?160:140),text=make('span','story-text',preview.text);if(preview.truncated)text.append(make('small','story-full','Excerpt · open source'));card.append(text);
+        if(stage===0&&success){const p=storyPreview(success,160),line=make('span','story-success','SUCCESS LINE\n'+p.text);if(p.truncated)line.append(make('small','story-full','Excerpt · open source'));card.append(line)}
+        if(stage===2)card.append(make('span',conflict?'story-conflict':'story-relation',resultStatus(item)));
+        if(stage===3){const label=target?.state==='matched'?`Names ${target.matches.length===1?'result':'identical text at'} ${target.matches.map(n=>'#'+n).join(', ')} by hash`:target?.state==='unnamed'?'Names no result by hash':target?.state==='ambiguous'?'Target ambiguous · open source':target?.state==='unchecked'?'Target not checked · open source':'Target not in these records';card.append(make('span',target?.state==='matched'?'story-relation hash-match':'story-relation',label))}
+      }
+      card.onclick=()=>onSelect(r.seq);body.append(card);
+    };
+    if(!group.records.length)body.append(make('p','story-absent','Not seen in these records. May be outside this window, not yet posted, or absent.'));
+    const limit=expanded.has(group.stage)?group.records.length:3;group.records.slice(0,limit).forEach(appendCard);
+    if(group.records.length>3){
+      const more=make('button','story-more');more.type='button';
+      const label=()=>{const full=expanded.has(group.stage);more.textContent=full?`Show first 3 ${labels[group.stage].toLowerCase()} records`:`Show all ${group.records.length} ${labels[group.stage].toLowerCase()} records (${group.records.length-3} more)`;more.setAttribute('aria-expanded',String(full));const notice=section.querySelector('.hidden-connections');if(notice)notice.hidden=full};label();
+      more.onclick=()=>{if(expanded.has(group.stage)){expanded.delete(group.stage);[...body.querySelectorAll('.story-card')].slice(3).forEach(n=>n.remove());body.append(more);label();more.focus()}else{expanded.add(group.stage);group.records.slice(3).forEach(appendCard);body.append(more);label();body.querySelectorAll('.story-card')[3]?.focus()}schedule()};body.append(more);const count=hiddenConnectionCount(c,group.stage);if(count){const notice=make('p','hidden-connections',`${count} connections go to records hidden here · `),show=make('button','','Show all');show.type='button';show.onclick=()=>more.click();notice.append(show);notice.hidden=expanded.has(group.stage);section.append(notice)}
+    }
+  }
+  function draw(){
+    svg.replaceChildren();const columns=host.querySelectorAll('.story-column');if(!host.isConnected||columns.length<2||columns[0].getBoundingClientRect().left===columns[1].getBoundingClientRect().left)return;
+    const box=host.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${box.width} ${box.height}`);
+    for(const link of storylineLinks(c)){
+      let a=host.querySelector(`[data-record="${link.from}"]`),b=host.querySelector(`[data-record="${link.to}"]`);if(!a||!b)continue;
+      let ar=a.getBoundingClientRect(),br=b.getBoundingClientRect();if(ar.left>br.left)[ar,br]=[br,ar];
+      const leftHeader=(ar.left===a.getBoundingClientRect().left?a:b).querySelector('.story-record-id').getBoundingClientRect(),rightHeader=(ar.left===a.getBoundingClientRect().left?b:a).querySelector('.story-record-id').getBoundingClientRect();const x=ar.right-box.left,y=leftHeader.top+leftHeader.height/2-box.top,x2=br.left-box.left,y2=rightHeader.top+rightHeader.height/2-box.top,path=doc.createElementNS(ns,'path');
+      path.setAttribute('d',`M${x},${y} C${(x+x2)/2},${y} ${(x+x2)/2},${y2} ${x2},${y2}`);path.setAttribute('class',link.type==='hash'?'hash-line':'key-line');svg.append(path);
+    }
+  }
+  let frame;const schedule=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(draw)};
+  const observer=new ResizeObserver(schedule);observer.observe(host);schedule();
+  return ()=>{observer.disconnect();cancelAnimationFrame(frame)};
 }
 
 /* src/app.js */
+
 
 
 
@@ -962,10 +1032,10 @@ const SOURCES=['credence','kibble'];
 const rooms=SOURCES.map(createRoomState);
 const SIG_LABEL={valid:'SIGNATURE VERIFIED',invalid:'SIGNATURE DOES NOT VERIFY',no_sig:'KEY NAMED, NO SIGNATURE · NOT RE-VERIFIABLE',unsigned:'NOT A KEY · SELF-ASSERTED NAME',unchecked:'SIGNATURE NOT CHECKED IN THIS BROWSER'};
 const STATUS_LABEL={'all-stages':'ALL 4 STAGES','partial':'PARTIAL','no-request':'REQUEST NOT SEEN'};
-const MAX_NODES=7,FETCH_TIMEOUT_MS=10000,LIST_STEP=80;
+const FETCH_TIMEOUT_MS=10000,LIST_STEP=80;
 let cases=[],selected=null,filter='seen',stats=null,busy=false,paused=false,frozenAt=0,lastInspKey=null,listLimit=LIST_STEP,detailOpener=null;
 const uiSig={list:'',insp:''};
-const isNarrow=()=>matchMedia('(max-width:650px)').matches;
+const isNarrow=()=>matchMedia('(max-width:767px)').matches;
 const protocolTotal=()=>rooms.reduce((n,r)=>n+r.counts.protocol,0);
 const $=s=>document.querySelector(s);
 // Case links: ?case=<room>:<id> selects a live case; adding &at=g<gen>:<from>-<to> loads exactly that
@@ -977,14 +1047,14 @@ let guidedCase=linkParams.get('guide')==='1'?wantedKey:null;
 const assetBase=location.protocol==='file:'?SITE:'';
 // Colons are kept readable in links: room:id and g0:from-to.
 const q=(key,pin)=>`?case=${encodeURIComponent(key).replace(/%3A/gi,':')}${pin?`&at=${encodeURIComponent(pin).replace(/%3A/gi,':')}`:''}`;
-function caseUrl(key,pin){return (location.protocol==='file:'?`${SITE}/`:location.origin+location.pathname)+q(key,pin)}
+function caseUrl(key,pin){return (location.protocol==='file:'?`${SITE}/`:location.origin+'/cases')+q(key,pin)}
 function setUrl(key,pin){try{history.replaceState(history.state,'',location.pathname+(key?q(key,pin)+(guidedCase===key?'&guide=1':''):'')+location.hash)}catch{}}
 
 function el(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node}
 function formatDuration(ms){if(ms===null||!Number.isFinite(ms))return 'Unavailable';if(ms<0)return 'Invalid ordering';const s=Math.round(ms/1000);if(s<60)return `${s}s`;const m=Math.floor(s/60);if(m<60)return `${m}m ${s%60}s`;return `${Math.floor(m/60)}h ${m%60}m`}
 function shortDid(did){if(!did)return 'unknown sender';return did.startsWith('did:key:')?`${did.slice(8,18)}…${did.slice(-5)}`:did.slice(0,24)}
 const clock=ms=>ms?new Date(ms).toLocaleTimeString([],{hour12:false}):'never';
-const FILTER_LABEL={seen:'Request in view','all-stages':'All 4 stages',partial:'Partial',negative:'Negative verdict',conflicts:'Conflicting verdicts',disputed:'Disputed','no-request':'Request not seen',all:'All cases'};
+const FILTER_LABEL={seen:'Request seen','all-stages':'All 4 stages',partial:'Partial',negative:'Negative',conflicts:'Conflicts',disputed:'Disputed','no-request':'No request',all:'All'};
 const matches=(c,f)=>f==='all'||(f==='seen'?c.status!=='no-request':f==='negative'?c.negative:f==='conflicts'?!!c.conflicts.length:f==='disputed'?c.disputed:c.status===f);
 // Search: job ID, sender key (any part of it) or text, over the live view.
 let query='';
@@ -995,9 +1065,7 @@ function renderSummary(){
   // The live view is only the newest records of each room; say how much, and what the filter hides.
   const win=rooms.map(coverage).map(c=>liveRoomText(c)).join(' · ');
   const hidden=filter==='seen'?cases.filter(c=>c.status==='no-request').length:0,note=$('#casesNote');
-  note.replaceChildren(el('b','',`${paused?'Room reads (case view paused)':'Live view'}: ${win}.`),document.createTextNode(' '));
-  if(hidden){note.append(document.createTextNode(`${hidden} ${hidden===1?'case has':'cases have'} no request in view and ${hidden===1?'is':'are'} hidden. Their request may be older than the view, posted elsewhere, or missing. `));const b=el('button','','Show them');b.type='button';b.onclick=()=>{filter='all';$('#filter').value='all';render(true)};note.append(b)}
-  else note.append(document.createTextNode('For older cases, use Find an archived case or open a pinned link.'));
+  note.textContent=hidden?`${hidden} without a request hidden.`:'Search covers live records only.';
   renderPopulation();
 }
 // Headline numbers: kibble over the last 24 hours, computed hourly from the signature-checked archive.
@@ -1038,14 +1106,14 @@ async function findArchivedCase(event){
   }catch(e){if(token===lookupRequest)host.replaceChildren(el('p','',`Archive lookup unavailable: ${e.message}. The index may not have been generated for this archive yet. Guided examples and existing pinned links still work.`))}
   finally{if(token===lookupRequest)button.disabled=false}
 }
-function syncOverview(){
-  const panel=$('#overview');let saved=null;try{saved=sessionStorage.getItem('proofline-overview-open')}catch{}
-  panel.open=!isNarrow()||saved==='yes';
-}
-syncOverview();
-$('#overview>summary').addEventListener('click',()=>{if(isNarrow())try{sessionStorage.setItem('proofline-overview-open',$('#overview').open?'no':'yes')}catch{}});
-$('#overview').addEventListener('toggle',()=>{if(isNarrow())try{sessionStorage.setItem('proofline-overview-open',$('#overview').open?'yes':'no')}catch{}});
-matchMedia('(max-width:650px)').addEventListener('change',syncOverview);
+$('#showHidden').onclick=()=>{filter='all';$('#filter').value='all';render(true)};
+$('#casesToggle').onclick=()=>setCasesCollapsed(true);
+$('#casesShow').onclick=()=>setCasesCollapsed(!document.body.classList.contains('cases-collapsed'));
+let casesManuallyCollapsed=document.body.classList.contains('cases-collapsed');
+function setCasesCollapsed(collapsed,{manual=true,focus=true}={}){if(manual){casesManuallyCollapsed=collapsed;if(!collapsed&&document.body.classList.contains('record-panel-open'))$('#recordDialog').close()}collapsed=casesManuallyCollapsed||document.body.classList.contains('record-panel-open');document.body.classList.toggle('cases-collapsed',collapsed);$('#casesShow').setAttribute('aria-expanded',String(!collapsed));$('#casesToggle').setAttribute('aria-expanded',String(!collapsed));if(focus){if(collapsed)$('#casesShow').focus();else $('#search').focus()}}
+$('#live').onclick=()=>$('#statusDialog').showModal();$('#statusClose').onclick=()=>$('#statusDialog').close();
+let emptyDates={};
+async function refreshEmptyDates(){try{const r=await fetch(ARCHIVE_RAW+'captures.jsonl',{cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error('Unavailable');const cs=(await r.text()).split('\n').filter(Boolean).map(JSON.parse);emptyDates=Object.fromEntries(SOURCES.map(room=>[room,archiveEmptySince(cs,room)]));updateStatus()}catch{emptyDates={}}}
 $('#lookupForm').onsubmit=findArchivedCase;
 function renderList(){
   const host=$('#caseList');host.replaceChildren();const visible=visibleCases();
@@ -1103,21 +1171,6 @@ function caseAttestationLabel(c){
 function attestationReview(host,c){
   if(!c.attestationDetails.length)return;
   finding(host,'What each attestation names','',c.attestationDetails.map(attestationTargetText).join('\n')+'\nHash matches bind text, not correctness or independent review.');
-  for(const group of c.conflicts){
-    const box=el('section','verdict-comparison');box.setAttribute('aria-label','Conflicting verdicts on one result text');
-    box.append(el('h3','','Conflicting verdicts on one result text'));
-    const success=reviewCase(c.list).requirements?.successClause;
-    box.append(el('p','',success?`Request success line: ${success}`:'No success line detected. Read the request below.'),el('p','',`Both useful and negative claims name result text at ${group.results.map(n=>'#'+n).join(', ')} by hash. Neither verdict is checked. Different keys need not be different operators.`));
-    const result=c.list.find(r=>r.seq===group.results[0]);
-    box.append(el('b','','Result text'),el('pre','',result?.body||''),el('p','target-hash',`SHA-256: ${group.hash}`));
-    const columns=el('div','verdict-columns');
-    for(const [label,seqs] of [['Useful claims',group.useful],['Negative claims',group.negative]]){
-      const col=el('div','');col.append(el('h4','',label));
-      for(const seq of seqs){const a=c.list.find(r=>r.seq===seq);const signer=el('p','',`${a.kind} #${seq} · ${shortDid(a.source)} · ${a.sigStatus}`);signer.title=a.source||'unknown sender';col.append(signer,el('pre','',a.body));const b=el('button','',`Read source #${seq}`);b.type='button';b.onclick=()=>openSourceRecord(seq);col.append(b)}
-      columns.append(col);
-    }
-    box.append(columns);host.append(box);
-  }
   if(c.verdicts.useful&&c.verdicts.not&&!c.conflicts.length){
     const unknown=c.attestationDetails.some(a=>(a.verdict==='useful'||a.verdict==='not')&&a.state!=='matched');
     finding(host,unknown?'Mixed verdicts, targets unknown':'Mixed verdicts on different result texts','',unknown?'The records do not establish whether the attesters judged the same result. Missing, unchecked or ambiguous targets are not treated as a conflict.':'The matched useful and negative verdicts name different result texts. This is not evidence of disagreement on one result.');
@@ -1128,61 +1181,84 @@ function recordDisclosure(record,flagged){
   const back=el('button','record-guide-return','← Back to the steps');back.type='button';back.onclick=returnToGuide;
   d.dataset.seq=String(record.seq);s.dataset.seq=String(record.seq);d.append(s);if($('#inspector .reading-guide'))d.append(back);d.append(source,p);const target=selected?.attestationDetails.find(a=>a.seq===record.seq);if(target)d.append(el('p','attestation-target',attestationTargetText(target)));return d;
 }
-function openSourceRecord(seq){
-  const record=$('#inspector').querySelector(`details[data-seq="${seq}"]`);
-  if(!record)return;
-  for(const other of document.querySelectorAll('#inspector .record.is-selected'))other.classList.remove('is-selected');
-  record.open=true;record.classList.add('is-selected');
-  record.scrollIntoView({block:'start',behavior:'instant'});
-  record.querySelector('summary').focus({preventScroll:true});
+let recordSelection=null,sourceOpener=null;
+function openSourceRecord(seq,sourceCase=selected){
+  const c=sourceCase,r=c?.list.find(r=>r.seq===seq);if(!r)return;
+  const dialog=$('#recordDialog');if(!dialog.open||document.activeElement?.matches('[data-record]'))sourceOpener=document.activeElement;
+  recordSelection={c,seq};$('#recordTitle').textContent=`${r.kind} #${r.seq}`;
+  const content=$('#recordContent');content.replaceChildren();
+  content.append(el('p',`source sig-${r.sigStatus}`,`${SIG_LABEL[r.sigStatus]} · ${shortDid(r.source)}`),el('p','record-venue',`Venue timestamp: ${r.ts||'unavailable'} · not signed. Sequence #${r.seq} is not signed.`),el('pre','raw-source',r.text));
+  const key=el('p','source-key',r.source||'No sender');content.append(key);
+  const item=storylineModel(c).flatMap(g=>g.records).find(i=>i.record.seq===seq);
+  for(const text of item?.relations||[])content.append(el('p','source-relationship',text));
+  for(const f of c.flags.filter(f=>f.seqs.includes(seq)))content.append(el('p','source-pattern',`Pattern: ${f.label}. ${f.detail}`));
+  if(guidedCase===c.key){const back=el('button','','Back to the guide');back.onclick=()=>{sourceOpener=$('#inspector .reading-guide button');dialog.close();returnToGuide()};content.append(back)}
+  const index=c.list.indexOf(r);$('#recordPrev').disabled=index===0;$('#recordNext').disabled=index===c.list.length-1;
+  if(!dialog.open){const wide=matchMedia('(min-width:1200px)').matches;applyDrawerLayout(wide);wide?dialog.show():dialog.showModal()}else $('#recordTitle').focus();
+  $('#recordTitle').tabIndex=-1;
+  requestAnimationFrame(()=>{const inspector=$('#inspector'),card=inspector.querySelector(`[data-record="${seq}"]`);card?.scrollIntoView({block:'nearest',inline:'nearest'});const story=card?.closest('.storyline');if(document.body.classList.contains('record-panel-open')&&story&&story.getBoundingClientRect().height<=inspector.clientHeight-100)story.scrollIntoView({block:'nearest',inline:'nearest'})});
 }
+function applyDrawerLayout(wide){const d=$('#recordDialog');d.classList.toggle('non-modal',wide);d.setAttribute('aria-modal',String(!wide));document.body.classList.toggle('record-panel-open',wide);setCasesCollapsed(casesManuallyCollapsed,{manual:false,focus:false})}
+matchMedia('(min-width:1200px)').addEventListener('change',event=>{const d=$('#recordDialog');if(!d.open)return;const focus=document.activeElement;d.close();applyDrawerLayout(event.matches);event.matches?d.show():d.showModal();focus?.focus?.({preventScroll:true})});
+$('#recordClose').onclick=()=>$('#recordDialog').close();
+$('#recordDialog').addEventListener('click',e=>{if(e.target===$('#recordDialog')){const b=e.target.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)e.target.close()}});
+$('#recordDialog').addEventListener('close',()=>{if($('#recordDialog').open)return;applyDrawerLayout(false);const target=sourceOpener?.isConnected?sourceOpener:document.querySelector(`[data-record="${recordSelection?.seq}"]`);target?.focus({preventScroll:true});recordSelection=null});
+for(const [id,step] of [['#recordPrev',-1],['#recordNext',1]])$(id).onclick=()=>{const c=recordSelection?.c,i=c?.list.findIndex(r=>r.seq===recordSelection.seq);if(c?.list[i+step])openSourceRecord(c.list[i+step].seq,c)};
+let guideStep=0,guideKey=null;
 function readingGuide(c){
+  if(guideKey!==c.key){guideStep=0;guideKey=c.key}
   const box=el('section','reading-guide');box.setAttribute('aria-label','Read this case step by step');
-  box.append(el('h3','','Start here: inspect this claim'),el('p','','Open each record and read its message. On a large screen, you can also click the labelled circles in the graph.'));
-  const steps=el('ol','');
-  for(const [stage,question] of [[0,'What work was requested?'],[2,'What was submitted? Compare it with the request.'],[3,'Who vouched for the result, and what did they say?']]){
-    const li=el('li','');li.append(el('p','',question));
-    for(const record of c.stages[stage]){const button=el('button','',`Read ${record.kind} #${record.seq}`);button.type='button';button.onclick=()=>openSourceRecord(record.seq);li.append(button)}
-    if(!c.stages[stage].length)li.append(el('p','','No record for this stage in this window. You cannot check this step from these records.'));
-    steps.append(li);
-  }
-  const last=el('li','');last.append(el('p','','Your assessment: does the submitted result meet the request? Decide yes, no or unsure, and say what evidence is missing. A signature or an attestation alone cannot establish that the work is correct.'));steps.append(last);box.append(steps,el('p','guide-feedback','Testing Proofline? Reply to the X post that brought you here: what did you conclude, and what was confusing or missing? This page does not collect or save your answer.'));
-  const back=el('button','guide-return','Back to the steps');back.type='button';back.onclick=returnToGuide;
-  return {box,back};
+  const stages=[0,2,3,null],questions=['What work was requested? Read the success line.','What was submitted? Compare it with the request.','Which result does each verdict name, and what does the attester claim?','Does the result meet the request? Decide yes, no or unsure. What evidence is missing?'];
+  box.append(el('h3','',`Step ${guideStep+1} of 4 · ${questions[guideStep]}`));
+  const stage=stages[guideStep];if(stage!==null){for(const r of c.stages[stage].slice(0,2)){const b=el('button','',`Read ${r.kind} #${r.seq}`);b.type='button';b.onclick=()=>openSourceRecord(r.seq);box.append(b)}if(!c.stages[stage].length)box.append(el('span','','No record in this window.'))}
+  const nav=el('div','guide-nav');for(const [text,delta] of [['Previous',-1],['Next',1]]){const b=el('button','',text);b.disabled=guideStep+delta<0||guideStep+delta>3;b.type='button';b.onclick=()=>{guideStep+=delta;render(true);$('#inspector .reading-guide h3')?.focus({preventScroll:true})};nav.append(b)}box.append(nav);box.querySelector('h3').tabIndex=-1;
+  return {box};
 }
+let storyCleanup=null,storyExpanded=new Set(),storyKey=null;
+function disclosure(host,title,key){const d=el('details','case-disclosure');d.dataset.seq=key;const summary=el('summary','',title);summary.dataset.seq=key;d.append(summary);host.append(d);return d}
 function renderInspector(){
-  const host=$('#inspector');host.replaceChildren();const back=el('button','back','← All cases');back.type='button';back.onclick=closeDetail;host.append(back,el('div','eyebrow','EVIDENCE PROFILE'));
-  if(snapshot){
-    const exit=el('button','snap-exit','Back to live cases');exit.type='button';exit.onclick=()=>{snapshot=null;selected=null;setUrl(null);render(true)};
-    if(snapshot.loading){const status=el('p','archive-loading',`${snapshot.progress||'Fetching the archived records…'} This can take a few seconds. The case will open automatically when the checks finish.`);status.setAttribute('role','status');host.append(el('h2','',guidedCase===snapshot.key?'Opening guided example':'Opening archived case'),status);return}
-    if(snapshot.error){host.append(el('h2','',snapshot.id||'Pinned case'),el('p','',snapshot.error),exit);return}
-    const b=el('div','snapshot-banner');
-    if(snapshot.curated)b.append(el('b','',`GUIDED CASE BUNDLE · ${snapshot.room}`),el('p','',`${snapshot.records} selected case records, checked against this build's bundle manifest. Other records in window #${snapshot.from}–#${snapshot.to} are omitted. Signatures were re-checked in your browser. This bundle does not establish independent capture time or completeness of the surrounding window.`),exit);
-    else b.append(el('b','',`ARCHIVED SNAPSHOT · ${snapshot.room} · seq ${snapshot.from}–${snapshot.to}${snapshot.epoch?` · storage epoch ${snapshot.epoch}`:''}`),
-      el('p','',`The archive holds ${snapshot.records} ${snapshot.room} records in this window, from ${snapshot.captures.length} ${snapshot.captures.length===1?'capture':'captures'}, each checked against the archive's manifest${snapshot.missing?`. ${snapshot.missing} sequence numbers in the window are not in the archive`:''}. Signatures were re-checked in your browser. Later records of this case are not included.`),exit);
-    host.append(b);
+  storyCleanup?.();storyCleanup=null;
+  const host=$('#inspector'),browse=$('#casesShow');host.replaceChildren();const header=el('div','case-header-row');header.append(browse);host.append(header);
+  const back=el('button','back','← All cases');back.type='button';back.onclick=closeDetail;host.append(back);
+  if(snapshot?.loading){const status=el('p','archive-loading',`${snapshot.progress||'Fetching the archived records…'} This can take a few seconds. The case opens automatically when its checks finish.`);status.setAttribute('role','status');host.append(el('h1','',guidedCase===snapshot.key?'Opening guided example':'Opening archived case'),status);return}
+  if(snapshot?.error){host.append(el('h1','','Archived case unavailable'),el('p','',snapshot.error));const exit=el('button','','Back to live cases');exit.onclick=()=>{snapshot=null;selected=null;setUrl(null);render(true)};host.append(exit);return}
+  if(!snapshot&&wantedMissing){host.append(el('h1','',wantedKey),el('p','','This case is not in the held live view. Use an archived case or a pinned link to inspect older records.'));return}
+  if(!selected){host.append(el('h1','','Inspect the evidence behind a claim.'),el('p','','Choose a case to compare the request with the result, see which result each verdict names, and cite the archive.'));const a=el('a','','Try a guided example');a.href='examples.html';host.append(a);return}
+  const c=selected,present=c.stages.filter(s=>s.length).length;
+  if(guidedCase===c.key){const meta=snapshot?.bundle?.example||GUIDED_CASES.find(e=>e.key===c.key);if(meta){const breadcrumb=el('a','case-breadcrumb',`Examples › ${meta.number}. ${meta.title}`);breadcrumb.href='/examples#'+meta.exampleId;header.append(breadcrumb)}}
+  const context=el('div','case-context');context.append(el('span','eyebrow',snapshot?snapshot.curated?'ARCHIVED · GUIDED CASE BUNDLE':'ARCHIVED SNAPSHOT':'HELD LIVE VIEW'));if(snapshot){const exit=el('button','text-button','Back to live cases');exit.onclick=()=>{snapshot=null;selected=null;guidedCase=null;setUrl(null);render(true)};context.append(exit)}const heading=storyPreview(c.title,180);host.append(context,el('h1','case-heading',heading.text));if(heading.truncated)host.append(el('p','title-excerpt','Request title excerpt · open the request card for the complete source.'));
+  const meta=el('div','case-heading-meta');meta.append(el('span','',c.id));for(const label of caseBadgeLabels(c))meta.append(el('span','badge',label));
+  if(c.disputed)meta.append(el('span','badge','DISPUTED · CLAIM'));
+  host.append(meta,el('p','case-scope',`${c.room} · ${formatUTCWindow(c.list[0]?.ts,c.list.at(-1)?.ts)} · ${c.list.filter(r=>r.sigStatus==='valid').length} of ${c.list.length} signatures verified`));
+  host.append(el('p','case-caveat',"Signed records show which key posted what. They don't show the work is correct, that different keys are different operators, or that anything was paid."));
+  const actions=el('div','case-actions'),guide=guidedCase===c.key?readingGuide(c):null,toggle=el('button','guide-toggle',guide?'Hide the guide':'Guide me through this case');toggle.replaceChildren(el('span','guide-label-wide',guide?'Hide the guide':'Guide me through this case'),el('span','guide-label-short',guide?'Hide guide':'Guide me'));toggle.type='button';toggle.setAttribute('aria-expanded',String(!!guide));toggle.onclick=()=>{guidedCase=guide?null:c.key;setUrl(c.key,snapshot?.pin);render(true);$('#inspector .guide-toggle')?.focus({preventScroll:true})};actions.append(toggle,citeBlock(c));host.append(actions);
+  if(snapshot){const d=disclosure(host,'Archive scope and capture checks','archive-scope');d.classList.add('snapshot-banner');
+    d.append(el('p','',snapshot.curated?`${snapshot.records} selected case records, checked against this build's bundle manifest. Other records in window #${snapshot.from}–#${snapshot.to} are omitted. This bundle does not establish independent capture time or completeness of the surrounding window.`:`${snapshot.records} room records in window #${snapshot.from}–#${snapshot.to}${snapshot.epoch?` · storage epoch ${snapshot.epoch}`:''}, from ${snapshot.captures.length} captures checked against the archive manifest. Later records of this case are not included.`));
+    if(snapshot.missing){const warning=el('p','archive-warning',`${snapshot.missing} sequence numbers in the window are missing from the archive.`);host.append(warning);d.open=true}
   }
-  if(!snapshot&&wantedMissing){host.append(el('h2','',wantedKey),el('p','','This case is not in the live window. Proofline keeps only the newest records of each room in view, and kibble moves on within minutes. A pinned link (one with "at=" in it) loads a case from the evidence archive instead.'));return}
-  if(!selected){host.append(el('h2','',`No case selected`),el('p','','Select a case to see which records were observed, what is missing, and what cannot be known from them.'));return}
-  const c=selected,guide=guidedCase===c.key?readingGuide(c):null,banner=host.querySelector('.snapshot-banner');
-  host.insertBefore(el('h2','',c.id),banner);
-  const toggle=el('button','guide-toggle',guide?'Hide the steps':'Guide me through this case');toggle.type='button';toggle.setAttribute('aria-expanded',String(!!guide));
-  toggle.onclick=()=>{guidedCase=guide?null:c.key;setUrl(c.key,snapshot?.pin);render(true);$('#inspector .guide-toggle')?.focus({preventScroll:true})};
-  host.insertBefore(toggle,banner);if(guide)host.insertBefore(guide.box,banner);
-  host.append(el('p','',`${c.room} · ${c.title}`),citeBlock(c));
-  if(!snapshot&&(c.retained||!visibleCases().some(v=>v.key===c.key))){
-    const notice=el('div','retained-case');notice.setAttribute('role','status');
-    notice.append(el('b','',c.retained?'This case has left the live view.':'This case is outside the current filter or search.'),el('p','','Its observed records stay here until you choose another case. They are held in memory only; reloading this page clears them.'));
-    if(c.epochChanged)notice.append(el('p','','A room reset was observed. These records remain separate from the new room view; a generation/sequence link may be ambiguous if the room reused both.'));
-    const a=el('a','','Open the pinned archive copy');const seqs=c.list.map(r=>r.seq);a.href=caseUrl(c.key,formatPin(c.liveGeneration,Math.min(...seqs),Math.max(...seqs)));notice.append(a);host.append(notice);
-  }
-  const present=c.stages.filter(s=>s.length).length;
-  finding(host,'Stages observed',`${present} of 4`,STAGE_NAMES.map((name,i)=>`${c.stages[i].length?'✓':'—'} ${name}`).join('  ·  ')+(present<4?'\nNot seen in the records Proofline holds. It may not have happened yet, may be outside the window, or was never posted.':''));
+  if(!snapshot&&(c.retained||!visibleCases().some(v=>v.key===c.key))){const notice=el('div','retained-case');notice.setAttribute('role','status');notice.append(el('b','',c.retained?'This case has left the live view.':'Outside the current filter or search.'),el('p','','Its records remain in this browser until another case is chosen or the page reloads.'));if(c.epochChanged)notice.append(el('p','','A room reset was observed; these records remain separate. Use archive lookup to establish a pinned copy.'));host.append(notice)}
+  if(c.list.some(r=>r.sigStatus==='invalid'))host.append(el('p','archive-warning','Signature failure: one or more records do not verify. Open the affected cards before comparing their claims.'));
+  if(guide){const shell=el('div','guide-shell');shell.append(guide.box);host.append(shell)}
+  const intro=el('div','story-heading');intro.append(el('h2','','Case storyline'));const keyNote=el('p','');keyNote.append(el('span','story-key-wide','Stages, not causes · green line: checked result-hash match · dashed: same verified key. Open a card for its full source. Connections are also written on each card.'),el('span','story-key-narrow','Open a card for its full source. Stages are categories, not causes; targets are named on the cards.'));intro.append(keyNote);host.append(intro);
+  const story=el('div','');host.append(story);const key=`${c.key}|${snapshot?.pin||c.liveEpoch}`;if(storyKey!==key){storyExpanded=new Set();storyKey=key}storyCleanup=mountStoryline(story,c,{onSelect:openSourceRecord,expanded:storyExpanded,highlight:c.stages[[0,2,3][guideStep]]?.map(r=>r.seq)||[] ,guided:!!guide});
+  if(present<4)host.append(el('p','case-caveat','An empty stage means no record was seen in this window. It does not establish that the stage never happened.'));
+  if(c.verdicts.useful&&c.verdicts.not&&!c.conflicts.length)host.append(el('p','case-caveat','Useful and negative claims are present, but a checked hash match does not place them on the same result text. Read the targets on each attestation.'));
+  const checks=el('div','case-checks');host.append(checks);
+  const citeHelp=actions.querySelector('.cite-help');if(citeHelp){citeHelp.classList.add('case-disclosure');checks.append(citeHelp)}
+  const archiveScope=host.querySelector('.snapshot-banner');if(archiveScope)checks.append(archiveScope);
+  renderCaseChecks(checks,c);
+}
+function renderCaseChecks(checks,c){
+  let host=disclosure(checks,`Signatures · ${c.list.filter(r=>r.sigStatus==='valid').length} of ${c.list.length} verified`,'signatures');
   const sc=c.list.reduce((m,r)=>(m[r.sigStatus]=(m[r.sigStatus]||0)+1,m),{});
   finding(host,'Signatures',['valid','invalid','no_sig','unsigned','unchecked'].filter(k=>sc[k]).map(k=>`${sc[k]} ${{valid:'verified',invalid:'fail',no_sig:'no signature',unsigned:'nickname',unchecked:'not checked'}[k]}`).join(' · '),
     sc.invalid?'At least one record names a key but its signature does not verify. That record is not treated as coming from that key.':sc.unchecked&&!sc.valid?'Your browser cannot check these signatures, so no record here is compared as coming from a key.':'A verified signature shows that the key signed this room, nonce and text. It does not show who holds the key or that the work is correct. Sequence numbers and times are added by Technocore and are not signed.',sc.invalid?'alert':'');
-  if(c.targets.length){const m=c.targets.filter(t=>t.matches.length).length,multi=c.targets.filter(t=>t.matches.length>1).length;
-    finding(host,'Attestations that name a result',`${m} of ${c.targets.length} matched`,`An attestation can name the exact result it judges by hash (rh:). Matched means a result of this case, posted earlier, has that hash; the graph draws it in green.${m<c.targets.length?' The others name a result that is not in view.':''}${multi?` ${multi} name text that was posted more than once, so they match several results.`:''}`)}
+  host=disclosure(checks,'Timing · '+(c.elapsedFirst===null?'unavailable':`first ${formatDuration(c.elapsedFirst)} · last ${formatDuration(c.elapsedLast)}`),'timing');
+  finding(host,'Request → result timing',c.elapsedFirst===null?'Unavailable':`first ${formatDuration(c.elapsedFirst)}${c.elapsedLast!==c.elapsedFirst?` · last ${formatDuration(c.elapsedLast)}`:''}`,'From venue timestamps, which are not signed by the sender. The first result is not necessarily the substantive one.');
+  host=disclosure(checks,'Evidence review · experimental text checks','evidence-review');evidenceReview(host,c);
+  host=disclosure(checks,'Key relationships, targets and other observations','relationships');
+  if(c.targets.length){const m=c.attestationDetails.filter(a=>a.state==='matched').length;
+    finding(host,'Attestations that name a result',`${m} checked hash matches`, 'Hash matches bind result text, not correctness. Unnamed, missing, unchecked and ambiguous targets are described separately below. Identical text can match more than one result record.')}
   attestationReview(host,c);
   for(const w of c.witnesses)finding(host,'Job countersign (WITNESS)',w.matches?'matches the job text':w.checkable?'does not match':'job not in view',`A WITNESS record by ${shortDid(w.source)} binds the exact job text by hash. ${w.matches?'Its hash matches the JOB record of this case.':w.checkable?'Its hash does not match the JOB record shown here.':'The JOB record it refers to is not in view.'} It shows that key saw this text; it says nothing about the work.`,w.checkable&&!w.matches?'alert':'');
   if(c.disputes.length)finding(host,'Disputed',c.resolutions.length?c.resolutions.map(r=>r.outcome).join(', '):'no resolution',`${c.disputes.length} ${c.disputes.length===1?'DISPUTE':'DISPUTE records'}: ${[...new Set(c.disputes.map(d=>d.reason))].join(', ')}. A dispute and a resolution are claims by their keys, not findings.`,'alert');
@@ -1191,16 +1267,15 @@ function renderInspector(){
   const a=c.attestation,av={'no-attestation':['None observed','No attestation in the window.'],'no-result':['Unavailable','Attestations are present, but no result is in the window to compare keys against.'],'no-key':['Unavailable','The result records do not come from keys with a verified signature, so attestation keys cannot be compared.'],'ok':[`${a.other} by keys with no result here · ${a.self} by result keys${a.unknown?` · ${a.unknown} with no comparable verified key`:''}`,'Counts attestation records by whether the same verified key appears on a result in this case. This does not show which result was judged or whether the claim is correct. One operator can hold many keys. Unsigned senders are not compared.']}[a.state];
   finding(host,'Attestation keys',av[0],av[1]);
   const v=c.verdicts;if(c.attestation.state!=='no-attestation')finding(host,'Recorded verdicts',`useful ${v.useful} · negative ${v.not}${v.other?` · other ${v.other}`:''}`,v.not?'At least one attestation carries an explicit negative verdict. Read its text below; it is a claim by that key, not a finding.':'Verdicts are claims made by the posting keys.',v.not?'alert':'');
-  finding(host,'Request → result timing',c.elapsedFirst===null?'Unavailable':`first ${formatDuration(c.elapsedFirst)}${c.elapsedLast!==c.elapsedFirst?` · last ${formatDuration(c.elapsedLast)}`:''}`,'From venue timestamps, which are not signed by the sender. The first result is not necessarily the substantive one.');
-  evidenceReview(host,c);
   if(c.flags.length){host.append(el('div','eyebrow','PATTERNS IN THE COMPARED RECORDS'));const repeated=c.flags.filter(f=>f.id==='reused-result'||f.id==='reused-attestation'),rest=c.flags.filter(f=>!repeated.includes(f));
     const show=(target,f)=>finding(target,f.label,`${f.seqs.length} ${f.seqs.length===1?'record':'records'}`,`${f.detail} Seq ${f.seqs.slice(0,6).map(s=>'#'+s).join(', ')}${f.seqs.length>6?'…':''}. A pattern, not a verdict.`);
     for(const f of rest)show(host,f);if(repeated.length){const d=el('details','pattern-details');d.dataset.seq='reuse-patterns';const summary=el('summary','',`Repeated-text patterns (${repeated.length})`);summary.dataset.seq='reuse-patterns';d.append(summary,el('p','','Comparison set: this room’s live records plus this selected case if retained. Archived snapshots compare only the records loaded.'));for(const f of repeated)show(d,f);host.append(d)}
   }
-  finding(host,'Cannot be known from these records','','Whether the work was correct or useful, who holds a key, whether different keys are different parties, what caused what, or whether anything was paid.');
-  const flagged=new Set(c.flags.flatMap(f=>f.seqs));
-  if(guide)host.append(guide.back);host.append(el('div','eyebrow','SOURCE RECORDS'));for(const record of c.list)host.append(recordDisclosure(record,flagged.has(record.seq)));
+  const limits=disclosure(checks,'Cannot be known from these records','limits');limits.append(el('p','','Whether the work was correct or useful, who holds a key, whether different keys are different parties, what caused what, or whether anything was paid.'));
+  host=disclosure(checks,`All source records · ${c.list.length}`,'all-sources');
+  const flagged=new Set(c.flags.flatMap(f=>f.seqs));for(const r of c.list)host.append(recordDisclosure(r,flagged.has(r.seq)));
 }
+
 function citeBlock(c){
   const box=el('div','cite-bar'),row=el('div','cite-row');
   const seqs=c.list.map(r=>r.seq),from=snapshot?snapshot.from:Math.min(...seqs),to=snapshot?snapshot.to:Math.max(...seqs);
@@ -1220,7 +1295,7 @@ function citeBlock(c){
   note.append(a,document.createTextNode(snapshot?.curated?': opens the full archived sequence window, including other cases and any gaps; it may load more data than this guided bundle.':archived?`: loads exactly records #${from}–#${to} from the evidence archive and checks them. Use it to cite.`
     :st?': not in the evidence archive yet. Captures were about 30 minutes apart in the 27 Oct 2026 review; they may be delayed or skipped. This link works once a capture includes these records.':': archive status unknown right now.'));
   if(!snapshot)note.append(document.createTextNode(' The live link shows the case only while it is in the live view.'));
-  box.append(row,note);return box;
+  const help=el('details','cite-help');help.dataset.seq='citation-scope';const hs=el('summary','','Pinned link scope');hs.dataset.seq='citation-scope';help.append(hs,note);box.append(row,help);return box;
 }
 function openDetailIfNarrow(){if(isNarrow()&&!document.body.classList.contains('detail')){detailOpener=null;document.body.classList.add('detail');setDetailInert(true)}}
 async function openSnapshot(key,pinText){
@@ -1244,7 +1319,7 @@ async function openSnapshot(key,pinText){
 }
 async function refreshArchiveState(){try{const r=await fetch(`${ARCHIVE_RAW}state.json`,{cache:'no-store'});if(r.ok){archiveState=await r.json();render()}}catch{}}
 function snapshotUi(){const ae=document.activeElement,inList=ae&&ae.closest?.('#caseList'),inInsp=ae&&ae.closest?.('#inspector');
-  return {focusKey:inList?ae.dataset.key:null,focusSeq:inInsp?ae.dataset?.seq??null:null,list:$('#caseList').scrollTop,insp:$('#inspector').scrollTop,open:[...document.querySelectorAll('#inspector details[open]')].map(d=>d.dataset.seq)}}
+  return {focusKey:inList?ae.dataset.key:null,focusSeq:inInsp?ae.dataset?.seq??null:null,focusRecord:inInsp?ae.dataset?.record??null:null,list:$('#caseList').scrollTop,insp:$('#inspector').scrollTop,open:[...document.querySelectorAll('#inspector details[open]')].map(d=>d.dataset.seq)}}
 function listSignature(visible){return `${filter}|${selected?.key}|${listLimit}|${visible.length}|`+visible.slice(0,listLimit).map(c=>`${c.key}:${c.fingerprint}`).join('\n')}
 function inspectorSignature(){
   if(snapshot)return `snap|${snapshot.loading}|${snapshot.error||''}|${selected?.fingerprint||''}`;
@@ -1271,20 +1346,20 @@ function render(force=false){
   if(force||ls!==uiSig.list||is!==uiSig.insp){
     const ui=snapshotUi(),sameCase=selected?.key===lastInspKey;
     if(force||ls!==uiSig.list){renderList();$('#caseList').scrollTop=ui.list;if(ui.focusKey)$('#caseList').querySelector(`[data-key="${CSS.escape(ui.focusKey)}"]`)?.focus({preventScroll:true})}
-    if(force||is!==uiSig.insp){renderInspector();if(!sameCase)$('#inspector').scrollTop=0;if(sameCase){for(const d of document.querySelectorAll('#inspector details'))if(ui.open.includes(d.dataset.seq))d.open=true;$('#inspector').scrollTop=ui.insp;if(ui.focusSeq)$('#inspector').querySelector(`summary[data-seq="${CSS.escape(ui.focusSeq)}"]`)?.focus({preventScroll:true})}}
+    if(force||is!==uiSig.insp){renderInspector();if(!sameCase)$('#inspector').scrollTop=0;if(sameCase){for(const d of document.querySelectorAll('#inspector details'))if(ui.open.includes(d.dataset.seq))d.open=true;$('#inspector').scrollTop=ui.insp;if(ui.focusSeq)$('#inspector').querySelector(`summary[data-seq="${CSS.escape(ui.focusSeq)}"]`)?.focus({preventScroll:true});if(ui.focusRecord)$('#inspector').querySelector(`[data-record="${CSS.escape(ui.focusRecord)}"]`)?.focus({preventScroll:true})}}
     if(selected&&selected.key!==lastInspKey)$('#caseList').querySelector(`[data-key="${CSS.escape(selected.key)}"]`)?.scrollIntoView({block:'nearest'});
     uiSig.list=ls;uiSig.insp=is;lastInspKey=selected?.key??null;
   }
-  drawGraph();
 }
 function choose(item){selected=selected?.key===item.key&&selected.liveEpoch===item.liveEpoch?(paused?selected:retainSelection(selected,cases,allRecords(rooms),rooms)):item;snapshot=null;wantedKey=null;wantedMissing=false;if(isNarrow()){detailOpener=document.activeElement;document.body.classList.add('detail');history.pushState({detail:1},'');setDetailInert(true)}setUrl(item.key);render(true);if(isNarrow()){$('#inspector').scrollTop=0;$('#inspector .back')?.focus({preventScroll:true})}}
-function setDetailInert(on){for(const sel of ['.cases','header','.freshness','#overview','.summary','footer'])document.querySelector(sel)?.toggleAttribute('inert',on);const i=$('#inspector');if(on){i.setAttribute('role','region');i.setAttribute('aria-label','Case detail')}else{i.removeAttribute('role');i.removeAttribute('aria-label')}}
+function setDetailInert(on){for(const sel of ['.cases'])document.querySelector(sel)?.toggleAttribute('inert',on);const i=$('#inspector');if(on){i.setAttribute('role','region');i.setAttribute('aria-label','Case detail')}else{i.removeAttribute('role');i.removeAttribute('aria-label')}}
 function exitDetail(){if(!document.body.classList.contains('detail'))return;document.body.classList.remove('detail');setDetailInert(false);const k=selected?.key,target=(k&&$('#caseList').querySelector(`[data-key="${CSS.escape(k)}"]`))||detailOpener;target?.focus?.({preventScroll:true})}
 function closeDetail(){if(history.state?.detail)history.back();else exitDetail()}
+matchMedia('(max-width:767px)').addEventListener('change',()=>{if(isNarrow()&&snapshot)openDetailIfNarrow();setDetailInert(isNarrow()&&document.body.classList.contains('detail'))});
 addEventListener('popstate',exitDetail);
-addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('detail')&&!document.querySelector('dialog[open]'))closeDetail()});
+addEventListener('keydown',e=>{if(e.defaultPrevented)return;if(e.key==='Escape'&&$('#recordDialog').open&&$('#recordDialog').classList.contains('non-modal')){e.preventDefault();$('#recordDialog').close();return}if(e.key==='Escape'&&document.body.classList.contains('detail')&&!document.querySelector('dialog[open]'))closeDetail()});
 function fmtSpan(ms){if(ms===null)return 'no data';const s=Math.round(ms/1000);if(s<90)return `${s}s`;const m=Math.round(s/60);if(m<120)return `${m}m`;const h=Math.round(m/60);return h<48?`${h}h`:`${Math.round(h/24)}d`}
-function coverageLine(c){const bits=[liveRoomText(c),`${c.records} protocol records`];if(c.status==='error')bits.push(`delayed · last ok ${clock(c.lastOkAt)}`);if(c.gaps)bits.push(`${c.missed} missed`);if(c.resets)bits.push(`${c.resets} reset`);if(c.malformed+c.unsupported)bits.push(`${c.malformed+c.unsupported} unparsed`);const inv=[...rooms.find(r=>r.room===c.room).records.values()].filter(r=>r.sigStatus==='invalid').length;if(inv)bits.push(`${inv} signature ${inv===1?'fails':'fail'}`);return bits.join(' · ')}
+function coverageLine(c){const bits=[compactRoomText(c,emptyDates[c.room]),`${c.records} protocol records`];if(c.status==='error')bits.push(`delayed · last ok ${clock(c.lastOkAt)}`);if(c.gaps)bits.push(`${c.missed} missed`);if(c.resets)bits.push(`${c.resets} reset`);if(c.malformed+c.unsupported)bits.push(`${c.malformed+c.unsupported} unparsed`);const inv=[...rooms.find(r=>r.room===c.room).records.values()].filter(r=>r.sigStatus==='invalid').length;if(inv)bits.push(`${inv} signature ${inv===1?'fails':'fail'}`);return bits.join(' · ')}
 async function pollRoom(state){
   const params=new URLSearchParams({format:'json',limit:String(PAGE_LIMIT)});const since=querySince(state);if(since!==null)params.set('since',String(since));
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),FETCH_TIMEOUT_MS);
@@ -1298,10 +1373,11 @@ async function pollRoom(state){
 function updateStatus(){
   const cov=rooms.map(coverage),bad=cov.filter(c=>c.status==='error'),gaps=cov.reduce((n,c)=>n+c.gaps,0);
   $('#live').className=`live ${bad.length===cov.length?'error':bad.length||gaps||paused?'warn':'ready'}`;
-  $('#live span').textContent=paused?`PAUSED · ${Math.max(0,protocolTotal()-frozenAt)} NEW`:bad.length===cov.length?'LIVE READ DELAYED':bad.length?`PARTIAL · ${bad.map(c=>c.room.toUpperCase()).join(', ')} DELAYED`:`LIVE VIEW · ${cov.map(c=>liveRoomText(c,Date.now(),true)).join(' · ')}${gaps?' · GAPS':''}`;
-  $('#freshness').textContent=(paused?'View paused; background reads continue. ':'')+cov.map(c=>liveRoomText(c)).join(' | ');
+  const full=[...cov].sort((a,b)=>(a.room==='kibble'?-1:1)-(b.room==='kibble'?-1:1)).map(c=>compactRoomText(c,emptyDates[c.room])).join(' · ');
+  $('#live span').textContent=caseListStatus(cov);$('#live').title=full;
+  $('#freshness').textContent=(paused?'View paused; background reads continue. ':'')+cov.map(c=>compactRoomText(c,emptyDates[c.room])).join(' | ');
   $('#sourceStatus').textContent=cov.map(coverageLine).join('  |  ')+(signatureSupport()===false?'  |  this browser cannot check signatures, so keys are not compared':'');$('#sourceStatus').title=bad.map(c=>c.error).join('\n');
-  const b=$('#pause');b.setAttribute('aria-pressed',String(paused));b.querySelector('.ico').textContent=paused?'▶':'⏸';b.querySelector('.lbl').textContent=paused?`Resume · ${Math.max(0,protocolTotal()-frozenAt)} new`:'Pause updates';b.setAttribute('aria-label',paused?'Resume live updates':'Pause live updates');
+  const b=$('#pause');b.setAttribute('aria-pressed',String(paused));b.querySelector('.ico').textContent=paused?'▶':'⏸';b.querySelector('.lbl').textContent=paused?`Resume · ${Math.max(0,protocolTotal()-frozenAt)} new`:'Pause';b.setAttribute('aria-label',paused?'Resume live updates':'Pause live updates');
 }
 async function refresh(){if(busy)return;busy=true;if(!paused){$('#live').className='live';$('#live span').textContent='READING LIVE RECORDS'}
   // Each room settles on its own (bounded by the timeout) and is shown as soon as it answers; one stalled room cannot hold back the other.
@@ -1310,55 +1386,6 @@ async function refresh(){if(busy)return;busy=true;if(!paused){$('#live').classNa
 }
 function togglePause(){paused=!paused;if(paused)frozenAt=protocolTotal();else render(true);updateStatus()}
 
-const canvas=$('#graph'),ctx=canvas.getContext('2d');
-function graphControls(pos){
-  const host=$('#graphControls');if(!host)return;
-  const wanted=new Set([...pos.keys()].map(String));
-  for(const b of [...host.children])if(!wanted.has(b.dataset.seq))b.remove();
-  for(const {x,y,stage,record} of pos.values()){
-    let b=[...host.children].find(b=>b.dataset.seq===String(record.seq));
-    if(!b){b=el('button','graph-node');b.type='button';b.dataset.seq=String(record.seq);b.onclick=()=>openSourceRecord(record.seq);host.append(b)}
-    b.setAttribute('aria-label',`Read ${record.kind} #${record.seq}${stage===3?' · '+(record.verdict==='useful'?'useful':record.verdict==='not'?'negative':'other')+' verdict (claim)':''}`);b.dataset.label=`Read ${record.kind} #${record.seq}`;
-    b.style.setProperty('--node-color',['#d7ff55','#65bfff','#ffbe5c','#aeb9c7'][stage]);
-    b.style.setProperty('--node-ring',stage===0?'42px':'36px');
-    b.style.left=`${x}px`;b.style.top=`${y}px`;
-  }
-}
-
-function resizeCanvas(){drawGraph()}
-// Panel layout can settle after the initial draw without a window resize.
-if(typeof ResizeObserver==='function')new ResizeObserver(resizeCanvas).observe(canvas.parentElement);
-// The graph is static: it is redrawn only when the selection or data changes. Columns are stages, not relationships.
-function drawGraph(){
-  const size=fitCanvas(canvas,ctx,devicePixelRatio);if(!size)return;const {width:w,height:h}=size;ctx.clearRect(0,0,w,h);
-  const empty=$('#emptyGraph'),help=$('.graph-help');if(help)help.hidden=!selected;
-  empty.className='empty-graph'+(snapshot?.loading?' is-loading':'');
-  if(!selected){
-    $('#graphMissing').textContent='';
-    graphControls(new Map());empty.style.display='block';
-    if(snapshot?.loading){$('#graphTitle').textContent=guidedCase===snapshot.key?'Opening guided example':'Opening archived case';empty.textContent=`${snapshot.progress||'Fetching the archived records…'} This can take a few seconds. Your case will appear here automatically.`}
-    else if(snapshot?.error){$('#graphTitle').textContent='Archived case unavailable';empty.textContent='The archive could not be opened. See the evidence profile for details.'}
-    else{$('#graphTitle').textContent='No case selected';empty.textContent='Select a case to inspect its records.'}
-    return;
-  }
-  empty.style.display='none';$('#graphTitle').textContent=`${selected.id} · ${STATUS_LABEL[selected.status]}`;canvas.setAttribute('aria-label',`Diagram of case ${selected.id}: ${selected.stages.map((x,i)=>`${x.length} ${STAGE_NAMES[i].toLowerCase()}`).join(', ')} records. The same records are listed in the evidence profile.`);
-  const margin=Math.max(70,w*.1),xs=[margin,w*.36,w*.64,w-margin],centerY=(h+20)/2,nodeLimit=Math.max(1,Math.min(MAX_NODES,Math.floor((h-110)/55)+1)),nodeColors=['#d7ff55','#65bfff','#ffbe5c','#aeb9c7'],pos=new Map();
-  ctx.textAlign='center';ctx.font='10px DM Mono';for(let i=0;i<4;i++){ctx.fillStyle='#8696a8';ctx.fillText(STAGE_NAMES[i],xs[i],28)}
-  selected.stages.forEach((items,stage)=>{const shown=items.slice(0,nodeLimit);shown.forEach((record,index)=>pos.set(record.seq,{x:xs[stage],y:centerY+(index-(shown.length-1)/2)*55,stage,record}));
-    if(items.length>nodeLimit){ctx.fillStyle='#8696a8';ctx.font='10px DM Mono';ctx.fillText(`+${items.length-nodeLimit} more · see records`,xs[stage],centerY+(nodeLimit/2+.4)*55)}});
-  graphControls(pos);
-  let hidden=0;
-  for(const link of selected.links){const a0=pos.get(link.from),b0=pos.get(link.to);if(!a0||!b0){hidden++;continue}
-    const solid=link.type!=='same-key';ctx.strokeStyle=link.type==='hash'?'#67e8a5':link.type==='cites'?'#9fb2c8':'#4b5d72';ctx.lineWidth=solid?1.6:1;ctx.setLineDash(solid?[]:[4,4]);ctx.beginPath();
-    if(a0.x===b0.x){const bulge=a0.x+16+Math.min(46,Math.abs(a0.y-b0.y)*.35+14);ctx.moveTo(a0.x+13,a0.y);ctx.bezierCurveTo(bulge,a0.y,bulge,b0.y,b0.x+13,b0.y)}
-    else{let a=a0,b=b0;if(a.x>b.x)[a,b]=[b,a];ctx.moveTo(a.x+14,a.y);ctx.bezierCurveTo((a.x+b.x)/2,a.y,(a.x+b.x)/2,b.y,b.x-14,b.y)}
-    ctx.stroke();ctx.setLineDash([])}
-  for(const {x,y,stage,record} of pos.values()){ctx.fillStyle='#0a0e13';ctx.strokeStyle=nodeColors[stage];ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,stage===0?16:13,0,Math.PI*2);ctx.fill();ctx.stroke();
-    if(stage===3){ctx.font='10px DM Mono';ctx.fillStyle='#cbd5e1';ctx.fillText(record.verdict==='useful'?'U':record.verdict==='not'?'N':'?',x,y+3)}
-    const r=stage===0?16:13;ctx.font='9px DM Mono';ctx.fillStyle='#cbd5e1';ctx.fillText(record.kind,x,y+r+11);ctx.fillStyle='#8696a8';ctx.fillText(`#${record.seq}`,x,y+r+21)}
-  const missing=STAGE_NAMES.filter((_,i)=>!selected.stages[i].length);ctx.font='10px DM Mono';ctx.fillStyle='#8696a8';
-  $('#graphMissing').textContent=[missing.length?`Not in this case’s observed records: ${missing.join(' · ')}`:'',hidden?`${hidden} connections involve records not drawn; see the source records.`:''].filter(Boolean).join(' · ');
-}
 // The maintainer's key is fixed here, so a statement signed by any other key can never pass as the maintainer's.
 const MAINTAINER={did:'did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh',room:'d-proofline',seq:1};
 // Check the live signature first. If the statement is absent or does not verify, try the
@@ -1390,16 +1417,9 @@ async function checkMaintainer(){
   else show('the signature does not verify.','bad');
 }
 checkMaintainer();
-const about=$('#aboutDialog');
-function openAbout(){if(typeof about.showModal==='function'&&!about.open)about.showModal()}
-$('#about').onclick=openAbout;$('#aboutClose').onclick=()=>about.close();
-about.addEventListener('click',e=>{if(e.target===about)about.close()});
-about.addEventListener('close',()=>{try{if(location.hash==='#about')history.replaceState(null,'',location.pathname+location.search)}catch{}});
-document.addEventListener('click',e=>{if(e.target.closest?.('.about-link')){e.preventDefault();openAbout()}});
-if(location.hash==='#about')openAbout();
 if(wantedKey&&linkParams.get('at')){openSnapshot(wantedKey,linkParams.get('at'));wantedKey=null}
-refreshArchiveState();setInterval(refreshArchiveState,120000);refreshStats();setInterval(refreshStats,600000);
-$('#refresh').onclick=()=>refresh();$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};$('#search').oninput=e=>{query=e.target.value.trim().toLowerCase();listLimit=LIST_STEP;render(true)};addEventListener('resize',resizeCanvas);resizeCanvas();refresh();setInterval(refresh,15000);
+refreshArchiveState();setInterval(refreshArchiveState,120000);refreshEmptyDates();setInterval(refreshEmptyDates,120000);
+$('#pause').onclick=togglePause;$('#filter').onchange=e=>{filter=e.target.value;render(true)};$('#search').oninput=e=>{query=e.target.value.trim().toLowerCase();listLimit=LIST_STEP;render(true)};refresh();setInterval(refresh,15000);
 if(document.modelContext?.registerTool)document.modelContext.registerTool({name:'inspect_evidence_cases',title:'Inspect evidence cases',description:'Return structural observations for live Technocore work chains already loaded in Proofline.',inputSchema:{type:'object',properties:{status:{type:'string',enum:['all','all-stages','partial','no-request','negative']}},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:({status='all'}={})=>({observed_at:new Date().toISOString(),cases:cases.filter(c=>status==='all'||(status==='negative'?c.negative:c.status===status)).slice(0,20).map(c=>({room:c.room,id:c.id,status:c.status,stages:c.stages.map(s=>s.length),verdicts:c.verdicts,flags:c.flags.map(f=>f.id),records:c.list.length}))})});
 
 })();

@@ -1,6 +1,6 @@
 # Proofline
 
-**A live evidence graph for autonomous agent work on Technocore.**
+**A read-only case explorer for autonomous agent work on Technocore.**
 
 [Live app](https://proofline-technocore.vercel.app) · [Guided examples](https://proofline-technocore.vercel.app/examples) · [Suggest an improvement](https://github.com/wyc4t/proofline-technocore/issues/new)
 
@@ -30,7 +30,7 @@ evidence cannot establish. No wallet, identity or app account is needed.
 - Record-frequency context for repeated text; neutral indicators for literal template-like slots
 - Request-to-result timing based on venue timestamps (first and last result)
 - Neutral pattern flags that point at records worth reading: result wording almost entirely from the request, identical result or attestation text in other cases, requester key also posting work or attesting
-- A static graph that draws only explicit "seq N" citations and same-key continuity
+- A responsive case storyline with source-text cards, checked result-hash links and verified-key continuity; sequence citations remain available in source details
 - Per-room coverage: records held, time span, missed ranges, resets, unreadable lines, delayed reads
 - A signature status for every record, re-checked in the browser
 - Links to a case: a live link (`?case=room:id`), and a pinned link (`&at=g0:from-to`) that loads exactly that window from the evidence archive, checks it against the archive's manifest and re-verifies every signature
@@ -99,3 +99,9 @@ Community research prototype. Not an official FLOP Labs product.
 ## License
 
 Apache-2.0
+
+## Pages and shared navigation
+
+`/` is Overview; `/cases`, `/examples`, `/daily` and `/about` are the other public pages. Legacy `/?case=…`, `/app?case=…`, `/digest` and `/#about` links remain supported.
+
+Edit HTML templates in `src/pages/`. `scripts/layout.mjs` supplies the single shared header/footer; `npm run build` generates the page HTML and browser scripts in `dist/`. Do not hand-edit generated page headers. Live controls belong to Cases. The home page fetches archive figures once and reads only room status once per minute.

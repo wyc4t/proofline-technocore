@@ -118,8 +118,8 @@ test('actual digest renderer shows both rates and unavailable legacy rate with f
     text(){return [this.textContent,...this.children.map(x=>typeof x==='string'?x:x.text())].join(' ');}
   }
   const host = new Node();
-  const html = fs.readFileSync('dist/daily.html','utf8');
-  const code = html.slice(html.indexOf('<script type="module">')+22,html.indexOf('</script>')).replace(/^import .*;$/m,'');
+  const html = fs.readFileSync('dist/site-daily.html','utf8');
+  const code = html.match(/<script type="module">([\s\S]*?)<\/script>/)[1].replace(/^import .*;$/m,'');
   for (const day of [dayData(),dayData(null)]) {
     vm.runInNewContext(code,{formatUTCWindow,verdictCountText,document:{getElementById:()=>host,createElement:()=>new Node()},location:{search:''},URLSearchParams,fetch:async()=>({ok:true,json:async()=>({days:[day]})}),setTimeout});
     await new Promise(resolve=>setImmediate(resolve));

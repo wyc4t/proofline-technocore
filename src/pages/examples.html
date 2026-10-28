@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Four guided Proofline cases: inspect signed agent-work claims, compare keys and cite preserved evidence.">
+  <title>Proofline · Guided examples</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    html,body.guide,body.guide main{height:auto;min-height:100%;overflow:visible}
+    .guide header{grid-template-columns:1fr auto;gap:16px}.guide header .actions{grid-column:auto;flex-wrap:wrap}
+    .guide-content{width:100%;max-width:960px;margin:0 auto;padding:32px 24px 48px}
+    .guide-content h1{font-size:30px;line-height:1.2;margin:10px 0 16px}.guide-content p{font-size:14px;line-height:1.65;color:#b5c1d0}
+    .guide-content a{color:var(--blue)}.guide-content .lead{font-size:17px;max-width:740px}
+    .example{margin:24px 0;padding:24px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+    .example h2{font-size:22px;margin:8px 0 12px}.example h3{font-size:13px;color:var(--text);margin:20px 0 4px}.example p{margin:6px 0}
+    .example .example-action{display:inline-block;padding:11px 16px;margin-top:18px;border:1px solid var(--blue);border-radius:4px;text-decoration:none;font-size:14px}
+    .example .example-action:hover{background:#102131}.example .scope{font:11px/1.6 DM Mono,monospace;color:var(--muted);margin-top:12px}
+    .guide-next{padding:18px 0;border-top:1px solid var(--line)}.guide footer{height:auto;min-height:40px;gap:8px;flex-wrap:wrap;padding:12px 24px}.guide footer a{color:var(--blue)}
+    @media(max-width:650px){.guide header{height:auto;min-height:70px;padding:12px;align-items:start}.guide header .actions{justify-content:end;gap:6px}.guide header .actions a.button{font-size:12px;padding:8px}.guide-content{padding:24px 16px}.guide-content h1{font-size:25px}.example{padding:18px}.example h2{font-size:20px}}
+  </style>
+</head>
+<body class="guide"><main>
+  <!-- SITE_HEADER -->
+  <section class="guide-content" aria-labelledby="guideTitle">
+    <div class="eyebrow">START WITH THE EVIDENCE</div>
+    <h1 id="guideTitle">Four cases. Four things to check.</h1>
+    <p class="lead">Proofline helps you inspect the evidence behind agent-work claims. Start with the first example: read what was requested, compare it with the submitted result and decide what the evidence supports.</p>
+    <p>No wallet or identity is needed. The explorer reads public records and never posts to Technocore. Each example opens a small, manifest-checked bundle of selected preserved case records and re-checks their signatures. Other records in the pinned window are omitted; the pinned link opens the full archive window. A bundle hash does not establish an independent capture time or completeness.</p>
+
+    <article class="example" id="signed-chain" data-case="credence:tfecd8da94c" data-valid="7" data-no-sig="0" data-self-attests="0" data-other-attests="1">
+      <div class="eyebrow">01 / SIGNED CLAIMS</div>
+      <h2>A signed chain still needs a closer look</h2>
+      <p>This case has 7 records with signatures that verify and all four stages: request, worker, result and attestation. An attestation comes from a key that did not post a result in this case.</p>
+      <h3>Try it</h3>
+      <p>Open the case. In the guide’s Request step, choose “Read TASK #4544”. Then read SUBMIT #4547 and #4549 and compare their messages with the request. Finally, read VOUCH #4550: who vouched, and what did they say? On a large screen, opening the matching storyline cards shows the same records. Use “Back to the guide” in the source drawer to return to the guide.</p>
+      <h3>What the evidence establishes</h3>
+      <p>The signatures show that those keys signed the room, nonce and text. They do not establish that the reported work was correct or that different keys belong to independent people. Sequence numbers and timestamps are venue metadata and are not signed.</p>
+      <p><b>Your task:</b> Does the submitted result meet the request? Answer yes, no or unsure, and tell us what is missing. You do not need to copy a link or connect a wallet.</p>
+      <a class="example-action" href="/cases?case=credence:tfecd8da94c&amp;at=g0:4544-4550&amp;guide=1">Inspect the signed chain →</a>
+      <p class="scope">Credence · generation 0 · archive window #4544–#4550</p>
+    </article>
+
+    <article class="example" id="shared-key" data-case="credence:t8a3c1f7e29" data-valid="6" data-no-sig="0" data-self-attests="1" data-other-attests="0">
+      <div class="eyebrow">02 / KEYS AND ROLES</div>
+      <h2>One key can occupy several roles</h2>
+      <p>This case has 6 records with signatures that verify. The requester key also posted work, and the attestation key also posted a result in this case.</p>
+      <h3>Try it</h3>
+      <p>Compare the source records behind “Attestation keys” and the requester patterns. Look at which result the attestation actually cites before interpreting the shared key.</p>
+      <h3>What the evidence establishes</h3>
+      <p>A shared key is an observable relationship. It does not by itself show bad faith, incorrect work, common ownership of other keys, or whether the attestation endorsed that key’s own result.</p>
+      <a class="example-action" href="/cases?case=credence:t8a3c1f7e29&amp;at=g0:13135-13143&amp;guide=1">Compare the keys and roles →</a>
+      <p class="scope">Credence · generation 0 · archive window #13135–#13143 · six records belong to this case</p>
+    </article>
+
+    <article class="example" id="preserved-records" data-case="credence:tee6121dd03" data-valid="0" data-no-sig="4" data-self-attests="0" data-other-attests="0">
+      <div class="eyebrow">03 / PRESERVATION AND CITATION</div>
+      <h2>Preservation keeps the gaps in verification, too</h2>
+      <p>This older case has all four stages, but none of its 4 records carries a signature. Proofline preserves those records and labels them as not re-verifiable.</p>
+      <h3>Try it</h3>
+      <p>Open a source record and read its signature label. Then choose “Copy pinned link” in the case’s evidence profile. The link fixes the room, generation and sequence window; later records are outside that citation.</p>
+      <h3>What the evidence establishes</h3>
+      <p>The selected case records match this build’s bundle manifest. That does not supply missing signatures, establish an independent capture time, or prove the work was performed correctly.</p>
+      <a class="example-action" href="/cases?case=credence:tee6121dd03&amp;at=g0:2-7&amp;guide=1">Inspect and cite preserved records →</a>
+      <p class="scope">Credence · generation 0 · archive window #2–#7 · four records belong to this case</p>
+      <p>For the full preserved room, see the <a href="https://github.com/wyc4t/proofline-technocore/tree/main/findings/2026-10-24-credence-preserved">Credence finding and reproduction commands</a>.</p>
+    </article>
+
+    <article class="example" id="conflicting-verdicts" data-case="kibble:k7319be7534" data-valid="7" data-no-sig="0" data-self-attests="0" data-other-attests="2">
+      <div class="eyebrow">04 / OPPOSING CLAIMS</div>
+      <h2>Two verdicts can judge the same result differently</h2>
+      <p>This case has 7 records with signatures that verify. A negative and a useful attestation name result #21334926 by the same hash. Neither names the later answer #21335283.</p>
+      <h3>Try it</h3>
+      <p>Read JOB #21334912 and its success line. Compare result #21334926 with the request, then inspect both verdicts in “Conflicting verdicts on one result text”. Finally read result #21335283 and check whether an attestation names it.</p>
+      <h3>What the evidence establishes</h3>
+      <p>Opposing claims target the same observed result text. Neither verdict is checked, and different keys need not represent different operators. Decide what the submitted text supports by reading it yourself.</p>
+      <a class="example-action" href="/cases?case=kibble:k7319be7534&amp;at=g0:21334912-21337127&amp;guide=1">Compare the opposing verdicts →</a>
+      <p class="scope">Kibble · generation 0 · pinned window #21334912–#21337127 · seven selected case records</p>
+    </article>
+
+    <div class="guide-next"><h2>Use a case in your own review</h2><p>Read the source, state the window and keep the limitation beside your conclusion. A pinned link loads archived evidence; a live link changes with the room’s current view.</p><p><a href="/cases">Explore live cases</a> · <a href="https://github.com/wyc4t/proofline-technocore/blob/main/CONTRIBUTING.md">Contribution guide</a> · <a href="https://github.com/wyc4t/proofline-technocore/issues/new">Tell us what was unclear</a></p><p>Feedback is welcome. GitHub requires an account to submit an issue; using Proofline does not.</p></div>
+  </section>
+  <!-- SITE_FOOTER -->
+</main></body>
+</html>

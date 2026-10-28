@@ -4,13 +4,13 @@ import assert from 'node:assert/strict';
 const PAGE = '<!doctype html><html><head><title>Proofline · Live evidence graph</title><meta property="og:title" content="Proofline: default"><meta property="og:image" content="https://x/api/card"><meta property="og:image:width" content="1200"><meta name="twitter:image" content="https://x/api/card"></head><body></body></html>';
 const STATS = { window_hours: 24, rooms: { kibble: { window_start: '2026-10-26T06:55:00Z', window_end: '2026-10-27T06:55:00Z', jobs: { records: 11975, reposted_share_pct: 18.9 }, outcomes: { with_result_pct: 75.1, with_useful_attestation_pct: 17.2, with_useful_non_result_key_attestation_pct: 11.4 } } } };
 
-async function run(query) {
+async function run(query,requestHeaders={}) {
   const real = globalThis.fetch;
   globalThis.fetch = async (url) => ({ ok: true, status: 200, text: async () => (String(url).includes('stats/latest.json') ? JSON.stringify(STATS) : PAGE) });
   try {
     const { default: handler } = await import('../api/share.js');
     let out = {}; const headers = {};
-    await handler({ query }, { setHeader: (k, v) => (headers[k] = v), status: (s) => ({ send: (b) => { out = { s, b }; } }), end() {} });
+    await handler({ query, headers:requestHeaders }, { setHeader: (k, v) => (headers[k] = v), status: (s) => ({ send: (b) => { out = { s, b }; } }), end() {} });
     return { ...out, headers };
   } finally { globalThis.fetch = real; }
 }
@@ -27,7 +27,7 @@ test('live case link: escaped, with its own card image and canonical URL', async
   const r = await run({ case: 'kibble:k123abc' });
   assert.match(r.b, /<title>k123abc · kibble case · Proofline<\/title>/);
   assert.match(r.b, /<meta property="og:image" content="https:\/\/proofline-technocore.vercel.app\/api\/card\?case=kibble:k123abc">/);
-  assert.match(r.b, /<meta property="og:url" content="https:\/\/proofline-technocore.vercel.app\/\?case=kibble:k123abc">/);
+  assert.match(r.b, /<meta property="og:url" content="https:\/\/proofline-technocore.vercel.app\/cases\?case=kibble:k123abc">/);
 });
 
 test('malformed case parameters fall back to the site card', async () => {
@@ -48,3 +48,5 @@ test('digest preview carries both useful-verdict rates, dates and claim caveats'
     assert.doesNotMatch(d.description,/attested useful|verified archive/i);
   } finally {globalThis.fetch=real;}
 });
+
+test('preview metadata and card URLs stay on the tested deployment',async()=>{const r=await run({case:'kibble:k123abc'},{host:'preview-branch.vercel.app'});assert.match(r.b,/property="og:url" content="https:\/\/preview-branch.vercel.app\/cases\?case=kibble:k123abc"/);assert.match(r.b,/property="og:image" content="https:\/\/preview-branch.vercel.app\/api\/card/)});

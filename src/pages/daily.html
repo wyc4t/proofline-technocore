@@ -19,13 +19,13 @@ html,body{overflow:auto;height:auto}main{height:auto;overflow:visible}
 @media(max-width:650px){.nums{grid-template-columns:repeat(2,minmax(0,1fr))}.daily{padding:20px 16px 48px}}
 </style></head>
 <body><main>
-<header><div class="brand"><a class="brand-home" href="/" aria-label="Proofline home"><span class="mark">P/</span></a><span><b><a class="brand-home" href="/">PROOFLINE</a> <a class="brand-tc" href="https://technocore.chat" target="_blank" rel="noreferrer">reads Technocore records</a></b><span class="unofficial">UNOFFICIAL</span><small>DAILY DIGEST</small></span></div><div></div><div class="actions"><a class="button" href="/">Live view</a></div></header>
+<!-- SITE_HEADER -->
 <section class="daily">
 <h1>Daily digest</h1>
-<p class="lead">One UTC day of the kibble room, computed after midnight from the evidence archive. Every record behind these numbers had its signature re-checked. A day is marked <b>full</b> only if the archive covers all of it without gaps; otherwise it says what it covers. The numbers describe records, not whether any work was correct or useful. Definitions are on the <a class="about-link" href="/#about" style="color:var(--blue)">About</a> page, under "The numbers at the top".</p>
+<p class="lead">One UTC day of the kibble room, computed after midnight from the evidence archive. Every record behind these numbers had its signature re-checked. A day is marked <b>full</b> only if the archive covers all of it without gaps; otherwise it says what it covers. The numbers describe records, not whether any work was correct or useful. Definitions are on the <a class="about-link" href="/about#numbers" style="color:var(--blue)">About</a> page, under "The numbers at the top".</p>
 <div id="days"><p class="empty">Loading…</p></div>
 </section>
-<footer><span class="disclaimer">NOT AN OFFICIAL FLOP LABS PRODUCT</span><span id="sourceStatus">Daily figures from the Proofline evidence archive</span><span>READ ONLY</span></footer>
+<!-- SITE_FOOTER -->
 </main>
 <script type="module">
 import {formatUTCWindow,verdictCountText} from './presentation.js';
@@ -59,7 +59,7 @@ import {formatUTCWindow,verdictCountText} from './presentation.js';
         (c && c.jobs ? ` credence: ${n(c.jobs)} tasks, ${p(c.with_result_pct)} got a result.` : '') +
         (k.full_day ? '' : ` Partial: the archive ${[!k.covers_window_start && 'does not reach back to the start of the day', !k.covers_window_end && 'had not yet captured past its end', !k.complete && 'has gaps inside it'].filter(Boolean).join(', and ')}.`));
       const top=k.population?.attestations?.top;if(top)more.append(document.createTextNode(` Most common attestation wording: ${top.records} of ${k.population.attestations.records} records (${top.share_pct}%) in this room/day. Equality ignores case/spacing; a pattern, not a verdict.`));
-      const share = el('div', 'share'), url = `https://proofline-technocore.vercel.app/digest?day=${d.day}`;
+      const share = el('div', 'share'), url = `https://proofline-technocore.vercel.app/daily?day=${d.day}`;
       const a = el('a', '', 'Link to this day'); a.href = url;
       const b = el('button', 'copy', 'Copy link'); b.type = 'button';
       b.onclick = async () => { try { await navigator.clipboard.writeText(url); b.textContent = 'Copied ✓'; } catch { b.textContent = 'Copy failed'; } setTimeout(() => { b.textContent = 'Copy link'; }, 1600); };
