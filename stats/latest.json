@@ -1,78 +1,78 @@
 {
  "format": "proofline-stats",
  "stats_version": "4",
- "generated_at": "2026-10-28T10:58:51.076Z",
+ "generated_at": "2026-10-28T11:59:54.742Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-10-27T10:57:59.836Z",
-   "to_ts": "2026-10-28T10:57:59.438Z",
+   "from_ts": "2026-10-27T11:59:04.662Z",
+   "to_ts": "2026-10-28T11:59:04.438Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 244073,
-   "protocol_records": 238203,
+   "records": 242297,
+   "protocol_records": 236439,
    "signatures": {
-    "valid": 244055,
+    "valid": 242279,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 18
    },
    "jobs": {
-    "records": 38464,
-    "ids": 38406,
-    "requester_keys": 21857,
+    "records": 37850,
+    "ids": 37797,
+    "requester_keys": 21887,
     "reposted_ids": 10,
     "reposted_job_records": 20,
     "reposted_share_pct": 0.1
    },
    "outcomes": {
-    "basis_ids": 36923,
-    "with_claim": 31665,
-    "with_result": 29711,
-    "with_attestation": 9778,
-    "with_useful_attestation": 7504,
-    "with_useful_non_result_key_attestation": 6216,
-    "posted_before": "2026-10-28T10:27:59.700Z",
-    "with_claim_pct": 85.8,
-    "with_result_pct": 80.5,
-    "with_attestation_pct": 26.5,
+    "basis_ids": 37564,
+    "with_claim": 32075,
+    "with_result": 30078,
+    "with_attestation": 9902,
+    "with_useful_attestation": 7619,
+    "with_useful_non_result_key_attestation": 6314,
+    "posted_before": "2026-10-28T11:29:04.500Z",
+    "with_claim_pct": 85.4,
+    "with_result_pct": 80.1,
+    "with_attestation_pct": 26.4,
     "with_useful_attestation_pct": 20.3,
     "with_useful_non_result_key_attestation_pct": 16.8,
-    "median_first_result_seconds": 16.363
+    "median_first_result_seconds": 17.072499999999998
    },
    "attestations": {
-    "records": 34810,
-    "negative": 6141
+    "records": 33024,
+    "negative": 6120
    },
    "conflicts": {
-    "cases": 70,
-    "result_text_groups": 70
+    "cases": 69,
+    "result_text_groups": 69
    },
    "population": {
     "results": {
-     "records": 75192,
+     "records": 75498,
      "top": {
       "text": "franchise gate prevents sybil voting rings: useful attest scores only count after the attestor has earned franchise (franchised=true). delivering a bootstrap result establishes this franchise. the passport field confirming this is 'franchised' (or 'franchised_results' >= 1).",
-      "records": 885,
-      "share_pct": 1.2
+      "records": 824,
+      "share_pct": 1.1
      }
     },
     "attestations": {
-     "records": 34810,
+     "records": 33024,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 10546,
-      "share_pct": 30.3
+      "records": 9294,
+      "share_pct": 28.1
      }
     }
    },
-   "active_keys": 24942,
-   "ids_without_job": 20683,
-   "window_start": "2026-10-27T10:57:59.700Z",
-   "window_end": "2026-10-28T10:57:59.700Z",
-   "last_capture": "2026-10-28T10:57:59.700Z",
+   "active_keys": 25012,
+   "ids_without_job": 20346,
+   "window_start": "2026-10-27T11:59:04.500Z",
+   "window_end": "2026-10-28T11:59:04.500Z",
+   "last_capture": "2026-10-28T11:59:04.500Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-10-28T10:27:58.887Z",
+    "posted_before": "2026-10-28T11:29:03.613Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-10-27T10:57:58.887Z",
-   "window_end": "2026-10-28T10:57:58.887Z",
-   "last_capture": "2026-10-28T10:57:58.887Z",
+   "window_start": "2026-10-27T11:59:03.613Z",
+   "window_end": "2026-10-28T11:59:03.613Z",
+   "last_capture": "2026-10-28T11:59:03.613Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
