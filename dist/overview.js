@@ -42,6 +42,9 @@ function archiveEmptySince(captures,room){let since=null;for(const c of captures
 function emptyRoomText(room,since){const d=new Date(since||NaN);if(!Number.isFinite(d.getTime()))return `${room}: empty on last read`;return `${room}: empty since ${d.getUTCDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()]} ${d.toISOString().slice(11,16)} UTC`}
 function compactRoomText(c,since,now=Date.now()){if(c.status==='error')return `${c.room}: read delayed`;if(!c.lastOkAt)return `${c.room}: loading`;if(c.roomEmpty)return emptyRoomText(c.room,since);const age=Math.max(0,Math.floor((now-Date.parse(c.windowEnd))/1000));return Number.isFinite(age)?`${c.room}: last ${age<90?age+' s':age<7200?Math.floor(age/60)+' min':Math.floor(age/3600)+' h'}`:`${c.room}: no record in view`}
 
+// Sidebar-sized status; the full archived date and coverage stay in the status dialog.
+function caseListStatus(captures,now=Date.now()){return [...captures].sort((a,b)=>(a.room==='kibble'?-1:1)-(b.room==='kibble'?-1:1)).map(c=>{if(c.status==='error')return c.room+' delayed';if(!c.lastOkAt)return c.room+' loading';if(c.roomEmpty)return c.room+' empty';const age=Math.floor((now-Date.parse(c.windowEnd))/1000);if(!Number.isFinite(age))return c.room+' no data';if(age<0)return c.room+' clock+';return c.room+' '+(age<90?age+' s':age<7200?Math.floor(age/60)+' min':Math.floor(age/3600)+' h')}).join(' · ')}
+
 
 
 const RAW='https://raw.githubusercontent.com/wyc4t/proofline-technocore/archive-data/',byId=id=>document.getElementById(id),n=x=>x==null?'—':Number(x).toLocaleString('en-US'),p=x=>x==null?'—':Math.round(x)+'%';

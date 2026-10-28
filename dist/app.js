@@ -76,6 +76,9 @@ function archiveEmptySince(captures,room){let since=null;for(const c of captures
 function emptyRoomText(room,since){const d=new Date(since||NaN);if(!Number.isFinite(d.getTime()))return `${room}: empty on last read`;return `${room}: empty since ${d.getUTCDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()]} ${d.toISOString().slice(11,16)} UTC`}
 function compactRoomText(c,since,now=Date.now()){if(c.status==='error')return `${c.room}: read delayed`;if(!c.lastOkAt)return `${c.room}: loading`;if(c.roomEmpty)return emptyRoomText(c.room,since);const age=Math.max(0,Math.floor((now-Date.parse(c.windowEnd))/1000));return Number.isFinite(age)?`${c.room}: last ${age<90?age+' s':age<7200?Math.floor(age/60)+' min':Math.floor(age/3600)+' h'}`:`${c.room}: no record in view`}
 
+// Sidebar-sized status; the full archived date and coverage stay in the status dialog.
+function caseListStatus(captures,now=Date.now()){return [...captures].sort((a,b)=>(a.room==='kibble'?-1:1)-(b.room==='kibble'?-1:1)).map(c=>{if(c.status==='error')return c.room+' delayed';if(!c.lastOkAt)return c.room+' loading';if(c.roomEmpty)return c.room+' empty';const age=Math.floor((now-Date.parse(c.windowEnd))/1000);if(!Number.isFinite(age))return c.room+' no data';if(age<0)return c.room+' clock+';return c.room+' '+(age<90?age+' s':age<7200?Math.floor(age/60)+' min':Math.floor(age/3600)+' h')}).join(' · ')}
+
 /* src/lib/signature.js */
 // Signature checks, following technocore.chat SIGNING: Ed25519 over the UTF-8 bytes of
 // `<room>|<nonce>|<text>`, with the key taken from the sender's did:key. Uses WebCrypto, so
@@ -965,6 +968,8 @@ function storyPreview(text,limit=300) {
 function caseBadgeLabels(c){const count=c.stages.filter(s=>s.length).length;return [count===4?'ALL 4 STAGES':`${count} OF 4 STAGES OBSERVED`,...(c.conflicts.length?['CONFLICTING VERDICTS']:[])]}
 function resultStatus(item){return item.conflict?`${item.conflict.useful.length+item.conflict.negative.length} OPPOSITE VERDICTS`:item.namedBy.length?`Named by ${item.namedBy.length} attestation${item.namedBy.length===1?'':'s'}`:'No attestation names this result'}
 function hiddenConnectionCount(c,stage,limit=3){const hidden=new Set(c.stages[stage].slice(limit).map(r=>r.seq));return storylineLinks(c).filter(l=>hidden.has(l.from)||hidden.has(l.to)).length}
+function workerChipLabel(record,links){const short=n=>String(n).length>4?'#…'+String(n).slice(-3):'#'+n;const targets=[...new Set(links.map(l=>l.to))];return `${record.kind} ${short(record.seq)}${targets.length?' · same key as '+(targets.length>2?targets.length+' results':targets.map(n=>'result '+short(n)).join(', ')):''}${record.sigStatus==='invalid'?' · SIGNATURE FAILS':''}`}
+function workerChipAria(record,links){return `${record.kind} #${record.seq}${links.length?' · same verified key as '+[...new Set(links.map(l=>l.to))].map(n=>'result #'+n).join(', '):''}${record.sigStatus==='invalid'?' · SIGNATURE FAILS':''}`}
 function mountStoryline(host,c,{onSelect,expanded=new Set(),highlight=[],guided=false}={}) {
   const doc=host.ownerDocument,make=(tag,cls,text)=>{const n=doc.createElement(tag);n.className=cls||'';if(text!==undefined)n.textContent=text;return n};
   host.replaceChildren();host.className='storyline';host.setAttribute('aria-label','Case storyline: columns are stages, not causes');
@@ -975,7 +980,7 @@ function mountStoryline(host,c,{onSelect,expanded=new Set(),highlight=[],guided=
     const appendCard=item=>{
       const {record:r,stage,target,relations,conflict,success,echo}=item,card=make('button',`story-card${stage===1?' worker-chip':''}${conflict?' has-conflict':''}${guided&&highlight.includes(r.seq)?' guide-highlight':''}`);card.type='button';card.dataset.record=String(r.seq);card.setAttribute('aria-haspopup','dialog');card.title=relations.join(' ');
       const pattern=c.flags.some(f=>f.seqs.includes(r.seq)),id=make('span','story-record-id',`${r.kind} #${r.seq}${r.sigStatus==='invalid'?' · SIGNATURE FAILS':''}`);
-      if(stage===1){id.textContent+=item.sameKey.length?' · same key as '+item.sameKey.map(l=>'result #'+l.to).join(', '):'';card.append(id)}else{
+      if(stage===1){id.textContent=workerChipLabel(r,item.sameKey);card.setAttribute('aria-label',workerChipAria(r,item.sameKey));card.append(id)}else{
         if(stage===2&&pattern)id.append(make('small','pattern-tag','Pattern'));card.append(id);
         if(stage===3)card.append(make('span','story-verdict',`${r.verdict==='useful'?'U · Useful':r.verdict==='not'?'N · Negative':`? · ${r.verdict}`} · claim`));
         const raw=stage===0?(r.text.split('|')[3]?.trim()||r.body):stage===3?r.body.replace(/^rh:[0-9a-f]{16,64}\s*\|\s*/i,''):r.body;
@@ -1060,9 +1065,7 @@ function renderSummary(){
   // The live view is only the newest records of each room; say how much, and what the filter hides.
   const win=rooms.map(coverage).map(c=>liveRoomText(c)).join(' · ');
   const hidden=filter==='seen'?cases.filter(c=>c.status==='no-request').length:0,note=$('#casesNote');
-  note.replaceChildren();
-  if(hidden){note.append(document.createTextNode(`${hidden} without a request hidden. `));const b=el('button','','Show them');b.type='button';b.onclick=()=>{filter='all';$('#filter').value='all';render(true)};note.append(b)}
-  else note.append(document.createTextNode('Search covers the held live view. Older cases: use the archive.'));
+  note.textContent=hidden?`${hidden} without a request hidden.`:'Search covers live records only.';
   renderPopulation();
 }
 // Headline numbers: kibble over the last 24 hours, computed hourly from the signature-checked archive.
@@ -1103,6 +1106,7 @@ async function findArchivedCase(event){
   }catch(e){if(token===lookupRequest)host.replaceChildren(el('p','',`Archive lookup unavailable: ${e.message}. The index may not have been generated for this archive yet. Guided examples and existing pinned links still work.`))}
   finally{if(token===lookupRequest)button.disabled=false}
 }
+$('#showHidden').onclick=()=>{filter='all';$('#filter').value='all';render(true)};
 $('#casesToggle').onclick=()=>setCasesCollapsed(true);
 $('#casesShow').onclick=()=>setCasesCollapsed(!document.body.classList.contains('cases-collapsed'));
 function setCasesCollapsed(collapsed){document.body.classList.toggle('cases-collapsed',collapsed);$('#casesShow').setAttribute('aria-expanded',String(!collapsed));$('#casesToggle').setAttribute('aria-expanded',String(!collapsed));if(collapsed)$('#casesShow').focus();else $('#search').focus()}
@@ -1189,12 +1193,14 @@ function openSourceRecord(seq,sourceCase=selected){
   for(const f of c.flags.filter(f=>f.seqs.includes(seq)))content.append(el('p','source-pattern',`Pattern: ${f.label}. ${f.detail}`));
   if(guidedCase===c.key){const back=el('button','','Back to the guide');back.onclick=()=>{sourceOpener=$('#inspector .reading-guide button');dialog.close();returnToGuide()};content.append(back)}
   const index=c.list.indexOf(r);$('#recordPrev').disabled=index===0;$('#recordNext').disabled=index===c.list.length-1;
-  if(!dialog.open){const wide=matchMedia('(min-width:1200px)').matches;dialog.classList.toggle('non-modal',wide);dialog.setAttribute('aria-modal',String(!wide));wide?dialog.show():dialog.showModal()}else $('#recordTitle').focus();
+  if(!dialog.open){const wide=matchMedia('(min-width:1200px)').matches;applyDrawerLayout(wide);wide?dialog.show():dialog.showModal()}else $('#recordTitle').focus();
   $('#recordTitle').tabIndex=-1;
 }
+function applyDrawerLayout(wide){const d=$('#recordDialog');d.classList.toggle('non-modal',wide);d.setAttribute('aria-modal',String(!wide));document.body.classList.toggle('record-panel-open',wide)}
+matchMedia('(min-width:1200px)').addEventListener('change',event=>{const d=$('#recordDialog');if(!d.open)return;const focus=document.activeElement;d.close();applyDrawerLayout(event.matches);event.matches?d.show():d.showModal();focus?.focus?.({preventScroll:true})});
 $('#recordClose').onclick=()=>$('#recordDialog').close();
 $('#recordDialog').addEventListener('click',e=>{if(e.target===$('#recordDialog')){const b=e.target.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)e.target.close()}});
-$('#recordDialog').addEventListener('close',()=>{const target=sourceOpener?.isConnected?sourceOpener:document.querySelector(`[data-record="${recordSelection?.seq}"]`);target?.focus({preventScroll:true});recordSelection=null});
+$('#recordDialog').addEventListener('close',()=>{if($('#recordDialog').open)return;document.body.classList.remove('record-panel-open');const target=sourceOpener?.isConnected?sourceOpener:document.querySelector(`[data-record="${recordSelection?.seq}"]`);target?.focus({preventScroll:true});recordSelection=null});
 for(const [id,step] of [['#recordPrev',-1],['#recordNext',1]])$(id).onclick=()=>{const c=recordSelection?.c,i=c?.list.findIndex(r=>r.seq===recordSelection.seq);if(c?.list[i+step])openSourceRecord(c.list[i+step].seq,c)};
 let guideStep=0,guideKey=null;
 function readingGuide(c){
@@ -1366,10 +1372,10 @@ function updateStatus(){
   const cov=rooms.map(coverage),bad=cov.filter(c=>c.status==='error'),gaps=cov.reduce((n,c)=>n+c.gaps,0);
   $('#live').className=`live ${bad.length===cov.length?'error':bad.length||gaps||paused?'warn':'ready'}`;
   const full=[...cov].sort((a,b)=>(a.room==='kibble'?-1:1)-(b.room==='kibble'?-1:1)).map(c=>compactRoomText(c,emptyDates[c.room])).join(' · ');
-  $('#live span').textContent=`${paused?'PAUSED':'LIVE'} · ${full}`;$('#live').title=full;
+  $('#live span').textContent=caseListStatus(cov);$('#live').title=full;
   $('#freshness').textContent=(paused?'View paused; background reads continue. ':'')+cov.map(c=>compactRoomText(c,emptyDates[c.room])).join(' | ');
   $('#sourceStatus').textContent=cov.map(coverageLine).join('  |  ')+(signatureSupport()===false?'  |  this browser cannot check signatures, so keys are not compared':'');$('#sourceStatus').title=bad.map(c=>c.error).join('\n');
-  const b=$('#pause');b.setAttribute('aria-pressed',String(paused));b.querySelector('.ico').textContent=paused?'▶':'⏸';b.querySelector('.lbl').textContent=paused?`Resume · ${Math.max(0,protocolTotal()-frozenAt)} new`:'Pause updates';b.setAttribute('aria-label',paused?'Resume live updates':'Pause live updates');
+  const b=$('#pause');b.setAttribute('aria-pressed',String(paused));b.querySelector('.ico').textContent=paused?'▶':'⏸';b.querySelector('.lbl').textContent=paused?`Resume · ${Math.max(0,protocolTotal()-frozenAt)} new`:'Pause';b.setAttribute('aria-label',paused?'Resume live updates':'Pause live updates');
 }
 async function refresh(){if(busy)return;busy=true;if(!paused){$('#live').className='live';$('#live span').textContent='READING LIVE RECORDS'}
   // Each room settles on its own (bounded by the timeout) and is shown as soon as it answers; one stalled room cannot hold back the other.

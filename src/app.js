@@ -2,7 +2,7 @@ import {STAGE_NAMES,parseMessage} from './lib/protocol.js';
 import {ARCHIVE_RAW,parsePin,formatPin,loadPinned} from './lib/snapshot.js';
 import {lookupCase} from './lib/lookup.js';
 import {roomPopulation} from './lib/population.js';
-import {archiveEmptySince,compactRoomText} from './lib/navigation.js';
+import {archiveEmptySince,compactRoomText,caseListStatus} from './lib/navigation.js';
 import {loadGuidedCase,GUIDED_CASES} from './lib/examples.js';
 import {buildCases,attestationTargetText} from './lib/cases.js';
 import {reviewCase, evidenceAssessment,buildReuseIndex} from './lib/evidence.js';
@@ -48,9 +48,7 @@ function renderSummary(){
   // The live view is only the newest records of each room; say how much, and what the filter hides.
   const win=rooms.map(coverage).map(c=>liveRoomText(c)).join(' · ');
   const hidden=filter==='seen'?cases.filter(c=>c.status==='no-request').length:0,note=$('#casesNote');
-  note.replaceChildren();
-  if(hidden){note.append(document.createTextNode(`${hidden} without a request hidden. `));const b=el('button','','Show them');b.type='button';b.onclick=()=>{filter='all';$('#filter').value='all';render(true)};note.append(b)}
-  else note.append(document.createTextNode('Search covers the held live view. Older cases: use the archive.'));
+  note.textContent=hidden?`${hidden} without a request hidden.`:'Search covers live records only.';
   renderPopulation();
 }
 // Headline numbers: kibble over the last 24 hours, computed hourly from the signature-checked archive.
@@ -91,6 +89,7 @@ async function findArchivedCase(event){
   }catch(e){if(token===lookupRequest)host.replaceChildren(el('p','',`Archive lookup unavailable: ${e.message}. The index may not have been generated for this archive yet. Guided examples and existing pinned links still work.`))}
   finally{if(token===lookupRequest)button.disabled=false}
 }
+$('#showHidden').onclick=()=>{filter='all';$('#filter').value='all';render(true)};
 $('#casesToggle').onclick=()=>setCasesCollapsed(true);
 $('#casesShow').onclick=()=>setCasesCollapsed(!document.body.classList.contains('cases-collapsed'));
 function setCasesCollapsed(collapsed){document.body.classList.toggle('cases-collapsed',collapsed);$('#casesShow').setAttribute('aria-expanded',String(!collapsed));$('#casesToggle').setAttribute('aria-expanded',String(!collapsed));if(collapsed)$('#casesShow').focus();else $('#search').focus()}
@@ -177,12 +176,14 @@ function openSourceRecord(seq,sourceCase=selected){
   for(const f of c.flags.filter(f=>f.seqs.includes(seq)))content.append(el('p','source-pattern',`Pattern: ${f.label}. ${f.detail}`));
   if(guidedCase===c.key){const back=el('button','','Back to the guide');back.onclick=()=>{sourceOpener=$('#inspector .reading-guide button');dialog.close();returnToGuide()};content.append(back)}
   const index=c.list.indexOf(r);$('#recordPrev').disabled=index===0;$('#recordNext').disabled=index===c.list.length-1;
-  if(!dialog.open){const wide=matchMedia('(min-width:1200px)').matches;dialog.classList.toggle('non-modal',wide);dialog.setAttribute('aria-modal',String(!wide));wide?dialog.show():dialog.showModal()}else $('#recordTitle').focus();
+  if(!dialog.open){const wide=matchMedia('(min-width:1200px)').matches;applyDrawerLayout(wide);wide?dialog.show():dialog.showModal()}else $('#recordTitle').focus();
   $('#recordTitle').tabIndex=-1;
 }
+function applyDrawerLayout(wide){const d=$('#recordDialog');d.classList.toggle('non-modal',wide);d.setAttribute('aria-modal',String(!wide));document.body.classList.toggle('record-panel-open',wide)}
+matchMedia('(min-width:1200px)').addEventListener('change',event=>{const d=$('#recordDialog');if(!d.open)return;const focus=document.activeElement;d.close();applyDrawerLayout(event.matches);event.matches?d.show():d.showModal();focus?.focus?.({preventScroll:true})});
 $('#recordClose').onclick=()=>$('#recordDialog').close();
 $('#recordDialog').addEventListener('click',e=>{if(e.target===$('#recordDialog')){const b=e.target.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)e.target.close()}});
-$('#recordDialog').addEventListener('close',()=>{const target=sourceOpener?.isConnected?sourceOpener:document.querySelector(`[data-record="${recordSelection?.seq}"]`);target?.focus({preventScroll:true});recordSelection=null});
+$('#recordDialog').addEventListener('close',()=>{if($('#recordDialog').open)return;document.body.classList.remove('record-panel-open');const target=sourceOpener?.isConnected?sourceOpener:document.querySelector(`[data-record="${recordSelection?.seq}"]`);target?.focus({preventScroll:true});recordSelection=null});
 for(const [id,step] of [['#recordPrev',-1],['#recordNext',1]])$(id).onclick=()=>{const c=recordSelection?.c,i=c?.list.findIndex(r=>r.seq===recordSelection.seq);if(c?.list[i+step])openSourceRecord(c.list[i+step].seq,c)};
 let guideStep=0,guideKey=null;
 function readingGuide(c){
@@ -354,10 +355,10 @@ function updateStatus(){
   const cov=rooms.map(coverage),bad=cov.filter(c=>c.status==='error'),gaps=cov.reduce((n,c)=>n+c.gaps,0);
   $('#live').className=`live ${bad.length===cov.length?'error':bad.length||gaps||paused?'warn':'ready'}`;
   const full=[...cov].sort((a,b)=>(a.room==='kibble'?-1:1)-(b.room==='kibble'?-1:1)).map(c=>compactRoomText(c,emptyDates[c.room])).join(' · ');
-  $('#live span').textContent=`${paused?'PAUSED':'LIVE'} · ${full}`;$('#live').title=full;
+  $('#live span').textContent=caseListStatus(cov);$('#live').title=full;
   $('#freshness').textContent=(paused?'View paused; background reads continue. ':'')+cov.map(c=>compactRoomText(c,emptyDates[c.room])).join(' | ');
   $('#sourceStatus').textContent=cov.map(coverageLine).join('  |  ')+(signatureSupport()===false?'  |  this browser cannot check signatures, so keys are not compared':'');$('#sourceStatus').title=bad.map(c=>c.error).join('\n');
-  const b=$('#pause');b.setAttribute('aria-pressed',String(paused));b.querySelector('.ico').textContent=paused?'▶':'⏸';b.querySelector('.lbl').textContent=paused?`Resume · ${Math.max(0,protocolTotal()-frozenAt)} new`:'Pause updates';b.setAttribute('aria-label',paused?'Resume live updates':'Pause live updates');
+  const b=$('#pause');b.setAttribute('aria-pressed',String(paused));b.querySelector('.ico').textContent=paused?'▶':'⏸';b.querySelector('.lbl').textContent=paused?`Resume · ${Math.max(0,protocolTotal()-frozenAt)} new`:'Pause';b.setAttribute('aria-label',paused?'Resume live updates':'Pause live updates');
 }
 async function refresh(){if(busy)return;busy=true;if(!paused){$('#live').className='live';$('#live span').textContent='READING LIVE RECORDS'}
   // Each room settles on its own (bounded by the timeout) and is shown as soon as it answers; one stalled room cannot hold back the other.

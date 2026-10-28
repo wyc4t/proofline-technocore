@@ -27,6 +27,8 @@ export function storyPreview(text,limit=300) {
 export function caseBadgeLabels(c){const count=c.stages.filter(s=>s.length).length;return [count===4?'ALL 4 STAGES':`${count} OF 4 STAGES OBSERVED`,...(c.conflicts.length?['CONFLICTING VERDICTS']:[])]}
 export function resultStatus(item){return item.conflict?`${item.conflict.useful.length+item.conflict.negative.length} OPPOSITE VERDICTS`:item.namedBy.length?`Named by ${item.namedBy.length} attestation${item.namedBy.length===1?'':'s'}`:'No attestation names this result'}
 export function hiddenConnectionCount(c,stage,limit=3){const hidden=new Set(c.stages[stage].slice(limit).map(r=>r.seq));return storylineLinks(c).filter(l=>hidden.has(l.from)||hidden.has(l.to)).length}
+export function workerChipLabel(record,links){const short=n=>String(n).length>4?'#…'+String(n).slice(-3):'#'+n;const targets=[...new Set(links.map(l=>l.to))];return `${record.kind} ${short(record.seq)}${targets.length?' · same key as '+(targets.length>2?targets.length+' results':targets.map(n=>'result '+short(n)).join(', ')):''}${record.sigStatus==='invalid'?' · SIGNATURE FAILS':''}`}
+export function workerChipAria(record,links){return `${record.kind} #${record.seq}${links.length?' · same verified key as '+[...new Set(links.map(l=>l.to))].map(n=>'result #'+n).join(', '):''}${record.sigStatus==='invalid'?' · SIGNATURE FAILS':''}`}
 export function mountStoryline(host,c,{onSelect,expanded=new Set(),highlight=[],guided=false}={}) {
   const doc=host.ownerDocument,make=(tag,cls,text)=>{const n=doc.createElement(tag);n.className=cls||'';if(text!==undefined)n.textContent=text;return n};
   host.replaceChildren();host.className='storyline';host.setAttribute('aria-label','Case storyline: columns are stages, not causes');
@@ -37,7 +39,7 @@ export function mountStoryline(host,c,{onSelect,expanded=new Set(),highlight=[],
     const appendCard=item=>{
       const {record:r,stage,target,relations,conflict,success,echo}=item,card=make('button',`story-card${stage===1?' worker-chip':''}${conflict?' has-conflict':''}${guided&&highlight.includes(r.seq)?' guide-highlight':''}`);card.type='button';card.dataset.record=String(r.seq);card.setAttribute('aria-haspopup','dialog');card.title=relations.join(' ');
       const pattern=c.flags.some(f=>f.seqs.includes(r.seq)),id=make('span','story-record-id',`${r.kind} #${r.seq}${r.sigStatus==='invalid'?' · SIGNATURE FAILS':''}`);
-      if(stage===1){id.textContent+=item.sameKey.length?' · same key as '+item.sameKey.map(l=>'result #'+l.to).join(', '):'';card.append(id)}else{
+      if(stage===1){id.textContent=workerChipLabel(r,item.sameKey);card.setAttribute('aria-label',workerChipAria(r,item.sameKey));card.append(id)}else{
         if(stage===2&&pattern)id.append(make('small','pattern-tag','Pattern'));card.append(id);
         if(stage===3)card.append(make('span','story-verdict',`${r.verdict==='useful'?'U · Useful':r.verdict==='not'?'N · Negative':`? · ${r.verdict}`} · claim`));
         const raw=stage===0?(r.text.split('|')[3]?.trim()||r.body):stage===3?r.body.replace(/^rh:[0-9a-f]{16,64}\s*\|\s*/i,''):r.body;
