@@ -57,3 +57,14 @@ body.explorer .case-toolbar #filter{width:128px;min-width:128px}
  body.explorer.record-panel-open .storyline{gap:24px;padding:16px}
  body.explorer.record-panel-open .story-card{padding:12px;font-size:12px}
 }
+
+:root{color-scheme:dark}
+body.explorer .inspector{--inspector-inset:32px;scroll-padding-top:100px}
+.case-header-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+body.explorer .case-header-row #casesShow{margin:0;align-self:auto}
+.guide-shell{position:sticky;top:0;z-index:4;background:var(--bg);padding:12px var(--inspector-inset);margin:12px calc(-1 * var(--inspector-inset));isolation:isolate}
+body.explorer .guide-shell .reading-guide{position:static;margin:0;background:#101b28}
+@media(max-width:1100px){body.explorer .inspector{--inspector-inset:22px}}
+@media(min-width:1200px){body.explorer.record-panel-open .inspector{--inspector-inset:20px;scroll-padding-top:100px}}
+@media(max-width:767px){body.explorer .inspector{--inspector-inset:16px}.guide-shell{position:static}}
+@media(min-width:768px){.guide-shell{top:calc(-1 * var(--inspector-inset));padding-top:calc(12px + var(--inspector-inset))}}

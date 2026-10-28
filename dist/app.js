@@ -1196,7 +1196,7 @@ function openSourceRecord(seq,sourceCase=selected){
   const index=c.list.indexOf(r);$('#recordPrev').disabled=index===0;$('#recordNext').disabled=index===c.list.length-1;
   if(!dialog.open){const wide=matchMedia('(min-width:1200px)').matches;applyDrawerLayout(wide);wide?dialog.show():dialog.showModal()}else $('#recordTitle').focus();
   $('#recordTitle').tabIndex=-1;
-  requestAnimationFrame(()=>{const inspector=$('#inspector'),card=inspector.querySelector(`[data-record="${seq}"]`);card?.scrollIntoView({block:'nearest',inline:'nearest'});const story=card?.closest('.storyline');if(document.body.classList.contains('record-panel-open')&&story&&story.getBoundingClientRect().height<=inspector.clientHeight-80)story.scrollIntoView({block:'nearest',inline:'nearest'})});
+  requestAnimationFrame(()=>{const inspector=$('#inspector'),card=inspector.querySelector(`[data-record="${seq}"]`);card?.scrollIntoView({block:'nearest',inline:'nearest'});const story=card?.closest('.storyline');if(document.body.classList.contains('record-panel-open')&&story&&story.getBoundingClientRect().height<=inspector.clientHeight-100)story.scrollIntoView({block:'nearest',inline:'nearest'})});
 }
 function applyDrawerLayout(wide){const d=$('#recordDialog');d.classList.toggle('non-modal',wide);d.setAttribute('aria-modal',String(!wide));document.body.classList.toggle('record-panel-open',wide);setCasesCollapsed(casesManuallyCollapsed,{manual:false,focus:false})}
 matchMedia('(min-width:1200px)').addEventListener('change',event=>{const d=$('#recordDialog');if(!d.open)return;const focus=document.activeElement;d.close();applyDrawerLayout(event.matches);event.matches?d.show():d.showModal();focus?.focus?.({preventScroll:true})});
@@ -1218,14 +1218,14 @@ let storyCleanup=null,storyExpanded=new Set(),storyKey=null;
 function disclosure(host,title,key){const d=el('details','case-disclosure');d.dataset.seq=key;const summary=el('summary','',title);summary.dataset.seq=key;d.append(summary);host.append(d);return d}
 function renderInspector(){
   storyCleanup?.();storyCleanup=null;
-  const host=$('#inspector');host.replaceChildren();
+  const host=$('#inspector'),browse=$('#casesShow');host.replaceChildren();const header=el('div','case-header-row');header.append(browse);host.append(header);
   const back=el('button','back','← All cases');back.type='button';back.onclick=closeDetail;host.append(back);
   if(snapshot?.loading){const status=el('p','archive-loading',`${snapshot.progress||'Fetching the archived records…'} This can take a few seconds. The case opens automatically when its checks finish.`);status.setAttribute('role','status');host.append(el('h1','',guidedCase===snapshot.key?'Opening guided example':'Opening archived case'),status);return}
   if(snapshot?.error){host.append(el('h1','','Archived case unavailable'),el('p','',snapshot.error));const exit=el('button','','Back to live cases');exit.onclick=()=>{snapshot=null;selected=null;setUrl(null);render(true)};host.append(exit);return}
   if(!snapshot&&wantedMissing){host.append(el('h1','',wantedKey),el('p','','This case is not in the held live view. Use an archived case or a pinned link to inspect older records.'));return}
   if(!selected){host.append(el('h1','','Inspect the evidence behind a claim.'),el('p','','Choose a case to compare the request with the result, see which result each verdict names, and cite the archive.'));const a=el('a','','Try a guided example');a.href='examples.html';host.append(a);return}
   const c=selected,present=c.stages.filter(s=>s.length).length;
-  if(guidedCase===c.key){const meta=snapshot?.bundle?.example||GUIDED_CASES.find(e=>e.key===c.key);if(meta){const breadcrumb=el('a','case-breadcrumb',`Examples › ${meta.number}. ${meta.title}`);breadcrumb.href='/examples#'+meta.exampleId;host.append(breadcrumb)}}
+  if(guidedCase===c.key){const meta=snapshot?.bundle?.example||GUIDED_CASES.find(e=>e.key===c.key);if(meta){const breadcrumb=el('a','case-breadcrumb',`Examples › ${meta.number}. ${meta.title}`);breadcrumb.href='/examples#'+meta.exampleId;header.append(breadcrumb)}}
   const context=el('div','case-context');context.append(el('span','eyebrow',snapshot?snapshot.curated?'ARCHIVED · GUIDED CASE BUNDLE':'ARCHIVED SNAPSHOT':'HELD LIVE VIEW'));if(snapshot){const exit=el('button','text-button','Back to live cases');exit.onclick=()=>{snapshot=null;selected=null;guidedCase=null;setUrl(null);render(true)};context.append(exit)}const heading=storyPreview(c.title,180);host.append(context,el('h1','case-heading',heading.text));if(heading.truncated)host.append(el('p','title-excerpt','Request title excerpt · open the request card for the complete source.'));
   const meta=el('div','case-heading-meta');meta.append(el('span','',c.id));for(const label of caseBadgeLabels(c))meta.append(el('span','badge',label));
   if(c.disputed)meta.append(el('span','badge','DISPUTED · CLAIM'));
@@ -1238,7 +1238,7 @@ function renderInspector(){
   }
   if(!snapshot&&(c.retained||!visibleCases().some(v=>v.key===c.key))){const notice=el('div','retained-case');notice.setAttribute('role','status');notice.append(el('b','',c.retained?'This case has left the live view.':'Outside the current filter or search.'),el('p','','Its records remain in this browser until another case is chosen or the page reloads.'));if(c.epochChanged)notice.append(el('p','','A room reset was observed; these records remain separate. Use archive lookup to establish a pinned copy.'));host.append(notice)}
   if(c.list.some(r=>r.sigStatus==='invalid'))host.append(el('p','archive-warning','Signature failure: one or more records do not verify. Open the affected cards before comparing their claims.'));
-  if(guide)host.append(guide.box);
+  if(guide){const shell=el('div','guide-shell');shell.append(guide.box);host.append(shell)}
   const intro=el('div','story-heading');intro.append(el('h2','','Case storyline'));const keyNote=el('p','');keyNote.append(el('span','story-key-wide','Stages, not causes · green line: checked result-hash match · dashed: same verified key. Open a card for its full source. Connections are also written on each card.'),el('span','story-key-narrow','Open a card for its full source. Stages are categories, not causes; targets are named on the cards.'));intro.append(keyNote);host.append(intro);
   const story=el('div','');host.append(story);const key=`${c.key}|${snapshot?.pin||c.liveEpoch}`;if(storyKey!==key){storyExpanded=new Set();storyKey=key}storyCleanup=mountStoryline(story,c,{onSelect:openSourceRecord,expanded:storyExpanded,highlight:c.stages[[0,2,3][guideStep]]?.map(r=>r.seq)||[] ,guided:!!guide});
   if(present<4)host.append(el('p','case-caveat','An empty stage means no record was seen in this window. It does not establish that the stage never happened.'));
