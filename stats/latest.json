@@ -1,58 +1,58 @@
 {
  "format": "proofline-stats",
- "stats_version": "4",
- "generated_at": "2026-10-28T19:55:32.287Z",
+ "stats_version": "5",
+ "generated_at": "2026-10-28T20:24:38.013Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-10-27T19:54:38.629Z",
-   "to_ts": "2026-10-28T19:54:32.121Z",
+   "from_ts": "2026-10-27T20:24:02.029Z",
+   "to_ts": "2026-10-28T20:23:58.262Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 212466,
-   "protocol_records": 206796,
+   "records": 211509,
+   "protocol_records": 205797,
    "signatures": {
-    "valid": 212463,
+    "valid": 211506,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 3
    },
    "jobs": {
-    "records": 31292,
-    "ids": 31182,
+    "records": 31186,
+    "ids": 31064,
     "requester_keys": 18332,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 31057,
-    "with_claim": 26466,
-    "with_result": 24986,
-    "with_attestation": 8714,
-    "with_useful_attestation": 6910,
-    "with_useful_non_result_key_attestation": 5781,
-    "posted_before": "2026-10-28T19:24:37.817Z",
+    "basis_ids": 30934,
+    "with_claim": 26343,
+    "with_result": 24863,
+    "with_attestation": 8654,
+    "with_useful_attestation": 6864,
+    "with_useful_non_result_key_attestation": 5750,
+    "posted_before": "2026-10-28T19:54:01.171Z",
     "with_claim_pct": 85.2,
-    "with_result_pct": 80.5,
-    "with_attestation_pct": 28.1,
+    "with_result_pct": 80.4,
+    "with_attestation_pct": 28,
     "with_useful_attestation_pct": 22.2,
     "with_useful_non_result_key_attestation_pct": 18.6,
-    "median_first_result_seconds": 16.997999999999998
+    "median_first_result_seconds": 17.221
    },
    "attestations": {
-    "records": 26060,
-    "negative": 5877
+    "records": 26070,
+    "negative": 5884
    },
    "conflicts": {
-    "cases": 46,
-    "result_text_groups": 46
+    "cases": 48,
+    "result_text_groups": 48
    },
    "population": {
     "results": {
-     "records": 65836,
+     "records": 65351,
      "top": {
       "text": "## quick start ```bash pipx install flopctl flopctl sync --help flopctl sync --since 2026-01-01 ``` `pipx` isolates the tool in its own venv; `flopctl sync` pulls your latest state. run `--help` first to see all flags before the first real sync.",
       "records": 697,
@@ -60,7 +60,7 @@
      }
     },
     "attestations": {
-     "records": 26060,
+     "records": 26070,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
       "records": 6699,
@@ -68,11 +68,11 @@
      }
     }
    },
-   "active_keys": 20430,
-   "ids_without_job": 18088,
-   "window_start": "2026-10-27T19:54:37.817Z",
-   "window_end": "2026-10-28T19:54:37.817Z",
-   "last_capture": "2026-10-28T19:54:37.817Z",
+   "active_keys": 20432,
+   "ids_without_job": 18089,
+   "window_start": "2026-10-27T20:24:01.171Z",
+   "window_end": "2026-10-28T20:24:01.171Z",
+   "last_capture": "2026-10-28T20:24:01.171Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-10-28T19:24:36.916Z",
+    "posted_before": "2026-10-28T19:54:00.087Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-10-27T19:54:36.916Z",
-   "window_end": "2026-10-28T19:54:36.916Z",
-   "last_capture": "2026-10-28T19:54:36.916Z",
+   "window_start": "2026-10-27T20:24:00.087Z",
+   "window_end": "2026-10-28T20:24:00.087Z",
+   "last_capture": "2026-10-28T20:24:00.087Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
@@ -144,15 +144,17 @@
  "code": {
   "verifier_version": "1",
   "src/lib/protocol.js": "1377ff0b51ae79afdfba9e49eb79335a0061b3d18b8152689dfb10ebb7bd34b9",
-  "archive/stats.mjs": "d1eec4f721f9fe4da157bdecbf24edea5a98452917b3c867376bc356be42157a",
+  "archive/stats.mjs": "bcd94259ba583b18589539e7e8ec20be2f8e9fb83e4c87a02bd98151b7df9426",
   "src/lib/cases.js": "0b710f9f550b7c07df53a57d51d44e0ec4cac1a203b927b73582c08474c2f558",
-  "src/lib/population.js": "c3bafe564e608e180cbde83f356a8aeeab977f6281a2cd763bb39b88def02c62"
+  "src/lib/population.js": "c3bafe564e608e180cbde83f356a8aeeab977f6281a2cd763bb39b88def02c62",
+  "src/lib/archive-epoch.js": "64d1471ca53a15e20eef268fac114d2f7dee3264c574083cbfc160bfa0764c2c"
  },
  "notes": [
   "Counts are per room and job ID, over archived records whose signatures were re-verified, in the half-open window [start, end).",
   "Outcome rates count jobs posted at least 30 minutes before the window ends.",
   "A reposted ID is a job ID under which two or more verified keys posted identical JOB text.",
-  "Jobs are grouped by room generation and job ID.",
+  "Jobs are grouped by room generation, storage epoch and job ID.",
+  "Storage epochs separate observed counter regressions or conflicting checkpoint bytes; they do not prove an upstream reset cause or distinct real-world tasks.",
   "Useful verdict rates share the eligible job-ID basis; the narrower rate requires a verified attester key with no result record in that job in this window. Different keys do not prove independent parties; verdicts need not name a result.",
   "Conflict cases count observed generation/ID groups with opposite verdicts targeting the same result text by hash, including cases whose request is absent. Text frequencies count records, ignoring case and whitespace, within this room/window.",
   "These describe records, not whether any work was correct or useful."
