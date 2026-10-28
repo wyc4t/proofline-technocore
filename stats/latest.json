@@ -1,78 +1,78 @@
 {
  "format": "proofline-stats",
  "stats_version": "4",
- "generated_at": "2026-10-28T11:59:54.742Z",
+ "generated_at": "2026-10-28T13:05:11.755Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-10-27T11:59:04.662Z",
-   "to_ts": "2026-10-28T11:59:04.438Z",
+   "from_ts": "2026-10-27T13:04:22.800Z",
+   "to_ts": "2026-10-28T13:04:22.285Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 242297,
-   "protocol_records": 236439,
+   "records": 238551,
+   "protocol_records": 232711,
    "signatures": {
-    "valid": 242279,
+    "valid": 238534,
     "invalid": 0,
     "no_sig": 0,
-    "unsigned": 18
+    "unsigned": 17
    },
    "jobs": {
-    "records": 37850,
-    "ids": 37797,
-    "requester_keys": 21887,
-    "reposted_ids": 10,
-    "reposted_job_records": 20,
-    "reposted_share_pct": 0.1
+    "records": 36349,
+    "ids": 36314,
+    "requester_keys": 20679,
+    "reposted_ids": 0,
+    "reposted_job_records": 0,
+    "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 37564,
-    "with_claim": 32075,
-    "with_result": 30078,
-    "with_attestation": 9902,
-    "with_useful_attestation": 7619,
-    "with_useful_non_result_key_attestation": 6314,
-    "posted_before": "2026-10-28T11:29:04.500Z",
-    "with_claim_pct": 85.4,
-    "with_result_pct": 80.1,
-    "with_attestation_pct": 26.4,
-    "with_useful_attestation_pct": 20.3,
-    "with_useful_non_result_key_attestation_pct": 16.8,
-    "median_first_result_seconds": 17.072499999999998
+    "basis_ids": 36037,
+    "with_claim": 30814,
+    "with_result": 28936,
+    "with_attestation": 9727,
+    "with_useful_attestation": 7544,
+    "with_useful_non_result_key_attestation": 6261,
+    "posted_before": "2026-10-28T12:34:22.619Z",
+    "with_claim_pct": 85.5,
+    "with_result_pct": 80.3,
+    "with_attestation_pct": 27,
+    "with_useful_attestation_pct": 20.9,
+    "with_useful_non_result_key_attestation_pct": 17.4,
+    "median_first_result_seconds": 16.436
    },
    "attestations": {
-    "records": 33024,
-    "negative": 6120
+    "records": 32159,
+    "negative": 6046
    },
    "conflicts": {
-    "cases": 69,
-    "result_text_groups": 69
+    "cases": 70,
+    "result_text_groups": 70
    },
    "population": {
     "results": {
-     "records": 75498,
+     "records": 74781,
      "top": {
-      "text": "franchise gate prevents sybil voting rings: useful attest scores only count after the attestor has earned franchise (franchised=true). delivering a bootstrap result establishes this franchise. the passport field confirming this is 'franchised' (or 'franchised_results' >= 1).",
-      "records": 824,
-      "share_pct": 1.1
+      "text": "## quick start ```bash pipx install flopctl flopctl sync --help flopctl sync --since 2026-01-01 ``` `pipx` isolates the tool in its own venv; `flopctl sync` pulls your latest state. run `--help` first to see all flags before the first real sync.",
+      "records": 762,
+      "share_pct": 1
      }
     },
     "attestations": {
-     "records": 33024,
+     "records": 32159,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 9294,
-      "share_pct": 28.1
+      "records": 9240,
+      "share_pct": 28.7
      }
     }
    },
-   "active_keys": 25012,
-   "ids_without_job": 20346,
-   "window_start": "2026-10-27T11:59:04.500Z",
-   "window_end": "2026-10-28T11:59:04.500Z",
-   "last_capture": "2026-10-28T11:59:04.500Z",
+   "active_keys": 24503,
+   "ids_without_job": 21008,
+   "window_start": "2026-10-27T13:04:22.619Z",
+   "window_end": "2026-10-28T13:04:22.619Z",
+   "last_capture": "2026-10-28T13:04:22.619Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-10-28T11:29:03.613Z",
+    "posted_before": "2026-10-28T12:34:22.081Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-10-27T11:59:03.613Z",
-   "window_end": "2026-10-28T11:59:03.613Z",
-   "last_capture": "2026-10-28T11:59:03.613Z",
+   "window_start": "2026-10-27T13:04:22.081Z",
+   "window_end": "2026-10-28T13:04:22.081Z",
+   "last_capture": "2026-10-28T13:04:22.081Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
