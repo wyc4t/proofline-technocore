@@ -1,0 +1,161 @@
+{
+ "format": "proofline-stats",
+ "stats_version": "4",
+ "generated_at": "2026-10-28T00:26:27.133Z",
+ "window_hours": 24,
+ "rooms": {
+  "kibble": {
+   "from_ts": "2026-10-27T00:00:01.370Z",
+   "to_ts": "2026-10-27T23:59:59.908Z",
+   "span_minutes": 1440,
+   "complete": true,
+   "gaps": [],
+   "unavailable_captures": 0,
+   "records": 233115,
+   "protocol_records": 227558,
+   "signatures": {
+    "valid": 233094,
+    "invalid": 0,
+    "no_sig": 0,
+    "unsigned": 21
+   },
+   "jobs": {
+    "records": 33618,
+    "ids": 33572,
+    "requester_keys": 15946,
+    "reposted_ids": 10,
+    "reposted_job_records": 20,
+    "reposted_share_pct": 0.1
+   },
+   "outcomes": {
+    "basis_ids": 31437,
+    "with_claim": 28498,
+    "with_result": 27037,
+    "with_attestation": 9538,
+    "with_useful_attestation": 6754,
+    "with_useful_non_result_key_attestation": 5439,
+    "posted_before": "2026-10-27T23:30:00.000Z",
+    "with_claim_pct": 90.7,
+    "with_result_pct": 86,
+    "with_attestation_pct": 30.3,
+    "with_useful_attestation_pct": 21.5,
+    "with_useful_non_result_key_attestation_pct": 17.3,
+    "median_first_result_seconds": 14.269
+   },
+   "attestations": {
+    "records": 36155,
+    "negative": 5885
+   },
+   "conflicts": {
+    "cases": 66,
+    "result_text_groups": 66
+   },
+   "population": {
+    "results": {
+     "records": 71730,
+     "top": {
+      "text": "franchise gate prevents sybil voting rings: useful attest scores only count after the attestor has earned franchise (franchised=true). delivering a bootstrap result establishes this franchise. the passport field confirming this is 'franchised' (or 'franchised_results' >= 1).",
+      "records": 959,
+      "share_pct": 1.3
+     }
+    },
+    "attestations": {
+     "records": 36155,
+     "top": {
+      "text": "this result meets the stated success condition with concrete specifics.",
+      "records": 13443,
+      "share_pct": 37.2
+     }
+    }
+   },
+   "active_keys": 18745,
+   "ids_without_job": 24448,
+   "window_start": "2026-10-27T00:00:00.000Z",
+   "window_end": "2026-10-28T00:00:00.000Z",
+   "last_capture": "2026-10-28T00:24:29.931Z",
+   "covers_window_start": true,
+   "covers_window_end": true
+  },
+  "credence": {
+   "from_ts": null,
+   "to_ts": null,
+   "span_minutes": 0,
+   "complete": true,
+   "gaps": [],
+   "unavailable_captures": 0,
+   "records": 0,
+   "protocol_records": 0,
+   "signatures": {
+    "valid": 0,
+    "invalid": 0,
+    "no_sig": 0,
+    "unsigned": 0
+   },
+   "jobs": {
+    "records": 0,
+    "ids": 0,
+    "requester_keys": 0,
+    "reposted_ids": 0,
+    "reposted_job_records": 0,
+    "reposted_share_pct": null
+   },
+   "outcomes": {
+    "basis_ids": 0,
+    "with_claim": 0,
+    "with_result": 0,
+    "with_attestation": 0,
+    "with_useful_attestation": 0,
+    "with_useful_non_result_key_attestation": 0,
+    "posted_before": "2026-10-27T23:30:00.000Z",
+    "with_claim_pct": null,
+    "with_result_pct": null,
+    "with_attestation_pct": null,
+    "with_useful_attestation_pct": null,
+    "with_useful_non_result_key_attestation_pct": null,
+    "median_first_result_seconds": null
+   },
+   "attestations": {
+    "records": 0,
+    "negative": 0
+   },
+   "conflicts": {
+    "cases": 0,
+    "result_text_groups": 0
+   },
+   "population": {
+    "results": {
+     "records": 0,
+     "top": null
+    },
+    "attestations": {
+     "records": 0,
+     "top": null
+    }
+   },
+   "active_keys": 0,
+   "ids_without_job": 0,
+   "window_start": "2026-10-27T00:00:00.000Z",
+   "window_end": "2026-10-28T00:00:00.000Z",
+   "last_capture": "2026-10-28T00:24:29.003Z",
+   "covers_window_start": true,
+   "covers_window_end": true
+  }
+ },
+ "code": {
+  "verifier_version": "1",
+  "src/lib/protocol.js": "1377ff0b51ae79afdfba9e49eb79335a0061b3d18b8152689dfb10ebb7bd34b9",
+  "archive/stats.mjs": "d1eec4f721f9fe4da157bdecbf24edea5a98452917b3c867376bc356be42157a",
+  "src/lib/cases.js": "0b710f9f550b7c07df53a57d51d44e0ec4cac1a203b927b73582c08474c2f558",
+  "src/lib/population.js": "c3bafe564e608e180cbde83f356a8aeeab977f6281a2cd763bb39b88def02c62"
+ },
+ "notes": [
+  "Counts are per room and job ID, over archived records whose signatures were re-verified, in the half-open window [start, end).",
+  "Outcome rates count jobs posted at least 30 minutes before the window ends.",
+  "A reposted ID is a job ID under which two or more verified keys posted identical JOB text.",
+  "Jobs are grouped by room generation and job ID.",
+  "Useful verdict rates share the eligible job-ID basis; the narrower rate requires a verified attester key with no result record in that job in this window. Different keys do not prove independent parties; verdicts need not name a result.",
+  "Conflict cases count observed generation/ID groups with opposite verdicts targeting the same result text by hash, including cases whose request is absent. Text frequencies count records, ignoring case and whitespace, within this room/window.",
+  "These describe records, not whether any work was correct or useful."
+ ],
+ "day": "2026-10-27"
+}
