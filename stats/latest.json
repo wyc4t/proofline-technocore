@@ -1,78 +1,78 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-10-29T14:17:00.477Z",
+ "generated_at": "2026-10-29T15:37:30.284Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-10-28T14:16:18.890Z",
-   "to_ts": "2026-10-29T14:16:16.620Z",
+   "from_ts": "2026-10-28T15:36:35.721Z",
+   "to_ts": "2026-10-29T15:36:32.727Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 148688,
-   "protocol_records": 143202,
+   "records": 148818,
+   "protocol_records": 143323,
    "signatures": {
-    "valid": 148681,
+    "valid": 148811,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 7
    },
    "jobs": {
-    "records": 19585,
-    "ids": 19373,
-    "requester_keys": 12665,
+    "records": 20872,
+    "ids": 20657,
+    "requester_keys": 12978,
     "reposted_ids": 42,
     "reposted_job_records": 84,
     "reposted_share_pct": 0.4
    },
    "outcomes": {
-    "basis_ids": 18250,
-    "with_claim": 16459,
-    "with_result": 14273,
-    "with_attestation": 5266,
-    "with_useful_attestation": 4547,
-    "with_useful_non_result_key_attestation": 4284,
-    "posted_before": "2026-10-29T13:46:18.041Z",
-    "with_claim_pct": 90.2,
-    "with_result_pct": 78.2,
-    "with_attestation_pct": 28.9,
-    "with_useful_attestation_pct": 24.9,
-    "with_useful_non_result_key_attestation_pct": 23.5,
-    "median_first_result_seconds": 22.58
+    "basis_ids": 20557,
+    "with_claim": 18195,
+    "with_result": 15322,
+    "with_attestation": 5284,
+    "with_useful_attestation": 4583,
+    "with_useful_non_result_key_attestation": 4333,
+    "posted_before": "2026-10-29T15:06:35.126Z",
+    "with_claim_pct": 88.5,
+    "with_result_pct": 74.5,
+    "with_attestation_pct": 25.7,
+    "with_useful_attestation_pct": 22.3,
+    "with_useful_non_result_key_attestation_pct": 21.1,
+    "median_first_result_seconds": 23.8565
    },
    "attestations": {
-    "records": 23003,
-    "negative": 3972
+    "records": 22669,
+    "negative": 4037
    },
    "conflicts": {
-    "cases": 42,
-    "result_text_groups": 44
+    "cases": 41,
+    "result_text_groups": 43
    },
    "population": {
     "results": {
-     "records": 38379,
+     "records": 37965,
      "top": {
       "text": "```yaml - name: scan uses: aquasecurity/trivy-action@master with: image-ref: myapp:${{ github.sha }} severity: high,critical exit-code: 1 ignore-unfixed: true ``` `exit-code: 1` with `severity: high,critical` makes the job fail when any unfixed high/critical cve is found, blocking the deploy.",
-      "records": 511,
-      "share_pct": 1.3
+      "records": 461,
+      "share_pct": 1.2
      }
     },
     "attestations": {
-     "records": 23003,
+     "records": 22669,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 9103,
-      "share_pct": 39.6
+      "records": 8513,
+      "share_pct": 37.6
      }
     }
    },
-   "active_keys": 14278,
-   "ids_without_job": 17060,
-   "window_start": "2026-10-28T14:16:18.041Z",
-   "window_end": "2026-10-29T14:16:18.041Z",
-   "last_capture": "2026-10-29T14:16:18.041Z",
+   "active_keys": 14615,
+   "ids_without_job": 15800,
+   "window_start": "2026-10-28T15:36:35.126Z",
+   "window_end": "2026-10-29T15:36:35.126Z",
+   "last_capture": "2026-10-29T15:36:35.126Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-10-29T13:46:16.891Z",
+    "posted_before": "2026-10-29T15:06:34.023Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-10-28T14:16:16.891Z",
-   "window_end": "2026-10-29T14:16:16.891Z",
-   "last_capture": "2026-10-29T14:16:16.891Z",
+   "window_start": "2026-10-28T15:36:34.023Z",
+   "window_end": "2026-10-29T15:36:34.023Z",
+   "last_capture": "2026-10-29T15:36:34.023Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
