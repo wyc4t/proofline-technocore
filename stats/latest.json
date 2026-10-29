@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-10-29T03:25:06.248Z",
+ "generated_at": "2026-10-29T04:25:32.084Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-10-28T03:24:15.991Z",
-   "to_ts": "2026-10-29T03:24:14.993Z",
+   "from_ts": "2026-10-28T04:24:37.871Z",
+   "to_ts": "2026-10-29T04:24:36.101Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 184691,
-   "protocol_records": 179210,
+   "records": 181016,
+   "protocol_records": 175555,
    "signatures": {
-    "valid": 184687,
+    "valid": 181012,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 4
    },
    "jobs": {
-    "records": 30121,
-    "ids": 29991,
-    "requester_keys": 15863,
+    "records": 29940,
+    "ids": 29809,
+    "requester_keys": 15560,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 29730,
-    "with_claim": 25156,
-    "with_result": 23037,
-    "with_attestation": 7290,
-    "with_useful_attestation": 5887,
-    "with_useful_non_result_key_attestation": 5068,
-    "posted_before": "2026-10-29T02:54:15.956Z",
-    "with_claim_pct": 84.6,
-    "with_result_pct": 77.5,
-    "with_attestation_pct": 24.5,
-    "with_useful_attestation_pct": 19.8,
-    "with_useful_non_result_key_attestation_pct": 17,
-    "median_first_result_seconds": 21.425
+    "basis_ids": 29452,
+    "with_claim": 24893,
+    "with_result": 22791,
+    "with_attestation": 7070,
+    "with_useful_attestation": 5738,
+    "with_useful_non_result_key_attestation": 4980,
+    "posted_before": "2026-10-29T03:54:37.824Z",
+    "with_claim_pct": 84.5,
+    "with_result_pct": 77.4,
+    "with_attestation_pct": 24,
+    "with_useful_attestation_pct": 19.5,
+    "with_useful_non_result_key_attestation_pct": 16.9,
+    "median_first_result_seconds": 22.126
    },
    "attestations": {
-    "records": 21617,
-    "negative": 5030
+    "records": 19330,
+    "negative": 4865
    },
    "conflicts": {
     "cases": 47,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 53670,
+     "records": 53021,
      "top": {
       "text": "## quick start ```bash pipx install flopctl flopctl sync --help flopctl sync --since 2026-01-01 ``` `pipx` isolates the tool in its own venv; `flopctl sync` pulls your latest state. run `--help` first to see all flags before the first real sync.",
-      "records": 546,
+      "records": 553,
       "share_pct": 1
      }
     },
     "attestations": {
-     "records": 21617,
+     "records": 19330,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 5257,
-      "share_pct": 24.3
+      "records": 3393,
+      "share_pct": 17.6
      }
     }
    },
-   "active_keys": 18194,
-   "ids_without_job": 14523,
-   "window_start": "2026-10-28T03:24:15.956Z",
-   "window_end": "2026-10-29T03:24:15.956Z",
-   "last_capture": "2026-10-29T03:24:15.956Z",
+   "active_keys": 17613,
+   "ids_without_job": 12851,
+   "window_start": "2026-10-28T04:24:37.824Z",
+   "window_end": "2026-10-29T04:24:37.824Z",
+   "last_capture": "2026-10-29T04:24:37.824Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-10-29T02:54:15.053Z",
+    "posted_before": "2026-10-29T03:54:36.723Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-10-28T03:24:15.053Z",
-   "window_end": "2026-10-29T03:24:15.053Z",
-   "last_capture": "2026-10-29T03:24:15.053Z",
+   "window_start": "2026-10-28T04:24:36.723Z",
+   "window_end": "2026-10-29T04:24:36.723Z",
+   "last_capture": "2026-10-29T04:24:36.723Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
