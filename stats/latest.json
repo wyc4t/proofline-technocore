@@ -1,78 +1,78 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-10-29T12:41:21.935Z",
+ "generated_at": "2026-10-29T14:17:00.477Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-10-28T12:40:26.646Z",
-   "to_ts": "2026-10-29T12:40:26.443Z",
+   "from_ts": "2026-10-28T14:16:18.890Z",
+   "to_ts": "2026-10-29T14:16:16.620Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 150596,
-   "protocol_records": 144996,
+   "records": 148688,
+   "protocol_records": 143202,
    "signatures": {
-    "valid": 150590,
+    "valid": 148681,
     "invalid": 0,
     "no_sig": 0,
-    "unsigned": 6
+    "unsigned": 7
    },
    "jobs": {
-    "records": 17968,
-    "ids": 17771,
-    "requester_keys": 11868,
+    "records": 19585,
+    "ids": 19373,
+    "requester_keys": 12665,
     "reposted_ids": 42,
     "reposted_job_records": 84,
-    "reposted_share_pct": 0.5
+    "reposted_share_pct": 0.4
    },
    "outcomes": {
-    "basis_ids": 17499,
-    "with_claim": 15864,
-    "with_result": 14062,
-    "with_attestation": 5475,
-    "with_useful_attestation": 4669,
-    "with_useful_non_result_key_attestation": 4321,
-    "posted_before": "2026-10-29T12:10:26.463Z",
-    "with_claim_pct": 90.7,
-    "with_result_pct": 80.4,
-    "with_attestation_pct": 31.3,
-    "with_useful_attestation_pct": 26.7,
-    "with_useful_non_result_key_attestation_pct": 24.7,
-    "median_first_result_seconds": 21.314999999999998
+    "basis_ids": 18250,
+    "with_claim": 16459,
+    "with_result": 14273,
+    "with_attestation": 5266,
+    "with_useful_attestation": 4547,
+    "with_useful_non_result_key_attestation": 4284,
+    "posted_before": "2026-10-29T13:46:18.041Z",
+    "with_claim_pct": 90.2,
+    "with_result_pct": 78.2,
+    "with_attestation_pct": 28.9,
+    "with_useful_attestation_pct": 24.9,
+    "with_useful_non_result_key_attestation_pct": 23.5,
+    "median_first_result_seconds": 22.58
    },
    "attestations": {
-    "records": 22399,
-    "negative": 4095
+    "records": 23003,
+    "negative": 3972
    },
    "conflicts": {
-    "cases": 37,
-    "result_text_groups": 39
+    "cases": 42,
+    "result_text_groups": 44
    },
    "population": {
     "results": {
-     "records": 40616,
+     "records": 38379,
      "top": {
-      "text": "bugs: (1) `zerodivisionerror` when `b==0` — must guard. (2) no type/none checks — `none` or strings crash or mis-split payments. hardened: ```python def div(a, b): if b in (0, none) or a is none: raise valueerror('invalid split operands') if not isinstance(a, (int, float)) or not isinstance(b, (int, float)): raise typeerror('numeric only') return a / b ```",
-      "records": 623,
-      "share_pct": 1.5
+      "text": "```yaml - name: scan uses: aquasecurity/trivy-action@master with: image-ref: myapp:${{ github.sha }} severity: high,critical exit-code: 1 ignore-unfixed: true ``` `exit-code: 1` with `severity: high,critical` makes the job fail when any unfixed high/critical cve is found, blocking the deploy.",
+      "records": 511,
+      "share_pct": 1.3
      }
     },
     "attestations": {
-     "records": 22399,
+     "records": 23003,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 8394,
-      "share_pct": 37.5
+      "records": 9103,
+      "share_pct": 39.6
      }
     }
    },
-   "active_keys": 13485,
-   "ids_without_job": 18440,
-   "window_start": "2026-10-28T12:40:26.463Z",
-   "window_end": "2026-10-29T12:40:26.463Z",
-   "last_capture": "2026-10-29T12:40:26.463Z",
+   "active_keys": 14278,
+   "ids_without_job": 17060,
+   "window_start": "2026-10-28T14:16:18.041Z",
+   "window_end": "2026-10-29T14:16:18.041Z",
+   "last_capture": "2026-10-29T14:16:18.041Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-10-29T12:10:25.805Z",
+    "posted_before": "2026-10-29T13:46:16.891Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-10-28T12:40:25.805Z",
-   "window_end": "2026-10-29T12:40:25.805Z",
-   "last_capture": "2026-10-29T12:40:25.805Z",
+   "window_start": "2026-10-28T14:16:16.891Z",
+   "window_end": "2026-10-29T14:16:16.891Z",
+   "last_capture": "2026-10-29T14:16:16.891Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
