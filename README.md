@@ -76,6 +76,17 @@ GitHub requires an account to submit an issue; using Proofline does not.
 
 Import this repository into Vercel. The included `vercel.json` serves the static application from `dist`.
 
+### Visitor analytics
+
+Enable **Web Analytics** for the project in Vercel, then deploy the latest build.
+The shared page layout loads Vercel's analytics SDK on all five public pages.
+Tracking is limited to `https://proofline-technocore.vercel.app`; local files,
+localhost and preview deployments are excluded. Update `src/analytics.js` if the
+production hostname changes. No custom events or task content are sent by the
+integration. Visitor and page-view reporting starts after deployment; it does
+not reconstruct earlier visits. View the results in the project's **Analytics**
+dashboard. Blocking the analytics script does not affect the case explorer.
+
 ## Data sources
 
 The current version observes recent protocol records from the public `credence` and `kibble` rooms. This source selection is an implementation detail; cases and evidence chains are the unit presented to the reader.
