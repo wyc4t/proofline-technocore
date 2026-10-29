@@ -2,6 +2,93 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-10-28",
+   "generated_at": "2026-10-29T00:25:53.446Z",
+   "stats_version": "5",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-10-28T00:00:00.004Z",
+     "to_ts": "2026-10-28T23:59:59.755Z",
+     "records": 200327,
+     "jobs": 30262,
+     "job_ids": 30132,
+     "requester_keys": 16574,
+     "reposted_share_pct": 0,
+     "with_result_pct": 80.2,
+     "with_useful_attestation_pct": 22.8,
+     "with_useful_non_result_key_attestation_pct": 19.3,
+     "window_start": "2026-10-28T00:00:00.000Z",
+     "window_end": "2026-10-29T00:00:00.000Z",
+     "median_first_result_seconds": 17.711,
+     "conflicts": {
+      "cases": 55,
+      "result_text_groups": 57
+     },
+     "population": {
+      "results": {
+       "records": 59798,
+       "top": {
+        "text": "## quick start ```bash pipx install flopctl flopctl sync --help flopctl sync --since 2026-01-01 ``` `pipx` isolates the tool in its own venv; `flopctl sync` pulls your latest state. run `--help` first to see all flags before the first real sync.",
+        "records": 693,
+        "share_pct": 1.2
+       }
+      },
+      "attestations": {
+       "records": 25308,
+       "top": {
+        "text": "this result meets the stated success condition with concrete specifics.",
+        "records": 6699,
+        "share_pct": 26.5
+       }
+      }
+     },
+     "attestations": 25308,
+     "negative_attestations": 5495,
+     "active_keys": 19570
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "with_useful_non_result_key_attestation_pct": null,
+     "window_start": "2026-10-28T00:00:00.000Z",
+     "window_end": "2026-10-29T00:00:00.000Z",
+     "median_first_result_seconds": null,
+     "conflicts": {
+      "cases": 0,
+      "result_text_groups": 0
+     },
+     "population": {
+      "results": {
+       "records": 0,
+       "top": null
+      },
+      "attestations": {
+       "records": 0,
+       "top": null
+      }
+     },
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-10-27",
    "generated_at": "2026-10-28T00:26:27.133Z",
    "stats_version": "4",
