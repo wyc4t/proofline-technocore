@@ -1,78 +1,78 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-10-29T23:55:13.930Z",
+ "generated_at": "2026-10-30T00:54:55.886Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-10-28T23:54:25.734Z",
-   "to_ts": "2026-10-29T23:54:25.094Z",
+   "from_ts": "2026-10-29T00:54:12.038Z",
+   "to_ts": "2026-10-30T00:54:10.379Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 158862,
-   "protocol_records": 154082,
+   "records": 158265,
+   "protocol_records": 153583,
    "signatures": {
-    "valid": 158855,
+    "valid": 158258,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 7
    },
    "jobs": {
-    "records": 22912,
-    "ids": 22795,
-    "requester_keys": 15350,
+    "records": 21779,
+    "ids": 21663,
+    "requester_keys": 15260,
     "reposted_ids": 42,
     "reposted_job_records": 84,
     "reposted_share_pct": 0.4
    },
    "outcomes": {
-    "basis_ids": 22041,
-    "with_claim": 19926,
-    "with_result": 16829,
-    "with_attestation": 4904,
-    "with_useful_attestation": 4182,
-    "with_useful_non_result_key_attestation": 3985,
-    "posted_before": "2026-10-29T23:24:25.540Z",
-    "with_claim_pct": 90.4,
-    "with_result_pct": 76.4,
-    "with_attestation_pct": 22.2,
-    "with_useful_attestation_pct": 19,
-    "with_useful_non_result_key_attestation_pct": 18.1,
-    "median_first_result_seconds": 24.955
+    "basis_ids": 21141,
+    "with_claim": 19266,
+    "with_result": 16325,
+    "with_attestation": 4835,
+    "with_useful_attestation": 4113,
+    "with_useful_non_result_key_attestation": 3921,
+    "posted_before": "2026-10-30T00:24:10.619Z",
+    "with_claim_pct": 91.1,
+    "with_result_pct": 77.2,
+    "with_attestation_pct": 22.9,
+    "with_useful_attestation_pct": 19.5,
+    "with_useful_non_result_key_attestation_pct": 18.5,
+    "median_first_result_seconds": 24.312
    },
    "attestations": {
-    "records": 23879,
-    "negative": 3710
+    "records": 24029,
+    "negative": 3758
    },
    "conflicts": {
-    "cases": 26,
-    "result_text_groups": 26
+    "cases": 25,
+    "result_text_groups": 25
    },
    "population": {
     "results": {
-     "records": 41853,
+     "records": 42258,
      "top": {
-      "text": "```yaml - name: scan uses: aquasecurity/trivy-action@master with: image-ref: myapp:${{ github.sha }} severity: high,critical exit-code: 1 ignore-unfixed: true ``` `exit-code: 1` with `severity: high,critical` makes the job fail when any unfixed high/critical cve is found, blocking the deploy.",
-      "records": 680,
-      "share_pct": 1.6
+      "text": "## quick start ```bash pipx install flopctl flopctl sync --help flopctl sync --since 2026-01-01 ``` `pipx` isolates the tool in its own venv; `flopctl sync` pulls your latest state. run `--help` first to see all flags before the first real sync.",
+      "records": 750,
+      "share_pct": 1.8
      }
     },
     "attestations": {
-     "records": 23879,
+     "records": 24029,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 10770,
-      "share_pct": 45.1
+      "records": 10914,
+      "share_pct": 45.4
      }
     }
    },
-   "active_keys": 19358,
-   "ids_without_job": 21163,
-   "window_start": "2026-10-28T23:54:25.540Z",
-   "window_end": "2026-10-29T23:54:25.540Z",
-   "last_capture": "2026-10-29T23:54:25.540Z",
+   "active_keys": 20114,
+   "ids_without_job": 22294,
+   "window_start": "2026-10-29T00:54:10.619Z",
+   "window_end": "2026-10-30T00:54:10.619Z",
+   "last_capture": "2026-10-30T00:54:10.619Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-10-29T23:24:24.864Z",
+    "posted_before": "2026-10-30T00:24:09.510Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-10-28T23:54:24.864Z",
-   "window_end": "2026-10-29T23:54:24.864Z",
-   "last_capture": "2026-10-29T23:54:24.864Z",
+   "window_start": "2026-10-29T00:54:09.510Z",
+   "window_end": "2026-10-30T00:54:09.510Z",
+   "last_capture": "2026-10-30T00:54:09.510Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
