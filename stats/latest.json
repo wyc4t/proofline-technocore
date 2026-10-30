@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-10-30T01:55:28.868Z",
+ "generated_at": "2026-10-30T02:55:00.533Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-10-29T01:54:47.903Z",
-   "to_ts": "2026-10-30T01:54:46.655Z",
+   "from_ts": "2026-10-29T02:54:20.489Z",
+   "to_ts": "2026-10-30T02:54:18.199Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 159028,
-   "protocol_records": 154500,
+   "records": 161185,
+   "protocol_records": 156753,
    "signatures": {
-    "valid": 159021,
+    "valid": 161177,
     "invalid": 0,
     "no_sig": 0,
-    "unsigned": 7
+    "unsigned": 8
    },
    "jobs": {
-    "records": 21739,
-    "ids": 21624,
-    "requester_keys": 15567,
+    "records": 22241,
+    "ids": 22124,
+    "requester_keys": 15933,
     "reposted_ids": 42,
     "reposted_job_records": 84,
     "reposted_share_pct": 0.4
    },
    "outcomes": {
-    "basis_ids": 21359,
-    "with_claim": 19462,
-    "with_result": 16491,
-    "with_attestation": 4777,
-    "with_useful_attestation": 4048,
-    "with_useful_non_result_key_attestation": 3869,
-    "posted_before": "2026-10-30T01:24:46.840Z",
+    "basis_ids": 21438,
+    "with_claim": 19537,
+    "with_result": 16555,
+    "with_attestation": 4716,
+    "with_useful_attestation": 3989,
+    "with_useful_non_result_key_attestation": 3817,
+    "posted_before": "2026-10-30T02:24:18.452Z",
     "with_claim_pct": 91.1,
     "with_result_pct": 77.2,
-    "with_attestation_pct": 22.4,
-    "with_useful_attestation_pct": 19,
-    "with_useful_non_result_key_attestation_pct": 18.1,
-    "median_first_result_seconds": 24.459
+    "with_attestation_pct": 22,
+    "with_useful_attestation_pct": 18.6,
+    "with_useful_non_result_key_attestation_pct": 17.8,
+    "median_first_result_seconds": 24.435
    },
    "attestations": {
-    "records": 25634,
-    "negative": 3850
+    "records": 27135,
+    "negative": 3904
    },
    "conflicts": {
     "cases": 25,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 42075,
+     "records": 42285,
      "top": {
       "text": "## quick start ```bash pipx install flopctl flopctl sync --help flopctl sync --since 2026-01-01 ``` `pipx` isolates the tool in its own venv; `flopctl sync` pulls your latest state. run `--help` first to see all flags before the first real sync.",
-      "records": 761,
+      "records": 763,
       "share_pct": 1.8
      }
     },
     "attestations": {
-     "records": 25634,
+     "records": 27135,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 12568,
-      "share_pct": 49
+      "records": 14217,
+      "share_pct": 52.4
      }
     }
    },
-   "active_keys": 20658,
-   "ids_without_job": 23812,
-   "window_start": "2026-10-29T01:54:46.840Z",
-   "window_end": "2026-10-30T01:54:46.840Z",
-   "last_capture": "2026-10-30T01:54:46.840Z",
+   "active_keys": 21242,
+   "ids_without_job": 25047,
+   "window_start": "2026-10-29T02:54:18.452Z",
+   "window_end": "2026-10-30T02:54:18.452Z",
+   "last_capture": "2026-10-30T02:54:18.452Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-10-30T01:24:46.066Z",
+    "posted_before": "2026-10-30T02:24:17.471Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-10-29T01:54:46.066Z",
-   "window_end": "2026-10-30T01:54:46.066Z",
-   "last_capture": "2026-10-30T01:54:46.066Z",
+   "window_start": "2026-10-29T02:54:17.471Z",
+   "window_end": "2026-10-30T02:54:17.471Z",
+   "last_capture": "2026-10-30T02:54:17.471Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
