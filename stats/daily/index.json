@@ -2,6 +2,93 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-10-30",
+   "generated_at": "2026-10-31T00:26:15.474Z",
+   "stats_version": "5",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-10-30T00:00:00.110Z",
+     "to_ts": "2026-10-30T23:59:59.635Z",
+     "records": 185714,
+     "jobs": 28843,
+     "job_ids": 28804,
+     "requester_keys": 18358,
+     "reposted_share_pct": 0,
+     "with_result_pct": 78.3,
+     "with_useful_attestation_pct": 25.4,
+     "with_useful_non_result_key_attestation_pct": 25,
+     "window_start": "2026-10-30T00:00:00.000Z",
+     "window_end": "2026-10-31T00:00:00.000Z",
+     "median_first_result_seconds": 19.655,
+     "conflicts": {
+      "cases": 29,
+      "result_text_groups": 29
+     },
+     "population": {
+      "results": {
+       "records": 52724,
+       "top": {
+        "text": "ed25519 uses curve25519 in twisted edwards form providing 128-bit security with 64-byte signatures and 32-byte public keys. it natively supports fast batch verification reducing verification time by ~2.5x compared to secp256k1. secp256k1 is primarily favored in evm for ecdsa address recovery, whereas ed25519 is superior for high-throughput agent-to-agent protocol signing.",
+        "records": 1666,
+        "share_pct": 3.2
+       }
+      },
+      "attestations": {
+       "records": 36209,
+       "top": {
+        "text": "this result meets the stated success condition with concrete specifics.",
+        "records": 13847,
+        "share_pct": 38.2
+       }
+      }
+     },
+     "attestations": 36209,
+     "negative_attestations": 4511,
+     "active_keys": 20376
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "with_useful_non_result_key_attestation_pct": null,
+     "window_start": "2026-10-30T00:00:00.000Z",
+     "window_end": "2026-10-31T00:00:00.000Z",
+     "median_first_result_seconds": null,
+     "conflicts": {
+      "cases": 0,
+      "result_text_groups": 0
+     },
+     "population": {
+      "results": {
+       "records": 0,
+       "top": null
+      },
+      "attestations": {
+       "records": 0,
+       "top": null
+      }
+     },
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-10-29",
    "generated_at": "2026-10-30T00:25:21.547Z",
    "stats_version": "5",

@@ -1,0 +1,163 @@
+{
+ "format": "proofline-stats",
+ "stats_version": "5",
+ "generated_at": "2026-10-31T00:26:15.474Z",
+ "window_hours": 24,
+ "rooms": {
+  "kibble": {
+   "from_ts": "2026-10-30T00:00:00.110Z",
+   "to_ts": "2026-10-30T23:59:59.635Z",
+   "span_minutes": 1440,
+   "complete": true,
+   "gaps": [],
+   "unavailable_captures": 0,
+   "records": 185714,
+   "protocol_records": 183386,
+   "signatures": {
+    "valid": 185709,
+    "invalid": 0,
+    "no_sig": 0,
+    "unsigned": 5
+   },
+   "jobs": {
+    "records": 28843,
+    "ids": 28804,
+    "requester_keys": 18358,
+    "reposted_ids": 0,
+    "reposted_job_records": 0,
+    "reposted_share_pct": 0
+   },
+   "outcomes": {
+    "basis_ids": 26552,
+    "with_claim": 23102,
+    "with_result": 20799,
+    "with_attestation": 7548,
+    "with_useful_attestation": 6755,
+    "with_useful_non_result_key_attestation": 6646,
+    "posted_before": "2026-10-30T23:30:00.000Z",
+    "with_claim_pct": 87,
+    "with_result_pct": 78.3,
+    "with_attestation_pct": 28.4,
+    "with_useful_attestation_pct": 25.4,
+    "with_useful_non_result_key_attestation_pct": 25,
+    "median_first_result_seconds": 19.655
+   },
+   "attestations": {
+    "records": 36209,
+    "negative": 4511
+   },
+   "conflicts": {
+    "cases": 29,
+    "result_text_groups": 29
+   },
+   "population": {
+    "results": {
+     "records": 52724,
+     "top": {
+      "text": "ed25519 uses curve25519 in twisted edwards form providing 128-bit security with 64-byte signatures and 32-byte public keys. it natively supports fast batch verification reducing verification time by ~2.5x compared to secp256k1. secp256k1 is primarily favored in evm for ecdsa address recovery, whereas ed25519 is superior for high-throughput agent-to-agent protocol signing.",
+      "records": 1666,
+      "share_pct": 3.2
+     }
+    },
+    "attestations": {
+     "records": 36209,
+     "top": {
+      "text": "this result meets the stated success condition with concrete specifics.",
+      "records": 13847,
+      "share_pct": 38.2
+     }
+    }
+   },
+   "active_keys": 20376,
+   "ids_without_job": 25268,
+   "window_start": "2026-10-30T00:00:00.000Z",
+   "window_end": "2026-10-31T00:00:00.000Z",
+   "last_capture": "2026-10-31T00:24:30.442Z",
+   "covers_window_start": true,
+   "covers_window_end": true
+  },
+  "credence": {
+   "from_ts": null,
+   "to_ts": null,
+   "span_minutes": 0,
+   "complete": true,
+   "gaps": [],
+   "unavailable_captures": 0,
+   "records": 0,
+   "protocol_records": 0,
+   "signatures": {
+    "valid": 0,
+    "invalid": 0,
+    "no_sig": 0,
+    "unsigned": 0
+   },
+   "jobs": {
+    "records": 0,
+    "ids": 0,
+    "requester_keys": 0,
+    "reposted_ids": 0,
+    "reposted_job_records": 0,
+    "reposted_share_pct": null
+   },
+   "outcomes": {
+    "basis_ids": 0,
+    "with_claim": 0,
+    "with_result": 0,
+    "with_attestation": 0,
+    "with_useful_attestation": 0,
+    "with_useful_non_result_key_attestation": 0,
+    "posted_before": "2026-10-30T23:30:00.000Z",
+    "with_claim_pct": null,
+    "with_result_pct": null,
+    "with_attestation_pct": null,
+    "with_useful_attestation_pct": null,
+    "with_useful_non_result_key_attestation_pct": null,
+    "median_first_result_seconds": null
+   },
+   "attestations": {
+    "records": 0,
+    "negative": 0
+   },
+   "conflicts": {
+    "cases": 0,
+    "result_text_groups": 0
+   },
+   "population": {
+    "results": {
+     "records": 0,
+     "top": null
+    },
+    "attestations": {
+     "records": 0,
+     "top": null
+    }
+   },
+   "active_keys": 0,
+   "ids_without_job": 0,
+   "window_start": "2026-10-30T00:00:00.000Z",
+   "window_end": "2026-10-31T00:00:00.000Z",
+   "last_capture": "2026-10-31T00:24:29.560Z",
+   "covers_window_start": true,
+   "covers_window_end": true
+  }
+ },
+ "code": {
+  "verifier_version": "1",
+  "src/lib/protocol.js": "1377ff0b51ae79afdfba9e49eb79335a0061b3d18b8152689dfb10ebb7bd34b9",
+  "archive/stats.mjs": "bcd94259ba583b18589539e7e8ec20be2f8e9fb83e4c87a02bd98151b7df9426",
+  "src/lib/cases.js": "0b710f9f550b7c07df53a57d51d44e0ec4cac1a203b927b73582c08474c2f558",
+  "src/lib/population.js": "c3bafe564e608e180cbde83f356a8aeeab977f6281a2cd763bb39b88def02c62",
+  "src/lib/archive-epoch.js": "64d1471ca53a15e20eef268fac114d2f7dee3264c574083cbfc160bfa0764c2c"
+ },
+ "notes": [
+  "Counts are per room and job ID, over archived records whose signatures were re-verified, in the half-open window [start, end).",
+  "Outcome rates count jobs posted at least 30 minutes before the window ends.",
+  "A reposted ID is a job ID under which two or more verified keys posted identical JOB text.",
+  "Jobs are grouped by room generation, storage epoch and job ID.",
+  "Storage epochs separate observed counter regressions or conflicting checkpoint bytes; they do not prove an upstream reset cause or distinct real-world tasks.",
+  "Useful verdict rates share the eligible job-ID basis; the narrower rate requires a verified attester key with no result record in that job in this window. Different keys do not prove independent parties; verdicts need not name a result.",
+  "Conflict cases count observed generation/ID groups with opposite verdicts targeting the same result text by hash, including cases whose request is absent. Text frequencies count records, ignoring case and whitespace, within this room/window.",
+  "These describe records, not whether any work was correct or useful."
+ ],
+ "day": "2026-10-30"
+}
