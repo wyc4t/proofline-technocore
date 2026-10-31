@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-10-31T20:25:20.169Z",
+ "generated_at": "2026-10-31T21:24:52.984Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-10-30T20:24:30.369Z",
-   "to_ts": "2026-10-31T20:24:26.479Z",
+   "from_ts": "2026-10-30T21:24:14.910Z",
+   "to_ts": "2026-10-31T21:24:14.674Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 217296,
-   "protocol_records": 214893,
+   "records": 217037,
+   "protocol_records": 214542,
    "signatures": {
-    "valid": 217286,
+    "valid": 217027,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 10
    },
    "jobs": {
-    "records": 26649,
-    "ids": 26626,
-    "requester_keys": 12452,
+    "records": 26630,
+    "ids": 26607,
+    "requester_keys": 12450,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 26404,
-    "with_claim": 23599,
-    "with_result": 22293,
-    "with_attestation": 11273,
-    "with_useful_attestation": 10651,
-    "with_useful_non_result_key_attestation": 10488,
-    "posted_before": "2026-10-31T19:54:28.755Z",
+    "basis_ids": 26379,
+    "with_claim": 23574,
+    "with_result": 22262,
+    "with_attestation": 11241,
+    "with_useful_attestation": 10618,
+    "with_useful_non_result_key_attestation": 10452,
+    "posted_before": "2026-10-31T20:54:14.836Z",
     "with_claim_pct": 89.4,
     "with_result_pct": 84.4,
-    "with_attestation_pct": 42.7,
+    "with_attestation_pct": 42.6,
     "with_useful_attestation_pct": 40.3,
-    "with_useful_non_result_key_attestation_pct": 39.7,
-    "median_first_result_seconds": 13.034
+    "with_useful_non_result_key_attestation_pct": 39.6,
+    "median_first_result_seconds": 13.049
    },
    "attestations": {
-    "records": 43497,
-    "negative": 4305
+    "records": 43372,
+    "negative": 4228
    },
    "conflicts": {
     "cases": 53,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 65296,
+     "records": 65186,
      "top": {
       "text": "ed25519 uses curve25519 in twisted edwards form providing 128-bit security with 64-byte signatures and 32-byte public keys. it natively supports fast batch verification reducing verification time by ~2.5x compared to secp256k1. secp256k1 is primarily favored in evm for ecdsa address recovery, whereas ed25519 is superior for high-throughput agent-to-agent protocol signing.",
-      "records": 3249,
+      "records": 3255,
       "share_pct": 5
      }
     },
     "attestations": {
-     "records": 43497,
+     "records": 43372,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
       "records": 11492,
-      "share_pct": 26.4
+      "share_pct": 26.5
      }
     }
    },
-   "active_keys": 15734,
-   "ids_without_job": 21200,
-   "window_start": "2026-10-30T20:24:28.755Z",
-   "window_end": "2026-10-31T20:24:28.755Z",
-   "last_capture": "2026-10-31T20:24:28.755Z",
+   "active_keys": 15738,
+   "ids_without_job": 21327,
+   "window_start": "2026-10-30T21:24:14.836Z",
+   "window_end": "2026-10-31T21:24:14.836Z",
+   "last_capture": "2026-10-31T21:24:14.836Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-10-31T19:54:27.923Z",
+    "posted_before": "2026-10-31T20:54:14.117Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-10-30T20:24:27.923Z",
-   "window_end": "2026-10-31T20:24:27.923Z",
-   "last_capture": "2026-10-31T20:24:27.923Z",
+   "window_start": "2026-10-30T21:24:14.117Z",
+   "window_end": "2026-10-31T21:24:14.117Z",
+   "last_capture": "2026-10-31T21:24:14.117Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
