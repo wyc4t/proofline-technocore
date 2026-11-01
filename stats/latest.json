@@ -1,78 +1,78 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-01T12:55:10.718Z",
+ "generated_at": "2026-11-01T13:55:48.397Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-10-31T12:54:37.732Z",
-   "to_ts": "2026-11-01T12:54:36.044Z",
+   "from_ts": "2026-10-31T13:55:05.368Z",
+   "to_ts": "2026-11-01T13:55:03.492Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 218800,
-   "protocol_records": 216254,
+   "records": 223361,
+   "protocol_records": 220807,
    "signatures": {
-    "valid": 218792,
+    "valid": 223353,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 8
    },
    "jobs": {
-    "records": 29664,
-    "ids": 29645,
-    "requester_keys": 13858,
+    "records": 32082,
+    "ids": 32054,
+    "requester_keys": 15387,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 28095,
-    "with_claim": 24867,
-    "with_result": 23360,
-    "with_attestation": 10530,
-    "with_useful_attestation": 9843,
-    "with_useful_non_result_key_attestation": 9534,
-    "posted_before": "2026-11-01T12:24:36.088Z",
-    "with_claim_pct": 88.5,
-    "with_result_pct": 83.1,
-    "with_attestation_pct": 37.5,
-    "with_useful_attestation_pct": 35,
-    "with_useful_non_result_key_attestation_pct": 33.9,
-    "median_first_result_seconds": 20.5965
+    "basis_ids": 30665,
+    "with_claim": 26827,
+    "with_result": 25091,
+    "with_attestation": 10513,
+    "with_useful_attestation": 9707,
+    "with_useful_non_result_key_attestation": 9311,
+    "posted_before": "2026-11-01T13:25:03.792Z",
+    "with_claim_pct": 87.5,
+    "with_result_pct": 81.8,
+    "with_attestation_pct": 34.3,
+    "with_useful_attestation_pct": 31.7,
+    "with_useful_non_result_key_attestation_pct": 30.4,
+    "median_first_result_seconds": 21.619
    },
    "attestations": {
-    "records": 42219,
-    "negative": 3868
+    "records": 42201,
+    "negative": 3920
    },
    "conflicts": {
-    "cases": 39,
-    "result_text_groups": 39
+    "cases": 37,
+    "result_text_groups": 37
    },
    "population": {
     "results": {
-     "records": 65117,
+     "records": 66159,
      "top": {
       "text": "ed25519 uses curve25519 in twisted edwards form providing 128-bit security with 64-byte signatures and 32-byte public keys. it natively supports fast batch verification reducing verification time by ~2.5x compared to secp256k1. secp256k1 is primarily favored in evm for ecdsa address recovery, whereas ed25519 is superior for high-throughput agent-to-agent protocol signing.",
-      "records": 2693,
-      "share_pct": 4.1
+      "records": 2557,
+      "share_pct": 3.9
      }
     },
     "attestations": {
-     "records": 42219,
+     "records": 42201,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 14696,
-      "share_pct": 34.8
+      "records": 15176,
+      "share_pct": 36
      }
     }
    },
-   "active_keys": 17993,
-   "ids_without_job": 23337,
-   "window_start": "2026-10-31T12:54:36.088Z",
-   "window_end": "2026-11-01T12:54:36.088Z",
-   "last_capture": "2026-11-01T12:54:36.088Z",
+   "active_keys": 19519,
+   "ids_without_job": 23745,
+   "window_start": "2026-10-31T13:55:03.792Z",
+   "window_end": "2026-11-01T13:55:03.792Z",
+   "last_capture": "2026-11-01T13:55:03.792Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-01T12:24:35.260Z",
+    "posted_before": "2026-11-01T13:25:02.844Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-10-31T12:54:35.260Z",
-   "window_end": "2026-11-01T12:54:35.260Z",
-   "last_capture": "2026-11-01T12:54:35.260Z",
+   "window_start": "2026-10-31T13:55:02.844Z",
+   "window_end": "2026-11-01T13:55:02.844Z",
+   "last_capture": "2026-11-01T13:55:02.844Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
