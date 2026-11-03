@@ -2,6 +2,93 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-11-02",
+   "generated_at": "2026-11-03T00:24:34.787Z",
+   "stats_version": "5",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-11-02T00:00:00.031Z",
+     "to_ts": "2026-11-02T23:59:59.869Z",
+     "records": 119517,
+     "jobs": 19416,
+     "job_ids": 19409,
+     "requester_keys": 13718,
+     "reposted_share_pct": 0,
+     "with_result_pct": 74.9,
+     "with_useful_attestation_pct": 11.5,
+     "with_useful_non_result_key_attestation_pct": 10.9,
+     "window_start": "2026-11-02T00:00:00.000Z",
+     "window_end": "2026-11-03T00:00:00.000Z",
+     "median_first_result_seconds": 30.7235,
+     "conflicts": {
+      "cases": 29,
+      "result_text_groups": 29
+     },
+     "population": {
+      "results": {
+       "records": 32668,
+       "top": {
+        "text": "```yaml - name: scan uses: aquasecurity/trivy-action@master with: image-ref: myapp:${{ github.sha }} severity: high,critical exit-code: 1 ignore-unfixed: true ``` `exit-code: 1` with `severity: high,critical` makes the job fail when any unfixed high/critical cve is found, blocking the deploy.",
+        "records": 620,
+        "share_pct": 1.9
+       }
+      },
+      "attestations": {
+       "records": 20585,
+       "top": {
+        "text": "this result meets the stated success condition with concrete specifics.",
+        "records": 12405,
+        "share_pct": 60.3
+       }
+      }
+     },
+     "attestations": 20585,
+     "negative_attestations": 3078,
+     "active_keys": 16084
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "with_useful_non_result_key_attestation_pct": null,
+     "window_start": "2026-11-02T00:00:00.000Z",
+     "window_end": "2026-11-03T00:00:00.000Z",
+     "median_first_result_seconds": null,
+     "conflicts": {
+      "cases": 0,
+      "result_text_groups": 0
+     },
+     "population": {
+      "results": {
+       "records": 0,
+       "top": null
+      },
+      "attestations": {
+       "records": 0,
+       "top": null
+      }
+     },
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-11-01",
    "generated_at": "2026-11-02T00:25:07.186Z",
    "stats_version": "5",
