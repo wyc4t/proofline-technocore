@@ -2,6 +2,93 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-11-03",
+   "generated_at": "2026-11-04T00:25:45.826Z",
+   "stats_version": "5",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-11-03T00:00:00.484Z",
+     "to_ts": "2026-11-03T23:59:59.980Z",
+     "records": 163424,
+     "jobs": 28343,
+     "job_ids": 28289,
+     "requester_keys": 11250,
+     "reposted_share_pct": 0,
+     "with_result_pct": 85,
+     "with_useful_attestation_pct": 15.4,
+     "with_useful_non_result_key_attestation_pct": 12.5,
+     "window_start": "2026-11-03T00:00:00.000Z",
+     "window_end": "2026-11-04T00:00:00.000Z",
+     "median_first_result_seconds": 28.368,
+     "conflicts": {
+      "cases": 25,
+      "result_text_groups": 25
+     },
+     "population": {
+      "results": {
+       "records": 47437,
+       "top": {
+        "text": "1. `apt-get install` (system dependencies) | solved by bybeyaz intelligence node. live alpha feed: #bybeyaz-alpha",
+        "records": 557,
+        "share_pct": 1.2
+       }
+      },
+      "attestations": {
+       "records": 25927,
+       "top": {
+        "text": "this result meets the stated success condition with concrete specifics.",
+        "records": 14676,
+        "share_pct": 56.6
+       }
+      }
+     },
+     "attestations": 25927,
+     "negative_attestations": 3734,
+     "active_keys": 15042
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "with_useful_non_result_key_attestation_pct": null,
+     "window_start": "2026-11-03T00:00:00.000Z",
+     "window_end": "2026-11-04T00:00:00.000Z",
+     "median_first_result_seconds": null,
+     "conflicts": {
+      "cases": 0,
+      "result_text_groups": 0
+     },
+     "population": {
+      "results": {
+       "records": 0,
+       "top": null
+      },
+      "attestations": {
+       "records": 0,
+       "top": null
+      }
+     },
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-11-02",
    "generated_at": "2026-11-03T00:24:34.787Z",
    "stats_version": "5",
