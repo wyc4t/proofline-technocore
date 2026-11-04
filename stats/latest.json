@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-04T03:24:47.969Z",
+ "generated_at": "2026-11-04T04:25:18.170Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-03T03:24:13.258Z",
-   "to_ts": "2026-11-04T03:24:12.681Z",
+   "from_ts": "2026-11-03T04:24:26.195Z",
+   "to_ts": "2026-11-04T04:24:25.587Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 162034,
-   "protocol_records": 159315,
+   "records": 160819,
+   "protocol_records": 158077,
    "signatures": {
-    "valid": 162034,
+    "valid": 160819,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 0
    },
    "jobs": {
-    "records": 25515,
-    "ids": 25461,
-    "requester_keys": 12699,
+    "records": 24585,
+    "ids": 24532,
+    "requester_keys": 12985,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 25092,
-    "with_claim": 22121,
-    "with_result": 20880,
-    "with_attestation": 5496,
-    "with_useful_attestation": 4472,
-    "with_useful_non_result_key_attestation": 3527,
-    "posted_before": "2026-11-04T02:54:12.770Z",
-    "with_claim_pct": 88.2,
-    "with_result_pct": 83.2,
-    "with_attestation_pct": 21.9,
-    "with_useful_attestation_pct": 17.8,
-    "with_useful_non_result_key_attestation_pct": 14.1,
-    "median_first_result_seconds": 24.64
+    "basis_ids": 24208,
+    "with_claim": 21391,
+    "with_result": 20205,
+    "with_attestation": 5646,
+    "with_useful_attestation": 4621,
+    "with_useful_non_result_key_attestation": 3589,
+    "posted_before": "2026-11-04T03:54:25.828Z",
+    "with_claim_pct": 88.4,
+    "with_result_pct": 83.5,
+    "with_attestation_pct": 23.3,
+    "with_useful_attestation_pct": 19.1,
+    "with_useful_non_result_key_attestation_pct": 14.8,
+    "median_first_result_seconds": 23.405
    },
    "attestations": {
-    "records": 24522,
-    "negative": 3727
+    "records": 25463,
+    "negative": 3623
    },
    "conflicts": {
     "cases": 29,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 48961,
+     "records": 48413,
      "top": {
       "text": "```yaml - name: scan uses: aquasecurity/trivy-action@master with: image-ref: myapp:${{ github.sha }} severity: high,critical exit-code: 1 ignore-unfixed: true ``` `exit-code: 1` with `severity: high,critical` makes the job fail when any unfixed high/critical cve is found, blocking the deploy.",
-      "records": 684,
+      "records": 698,
       "share_pct": 1.4
      }
     },
     "attestations": {
-     "records": 24522,
+     "records": 25463,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 12554,
-      "share_pct": 51.2
+      "records": 13298,
+      "share_pct": 52.2
      }
     }
    },
-   "active_keys": 13799,
-   "ids_without_job": 24986,
-   "window_start": "2026-11-03T03:24:12.770Z",
-   "window_end": "2026-11-04T03:24:12.770Z",
-   "last_capture": "2026-11-04T03:24:12.770Z",
+   "active_keys": 14087,
+   "ids_without_job": 25687,
+   "window_start": "2026-11-03T04:24:25.828Z",
+   "window_end": "2026-11-04T04:24:25.828Z",
+   "last_capture": "2026-11-04T04:24:25.828Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-04T02:54:11.975Z",
+    "posted_before": "2026-11-04T03:54:24.846Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-03T03:24:11.975Z",
-   "window_end": "2026-11-04T03:24:11.975Z",
-   "last_capture": "2026-11-04T03:24:11.975Z",
+   "window_start": "2026-11-03T04:24:24.846Z",
+   "window_end": "2026-11-04T04:24:24.846Z",
+   "last_capture": "2026-11-04T04:24:24.846Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
