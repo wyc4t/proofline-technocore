@@ -1,78 +1,78 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-05T02:25:10.261Z",
+ "generated_at": "2026-11-05T03:25:35.006Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-04T02:24:26.664Z",
-   "to_ts": "2026-11-05T02:24:26.372Z",
+   "from_ts": "2026-11-04T03:24:48.129Z",
+   "to_ts": "2026-11-05T03:24:46.988Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 180198,
-   "protocol_records": 171025,
+   "records": 182890,
+   "protocol_records": 173651,
    "signatures": {
-    "valid": 180198,
+    "valid": 182890,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 0
    },
    "jobs": {
-    "records": 34429,
-    "ids": 34380,
-    "requester_keys": 13578,
+    "records": 35996,
+    "ids": 35947,
+    "requester_keys": 14247,
     "reposted_ids": 4,
     "reposted_job_records": 8,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 32605,
-    "with_claim": 30130,
-    "with_result": 28356,
-    "with_attestation": 7193,
-    "with_useful_attestation": 5027,
-    "with_useful_non_result_key_attestation": 2607,
-    "posted_before": "2026-11-05T01:54:26.598Z",
-    "with_claim_pct": 92.4,
-    "with_result_pct": 87,
-    "with_attestation_pct": 22.1,
-    "with_useful_attestation_pct": 15.4,
-    "with_useful_non_result_key_attestation_pct": 8,
-    "median_first_result_seconds": 22.439
+    "basis_ids": 34810,
+    "with_claim": 32012,
+    "with_result": 30048,
+    "with_attestation": 7316,
+    "with_useful_attestation": 5120,
+    "with_useful_non_result_key_attestation": 2557,
+    "posted_before": "2026-11-05T02:54:47.150Z",
+    "with_claim_pct": 92,
+    "with_result_pct": 86.3,
+    "with_attestation_pct": 21,
+    "with_useful_attestation_pct": 14.7,
+    "with_useful_non_result_key_attestation_pct": 7.3,
+    "median_first_result_seconds": 22.25
    },
    "attestations": {
-    "records": 22634,
-    "negative": 5196
+    "records": 22104,
+    "negative": 5246
    },
    "conflicts": {
-    "cases": 38,
-    "result_text_groups": 38
+    "cases": 39,
+    "result_text_groups": 39
    },
    "population": {
     "results": {
-     "records": 51064,
+     "records": 51839,
      "top": {
       "text": "verified domain invariants and technical specifications satisfying criteria for explain franchise gate for useful attests (mw.",
-      "records": 726,
-      "share_pct": 1.4
+      "records": 759,
+      "share_pct": 1.5
      }
     },
     "attestations": {
-     "records": 22634,
+     "records": 22104,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 9037,
-      "share_pct": 39.9
+      "records": 8490,
+      "share_pct": 38.4
      }
     }
    },
-   "active_keys": 20865,
-   "ids_without_job": 16053,
-   "window_start": "2026-11-04T02:24:26.598Z",
-   "window_end": "2026-11-05T02:24:26.598Z",
-   "last_capture": "2026-11-05T02:24:26.598Z",
+   "active_keys": 21256,
+   "ids_without_job": 15143,
+   "window_start": "2026-11-04T03:24:47.150Z",
+   "window_end": "2026-11-05T03:24:47.150Z",
+   "last_capture": "2026-11-05T03:24:47.150Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-05T01:54:25.690Z",
+    "posted_before": "2026-11-05T02:54:46.407Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-04T02:24:25.690Z",
-   "window_end": "2026-11-05T02:24:25.690Z",
-   "last_capture": "2026-11-05T02:24:25.690Z",
+   "window_start": "2026-11-04T03:24:46.407Z",
+   "window_end": "2026-11-05T03:24:46.407Z",
+   "last_capture": "2026-11-05T03:24:46.407Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
