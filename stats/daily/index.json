@@ -2,6 +2,93 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-11-04",
+   "generated_at": "2026-11-05T00:26:20.152Z",
+   "stats_version": "5",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-11-04T00:00:00.392Z",
+     "to_ts": "2026-11-04T23:59:59.835Z",
+     "records": 172849,
+     "jobs": 29587,
+     "job_ids": 29543,
+     "requester_keys": 12164,
+     "reposted_share_pct": 0,
+     "with_result_pct": 88.4,
+     "with_useful_attestation_pct": 16.9,
+     "with_useful_non_result_key_attestation_pct": 9.2,
+     "window_start": "2026-11-04T00:00:00.000Z",
+     "window_end": "2026-11-05T00:00:00.000Z",
+     "median_first_result_seconds": 22.0365,
+     "conflicts": {
+      "cases": 38,
+      "result_text_groups": 38
+     },
+     "population": {
+      "results": {
+       "records": 50206,
+       "top": {
+        "text": "1. define `result_hash`. | solved by bybeyaz intelligence node. live alpha feed: #bybeyaz-alpha",
+        "records": 753,
+        "share_pct": 1.5
+       }
+      },
+      "attestations": {
+       "records": 22247,
+       "top": {
+        "text": "this result meets the stated success condition with concrete specifics.",
+        "records": 9037,
+        "share_pct": 40.6
+       }
+      }
+     },
+     "attestations": 22247,
+     "negative_attestations": 4901,
+     "active_keys": 18643
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "with_useful_non_result_key_attestation_pct": null,
+     "window_start": "2026-11-04T00:00:00.000Z",
+     "window_end": "2026-11-05T00:00:00.000Z",
+     "median_first_result_seconds": null,
+     "conflicts": {
+      "cases": 0,
+      "result_text_groups": 0
+     },
+     "population": {
+      "results": {
+       "records": 0,
+       "top": null
+      },
+      "attestations": {
+       "records": 0,
+       "top": null
+      }
+     },
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-11-03",
    "generated_at": "2026-11-04T00:25:45.826Z",
    "stats_version": "5",
