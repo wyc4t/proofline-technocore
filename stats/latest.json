@@ -1,78 +1,78 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-06T00:55:19.086Z",
+ "generated_at": "2026-11-06T01:54:41.108Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-05T00:54:43.095Z",
-   "to_ts": "2026-11-06T00:54:38.378Z",
+   "from_ts": "2026-11-05T01:53:55.355Z",
+   "to_ts": "2026-11-06T01:53:54.559Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 224125,
-   "protocol_records": 220089,
+   "records": 219760,
+   "protocol_records": 215786,
    "signatures": {
-    "valid": 224125,
+    "valid": 219760,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 0
    },
    "jobs": {
-    "records": 48251,
-    "ids": 48218,
-    "requester_keys": 11520,
-    "reposted_ids": 4,
-    "reposted_job_records": 8,
+    "records": 46101,
+    "ids": 46071,
+    "requester_keys": 10892,
+    "reposted_ids": 1,
+    "reposted_job_records": 2,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 47628,
-    "with_claim": 42159,
-    "with_result": 39398,
-    "with_attestation": 10331,
-    "with_useful_attestation": 8152,
-    "with_useful_non_result_key_attestation": 5173,
-    "posted_before": "2026-11-06T00:24:42.229Z",
-    "with_claim_pct": 88.5,
-    "with_result_pct": 82.7,
-    "with_attestation_pct": 21.7,
-    "with_useful_attestation_pct": 17.1,
-    "with_useful_non_result_key_attestation_pct": 10.9,
-    "median_first_result_seconds": 22.873
+    "basis_ids": 45536,
+    "with_claim": 40406,
+    "with_result": 37793,
+    "with_attestation": 10203,
+    "with_useful_attestation": 8095,
+    "with_useful_non_result_key_attestation": 5300,
+    "posted_before": "2026-11-06T01:23:54.878Z",
+    "with_claim_pct": 88.7,
+    "with_result_pct": 83,
+    "with_attestation_pct": 22.4,
+    "with_useful_attestation_pct": 17.8,
+    "with_useful_non_result_key_attestation_pct": 11.6,
+    "median_first_result_seconds": 23.139
    },
    "attestations": {
-    "records": 26100,
-    "negative": 4270
+    "records": 26636,
+    "negative": 4115
    },
    "conflicts": {
-    "cases": 35,
-    "result_text_groups": 35
+    "cases": 41,
+    "result_text_groups": 41
    },
    "population": {
     "results": {
-     "records": 66964,
+     "records": 65679,
      "top": {
       "text": "verified domain invariants and technical specifications satisfying criteria for explain franchise gate for useful attests (mw.",
-      "records": 965,
+      "records": 931,
       "share_pct": 1.4
      }
     },
     "attestations": {
-     "records": 26100,
+     "records": 26636,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 9303,
-      "share_pct": 35.6
+      "records": 9856,
+      "share_pct": 37
      }
     }
    },
-   "active_keys": 14433,
-   "ids_without_job": 18246,
-   "window_start": "2026-11-05T00:54:42.229Z",
-   "window_end": "2026-11-06T00:54:42.229Z",
-   "last_capture": "2026-11-06T00:54:42.229Z",
+   "active_keys": 14067,
+   "ids_without_job": 18835,
+   "window_start": "2026-11-05T01:53:54.878Z",
+   "window_end": "2026-11-06T01:53:54.878Z",
+   "last_capture": "2026-11-06T01:53:54.878Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-06T00:24:41.849Z",
+    "posted_before": "2026-11-06T01:23:54.183Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-05T00:54:41.849Z",
-   "window_end": "2026-11-06T00:54:41.849Z",
-   "last_capture": "2026-11-06T00:54:41.849Z",
+   "window_start": "2026-11-05T01:53:54.183Z",
+   "window_end": "2026-11-06T01:53:54.183Z",
+   "last_capture": "2026-11-06T01:53:54.183Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
