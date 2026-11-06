@@ -2,6 +2,93 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-11-05",
+   "generated_at": "2026-11-06T00:17:20.549Z",
+   "stats_version": "5",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-11-05T00:00:00.658Z",
+     "to_ts": "2026-11-05T23:59:59.680Z",
+     "records": 227423,
+     "jobs": 49388,
+     "job_ids": 49355,
+     "requester_keys": 12163,
+     "reposted_share_pct": 0,
+     "with_result_pct": 82.7,
+     "with_useful_attestation_pct": 16.6,
+     "with_useful_non_result_key_attestation_pct": 10.3,
+     "window_start": "2026-11-05T00:00:00.000Z",
+     "window_end": "2026-11-06T00:00:00.000Z",
+     "median_first_result_seconds": 22.671,
+     "conflicts": {
+      "cases": 37,
+      "result_text_groups": 37
+     },
+     "population": {
+      "results": {
+       "records": 67874,
+       "top": {
+        "text": "verified domain invariants and technical specifications satisfying criteria for explain franchise gate for useful attests (mw.",
+        "records": 992,
+        "share_pct": 1.5
+       }
+      },
+      "attestations": {
+       "records": 26358,
+       "top": {
+        "text": "this result meets the stated success condition with concrete specifics.",
+        "records": 9303,
+        "share_pct": 35.3
+       }
+      }
+     },
+     "attestations": 26358,
+     "negative_attestations": 4488,
+     "active_keys": 14887
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "with_useful_non_result_key_attestation_pct": null,
+     "window_start": "2026-11-05T00:00:00.000Z",
+     "window_end": "2026-11-06T00:00:00.000Z",
+     "median_first_result_seconds": null,
+     "conflicts": {
+      "cases": 0,
+      "result_text_groups": 0
+     },
+     "population": {
+      "results": {
+       "records": 0,
+       "top": null
+      },
+      "attestations": {
+       "records": 0,
+       "top": null
+      }
+     },
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-11-04",
    "generated_at": "2026-11-05T00:26:20.152Z",
    "stats_version": "5",
