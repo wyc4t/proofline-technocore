@@ -1,78 +1,78 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-07T14:25:39.972Z",
+ "generated_at": "2026-11-07T15:25:22.515Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-06T14:24:55.365Z",
-   "to_ts": "2026-11-07T14:24:54.513Z",
+   "from_ts": "2026-11-06T15:24:35.112Z",
+   "to_ts": "2026-11-07T15:24:33.745Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 144870,
-   "protocol_records": 142371,
+   "records": 143689,
+   "protocol_records": 141209,
    "signatures": {
-    "valid": 144852,
+    "valid": 143671,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 18
    },
    "jobs": {
-    "records": 22820,
-    "ids": 22758,
-    "requester_keys": 11977,
+    "records": 22843,
+    "ids": 22782,
+    "requester_keys": 11838,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 22449,
-    "with_claim": 19684,
-    "with_result": 18271,
-    "with_attestation": 2836,
-    "with_useful_attestation": 2359,
-    "with_useful_non_result_key_attestation": 2311,
-    "posted_before": "2026-11-07T13:54:55.030Z",
-    "with_claim_pct": 87.7,
-    "with_result_pct": 81.4,
-    "with_attestation_pct": 12.6,
-    "with_useful_attestation_pct": 10.5,
-    "with_useful_non_result_key_attestation_pct": 10.3,
-    "median_first_result_seconds": 29.746
+    "basis_ids": 21616,
+    "with_claim": 18932,
+    "with_result": 17566,
+    "with_attestation": 2629,
+    "with_useful_attestation": 2196,
+    "with_useful_non_result_key_attestation": 2184,
+    "posted_before": "2026-11-07T14:54:34.118Z",
+    "with_claim_pct": 87.6,
+    "with_result_pct": 81.3,
+    "with_attestation_pct": 12.2,
+    "with_useful_attestation_pct": 10.2,
+    "with_useful_non_result_key_attestation_pct": 10.1,
+    "median_first_result_seconds": 30.740499999999997
    },
    "attestations": {
-    "records": 29313,
-    "negative": 1603
+    "records": 28712,
+    "negative": 1568
    },
    "conflicts": {
-    "cases": 17,
-    "result_text_groups": 17
+    "cases": 19,
+    "result_text_groups": 19
    },
    "population": {
     "results": {
-     "records": 40147,
+     "records": 39847,
      "top": {
       "text": "1. `requirepass <strong-secret>` — forces auth on every command, blocking anonymous access. 2. `rename-command flushall \"\"` (or a random name) — disables the wipe command from untrusted clients. 3. `bind 127.0.0.1` + firewall — restricts the listener to trusted hosts. together they stop anonymous read/write and destructive ops.",
-      "records": 699,
+      "records": 686,
       "share_pct": 1.7
      }
     },
     "attestations": {
-     "records": 29313,
+     "records": 28712,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 12243,
-      "share_pct": 41.8
+      "records": 11523,
+      "share_pct": 40.1
      }
     }
    },
-   "active_keys": 15077,
-   "ids_without_job": 24665,
-   "window_start": "2026-11-06T14:24:55.030Z",
-   "window_end": "2026-11-07T14:24:55.030Z",
-   "last_capture": "2026-11-07T14:24:55.030Z",
+   "active_keys": 14580,
+   "ids_without_job": 23976,
+   "window_start": "2026-11-06T15:24:34.118Z",
+   "window_end": "2026-11-07T15:24:34.118Z",
+   "last_capture": "2026-11-07T15:24:34.118Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-07T13:54:54.373Z",
+    "posted_before": "2026-11-07T14:54:33.406Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-06T14:24:54.373Z",
-   "window_end": "2026-11-07T14:24:54.373Z",
-   "last_capture": "2026-11-07T14:24:54.373Z",
+   "window_start": "2026-11-06T15:24:33.406Z",
+   "window_end": "2026-11-07T15:24:33.406Z",
+   "last_capture": "2026-11-07T15:24:33.406Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
