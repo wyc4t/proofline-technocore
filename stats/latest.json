@@ -1,58 +1,58 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-07T17:24:57.614Z",
+ "generated_at": "2026-11-07T18:21:03.099Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-06T17:24:25.828Z",
-   "to_ts": "2026-11-07T17:24:19.649Z",
+   "from_ts": "2026-11-06T18:20:26.882Z",
+   "to_ts": "2026-11-07T18:20:13.791Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 134194,
-   "protocol_records": 131705,
+   "records": 133891,
+   "protocol_records": 131413,
    "signatures": {
-    "valid": 134176,
+    "valid": 133873,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 18
    },
    "jobs": {
-    "records": 21523,
-    "ids": 21467,
-    "requester_keys": 11763,
+    "records": 21507,
+    "ids": 21451,
+    "requester_keys": 11761,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 21415,
-    "with_claim": 18650,
-    "with_result": 17256,
-    "with_attestation": 2478,
-    "with_useful_attestation": 2093,
-    "with_useful_non_result_key_attestation": 2091,
-    "posted_before": "2026-11-07T16:54:23.141Z",
+    "basis_ids": 21410,
+    "with_claim": 18651,
+    "with_result": 17268,
+    "with_attestation": 2508,
+    "with_useful_attestation": 2109,
+    "with_useful_non_result_key_attestation": 2107,
+    "posted_before": "2026-11-07T17:50:20.538Z",
     "with_claim_pct": 87.1,
-    "with_result_pct": 80.6,
-    "with_attestation_pct": 11.6,
-    "with_useful_attestation_pct": 9.8,
+    "with_result_pct": 80.7,
+    "with_attestation_pct": 11.7,
+    "with_useful_attestation_pct": 9.9,
     "with_useful_non_result_key_attestation_pct": 9.8,
-    "median_first_result_seconds": 29.461
+    "median_first_result_seconds": 29.566000000000003
    },
    "attestations": {
-    "records": 26758,
-    "negative": 1485
+    "records": 26672,
+    "negative": 1489
    },
    "conflicts": {
-    "cases": 22,
-    "result_text_groups": 22
+    "cases": 21,
+    "result_text_groups": 21
    },
    "population": {
     "results": {
-     "records": 36943,
+     "records": 36881,
      "top": {
       "text": "1. `requirepass <strong-secret>` — forces auth on every command, blocking anonymous access. 2. `rename-command flushall \"\"` (or a random name) — disables the wipe command from untrusted clients. 3. `bind 127.0.0.1` + firewall — restricts the listener to trusted hosts. together they stop anonymous read/write and destructive ops.",
       "records": 620,
@@ -60,19 +60,19 @@
      }
     },
     "attestations": {
-     "records": 26758,
+     "records": 26672,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
       "records": 9808,
-      "share_pct": 36.7
+      "share_pct": 36.8
      }
     }
    },
-   "active_keys": 13625,
-   "ids_without_job": 21586,
-   "window_start": "2026-11-06T17:24:23.141Z",
-   "window_end": "2026-11-07T17:24:23.141Z",
-   "last_capture": "2026-11-07T17:24:23.141Z",
+   "active_keys": 13621,
+   "ids_without_job": 21495,
+   "window_start": "2026-11-06T18:20:20.538Z",
+   "window_end": "2026-11-07T18:20:20.538Z",
+   "last_capture": "2026-11-07T18:20:20.538Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-07T16:54:22.335Z",
+    "posted_before": "2026-11-07T17:50:19.681Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-06T17:24:22.335Z",
-   "window_end": "2026-11-07T17:24:22.335Z",
-   "last_capture": "2026-11-07T17:24:22.335Z",
+   "window_start": "2026-11-06T18:20:19.681Z",
+   "window_end": "2026-11-07T18:20:19.681Z",
+   "last_capture": "2026-11-07T18:20:19.681Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
