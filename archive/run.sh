@@ -16,7 +16,7 @@ while IFS=$'\t' read -r tag asset; do
   [ -z "$asset" ] || [ -f "checkpoint-assets/$asset" ] || gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$asset" -D checkpoint-assets || echo "checkpoint unavailable; collector will record the failure" >&2
 done < checkpoint-assets.tsv
 node code/archive/collect.mjs --data data --outbox data/pending-uploads \
-  --rooms credence,kibble,d-proofline --release-rooms kibble --checkpoint-assets checkpoint-assets
+  --rooms credence,kibble,d-proofline,d-proofline-maintainer --release-rooms kibble --checkpoint-assets checkpoint-assets
 
 node code/archive/pending.mjs --data data > pending.tsv
 while IFS=$'\t' read -r tag file; do
@@ -63,6 +63,12 @@ if [ -n "$FIRST" ] && [ ! -f "data/stats/daily/$YDAY.json" ] && [[ ! "$YDAY" < "
     node code/archive/daily.mjs --data data --assets assets --day "$YDAY"
   ) || echo "daily digest not computed this time"
 fi
+
+# Maintainer room: check that its ownership note is still being refreshed. Records the
+# result in data/ownership.json and, when it needs attention, writes ownership-alert.txt,
+# which the workflow's last step turns into a failed run. Never blocks the capture.
+node code/archive/ownership.mjs --data data --room d-proofline-maintainer \
+  --owner did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh || echo "ownership not checked this time"
 
 cd data
 git config user.name "github-actions[bot]"

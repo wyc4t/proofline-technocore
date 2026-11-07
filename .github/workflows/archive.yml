@@ -58,3 +58,13 @@ jobs:
           sleep "$WAIT"
           git -C data pull -q --rebase origin archive-data
           bash code/archive/run.sh
+
+      # Fails the run, so GitHub sends its failed-run notice, when the maintainer room's
+      # ownership note needs a refresh (at most every 6 hours). Runs after both captures,
+      # so a warning never stops the archive itself.
+      - name: Maintainer room ownership
+        run: |
+          if [ -f ownership-alert.txt ]; then
+            echo "::error title=Maintainer room ownership::$(cat ownership-alert.txt)"
+            exit 1
+          fi
