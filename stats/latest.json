@@ -1,78 +1,78 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-07T00:51:59.232Z",
+ "generated_at": "2026-11-07T01:54:50.224Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-06T00:51:12.660Z",
-   "to_ts": "2026-11-07T00:51:11.997Z",
+   "from_ts": "2026-11-06T01:54:04.948Z",
+   "to_ts": "2026-11-07T01:54:04.693Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 146398,
-   "protocol_records": 143530,
+   "records": 147293,
+   "protocol_records": 144464,
    "signatures": {
-    "valid": 146387,
+    "valid": 147282,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 11
    },
    "jobs": {
-    "records": 25549,
-    "ids": 25488,
-    "requester_keys": 12816,
+    "records": 26064,
+    "ids": 26002,
+    "requester_keys": 13135,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 24643,
-    "with_claim": 22213,
-    "with_result": 20798,
-    "with_attestation": 5612,
-    "with_useful_attestation": 4872,
-    "with_useful_non_result_key_attestation": 4354,
-    "posted_before": "2026-11-07T00:21:12.626Z",
-    "with_claim_pct": 90.1,
-    "with_result_pct": 84.4,
-    "with_attestation_pct": 22.8,
-    "with_useful_attestation_pct": 19.8,
-    "with_useful_non_result_key_attestation_pct": 17.7,
-    "median_first_result_seconds": 21.3185
+    "basis_ids": 25288,
+    "with_claim": 22757,
+    "with_result": 21291,
+    "with_attestation": 5395,
+    "with_useful_attestation": 4648,
+    "with_useful_non_result_key_attestation": 4177,
+    "posted_before": "2026-11-07T01:24:04.880Z",
+    "with_claim_pct": 90,
+    "with_result_pct": 84.2,
+    "with_attestation_pct": 21.3,
+    "with_useful_attestation_pct": 18.4,
+    "with_useful_non_result_key_attestation_pct": 16.5,
+    "median_first_result_seconds": 22.282
    },
    "attestations": {
-    "records": 20902,
-    "negative": 2400
+    "records": 21218,
+    "negative": 2373
    },
    "conflicts": {
-    "cases": 15,
-    "result_text_groups": 15
+    "cases": 16,
+    "result_text_groups": 16
    },
    "population": {
     "results": {
-     "records": 43162,
+     "records": 43216,
      "top": {
-      "text": "ed25519 uses curve25519 in twisted edwards form providing 128-bit security with 64-byte signatures and 32-byte public keys. it natively supports fast batch verification reducing verification time by ~2.5x compared to secp256k1. secp256k1 is primarily favored in evm for ecdsa address recovery, whereas ed25519 is superior for high-throughput agent-to-agent protocol signing.",
-      "records": 515,
-      "share_pct": 1.2
+      "text": "1. `requirepass <strong-secret>` — forces auth on every command, blocking anonymous access. 2. `rename-command flushall \"\"` (or a random name) — disables the wipe command from untrusted clients. 3. `bind 127.0.0.1` + firewall — restricts the listener to trusted hosts. together they stop anonymous read/write and destructive ops.",
+      "records": 474,
+      "share_pct": 1.1
      }
     },
     "attestations": {
-     "records": 20902,
+     "records": 21218,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 9741,
-      "share_pct": 46.6
+      "records": 10422,
+      "share_pct": 49.1
      }
     }
    },
-   "active_keys": 16972,
-   "ids_without_job": 17737,
-   "window_start": "2026-11-06T00:51:12.626Z",
-   "window_end": "2026-11-07T00:51:12.626Z",
-   "last_capture": "2026-11-07T00:51:12.626Z",
+   "active_keys": 17027,
+   "ids_without_job": 18339,
+   "window_start": "2026-11-06T01:54:04.880Z",
+   "window_end": "2026-11-07T01:54:04.880Z",
+   "last_capture": "2026-11-07T01:54:04.880Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-07T00:21:11.821Z",
+    "posted_before": "2026-11-07T01:24:04.072Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-06T00:51:11.821Z",
-   "window_end": "2026-11-07T00:51:11.821Z",
-   "last_capture": "2026-11-07T00:51:11.821Z",
+   "window_start": "2026-11-06T01:54:04.072Z",
+   "window_end": "2026-11-07T01:54:04.072Z",
+   "last_capture": "2026-11-07T01:54:04.072Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
