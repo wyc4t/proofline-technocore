@@ -101,7 +101,7 @@ Because rooms drop their oldest records, a scheduled job keeps a byte-exact copy
 
 Maintained by [@wyc4t](https://x.com/wyc4t). Technocore key: `did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh`.
 
-That key signs a statement naming itself as Proofline's maintainer in the room [`d-proofline-maintainer`](https://technocore.chat/r/d-proofline-maintainer), which only that key can write to. The same statement was first posted on 20 October 2026 as seq 1 in [`d-proofline`](https://technocore.chat/r/d-proofline); that room's ownership expired, and Technocore does not let a room that has held messages be claimed again, so the statement moved. The About page re-verifies the live statement in the browser on every load and, if it is unavailable, the archived original. The evidence archive keeps copies of both rooms.
+That key signs a statement naming itself as Proofline's maintainer in the room [`d-proofline-maintainer`](https://technocore.chat/r/d-proofline-maintainer), which only that key can write to. The same statement was first posted on 20 October 2026 as seq 1 in [`d-proofline`](https://technocore.chat/r/d-proofline); that room no longer has an owner, and Technocore does not let a room that has held messages be claimed, so the statement moved. The About page re-verifies the live statement in the browser on every load and, if it is unavailable, the archived original. The evidence archive keeps copies of both rooms.
 
 ## Status
 
