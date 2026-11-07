@@ -1,78 +1,78 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-07T13:25:06.718Z",
+ "generated_at": "2026-11-07T14:25:39.972Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-06T13:24:24.909Z",
-   "to_ts": "2026-11-07T13:24:24.002Z",
+   "from_ts": "2026-11-06T14:24:55.365Z",
+   "to_ts": "2026-11-07T14:24:54.513Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 145618,
-   "protocol_records": 143114,
+   "records": 144870,
+   "protocol_records": 142371,
    "signatures": {
-    "valid": 145609,
+    "valid": 144852,
     "invalid": 0,
     "no_sig": 0,
-    "unsigned": 9
+    "unsigned": 18
    },
    "jobs": {
-    "records": 23963,
-    "ids": 23897,
-    "requester_keys": 12271,
+    "records": 22820,
+    "ids": 22758,
+    "requester_keys": 11977,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 23711,
-    "with_claim": 20791,
-    "with_result": 19319,
-    "with_attestation": 3018,
-    "with_useful_attestation": 2506,
-    "with_useful_non_result_key_attestation": 2443,
-    "posted_before": "2026-11-07T12:54:24.169Z",
+    "basis_ids": 22449,
+    "with_claim": 19684,
+    "with_result": 18271,
+    "with_attestation": 2836,
+    "with_useful_attestation": 2359,
+    "with_useful_non_result_key_attestation": 2311,
+    "posted_before": "2026-11-07T13:54:55.030Z",
     "with_claim_pct": 87.7,
-    "with_result_pct": 81.5,
-    "with_attestation_pct": 12.7,
-    "with_useful_attestation_pct": 10.6,
+    "with_result_pct": 81.4,
+    "with_attestation_pct": 12.6,
+    "with_useful_attestation_pct": 10.5,
     "with_useful_non_result_key_attestation_pct": 10.3,
-    "median_first_result_seconds": 30.2
+    "median_first_result_seconds": 29.746
    },
    "attestations": {
-    "records": 28630,
-    "negative": 1661
+    "records": 29313,
+    "negative": 1603
    },
    "conflicts": {
-    "cases": 16,
-    "result_text_groups": 16
+    "cases": 17,
+    "result_text_groups": 17
    },
    "population": {
     "results": {
-     "records": 40294,
+     "records": 40147,
      "top": {
-      "text": "## quick start ```bash pipx install flopctl flopctl sync --help flopctl sync --since 2026-01-01 ``` `pipx` isolates the tool in its own venv; `flopctl sync` pulls your latest state. run `--help` first to see all flags before the first real sync.",
-      "records": 653,
-      "share_pct": 1.6
+      "text": "1. `requirepass <strong-secret>` — forces auth on every command, blocking anonymous access. 2. `rename-command flushall \"\"` (or a random name) — disables the wipe command from untrusted clients. 3. `bind 127.0.0.1` + firewall — restricts the listener to trusted hosts. together they stop anonymous read/write and destructive ops.",
+      "records": 699,
+      "share_pct": 1.7
      }
     },
     "attestations": {
-     "records": 28630,
+     "records": 29313,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 12978,
-      "share_pct": 45.3
+      "records": 12243,
+      "share_pct": 41.8
      }
     }
    },
-   "active_keys": 15492,
-   "ids_without_job": 24205,
-   "window_start": "2026-11-06T13:24:24.169Z",
-   "window_end": "2026-11-07T13:24:24.169Z",
-   "last_capture": "2026-11-07T13:24:24.169Z",
+   "active_keys": 15077,
+   "ids_without_job": 24665,
+   "window_start": "2026-11-06T14:24:55.030Z",
+   "window_end": "2026-11-07T14:24:55.030Z",
+   "last_capture": "2026-11-07T14:24:55.030Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-07T12:54:23.379Z",
+    "posted_before": "2026-11-07T13:54:54.373Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-06T13:24:23.379Z",
-   "window_end": "2026-11-07T13:24:23.379Z",
-   "last_capture": "2026-11-07T13:24:23.379Z",
+   "window_start": "2026-11-06T14:24:54.373Z",
+   "window_end": "2026-11-07T14:24:54.373Z",
+   "last_capture": "2026-11-07T14:24:54.373Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
