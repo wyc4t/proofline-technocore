@@ -1387,31 +1387,34 @@ async function refresh(){if(busy)return;busy=true;if(!paused){$('#live').classNa
 function togglePause(){paused=!paused;if(paused)frozenAt=protocolTotal();else render(true);updateStatus()}
 
 // The maintainer's key is fixed here, so a statement signed by any other key can never pass as the maintainer's.
-const MAINTAINER={did:'did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh',room:'d-proofline',seq:1};
-// Check the live signature first. If the statement is absent or does not verify, try the
-// archived copy, checked against its manifest hash and independently signature-verified.
-const isStatement=m=>m&&Number(m.seq)===MAINTAINER.seq&&m.from===MAINTAINER.did&&/maintain Proofline/.test(String(m.text));
+const MAINTAINER={did:'did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh',room:'d-proofline-maintainer',archived:{room:'d-proofline',gen:'1',seq:1}};
+// Check the live statement in the maintainer's owned room first. If it is absent or does not
+// verify, check the original statement (d-proofline #1, 20 October 2026) from the evidence
+// archive, against its manifest hash, with its signature verified again. A signature covers its
+// room, so a statement copied into another room never verifies there.
+const isStatement=m=>m&&m.from===MAINTAINER.did&&/^Proofline maintainer statement:/.test(String(m.text))&&/maintain Proofline/.test(String(m.text));
 async function archivedStatement(){
   const fetchText=async u=>{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(String(r.status));return r.text()};
   const fetchBytes=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(String(r.status));return new Uint8Array(await r.arrayBuffer())};
-  const res=await loadPinned({room:MAINTAINER.room,gen:'1',from:MAINTAINER.seq,to:MAINTAINER.seq,fetchText,fetchBytes,assetUrl:()=>''});
-  const dec=new TextDecoder();return res.lines.map(l=>parseRoomPage(dec.decode(l))).find(isStatement)||null;
+  const a=MAINTAINER.archived;
+  const res=await loadPinned({room:a.room,gen:a.gen,from:a.seq,to:a.seq,fetchText,fetchBytes,assetUrl:()=>''});
+  const dec=new TextDecoder();return res.lines.map(l=>parseRoomPage(dec.decode(l))).find(m=>isStatement(m)&&Number(m.seq)===a.seq)||null;
 }
 async function checkMaintainer(){
   const out=$('#maintainerProof');if(!out)return;
   const show=(text,tone)=>{out.textContent=text;out.className=`proof ${tone}`};
-  let m=null,live=true;
+  let m=null,live=true,room=MAINTAINER.room;
   try{
     const res=await fetch(`https://technocore.chat/r/${MAINTAINER.room}/export`,{cache:'no-store'});
-    if(res.ok){const line=(await res.text()).split('\n').find(l=>/^\{"seq":1,/.test(l));m=line?parseRoomPage(line):null}
+    if(res.ok)for(const line of (await res.text()).split('\n')){let c=null;try{c=line.trim()?parseRoomPage(line):null}catch{}if(isStatement(c)){m=c;break}}
   }catch{}
-  let st=isStatement(m)?await checkSignature(MAINTAINER.room,m):null;
+  let st=isStatement(m)?await checkSignature(room,m):null;
   if(!isStatement(m)||!['valid','unchecked'].includes(st)){
-    live=false;try{m=await archivedStatement()}catch{m=null}
-    st=isStatement(m)?await checkSignature(MAINTAINER.room,m):null;
+    live=false;room=MAINTAINER.archived.room;try{m=await archivedStatement()}catch{m=null}
+    st=isStatement(m)?await checkSignature(room,m):null;
   }
   if(!isStatement(m)){show('no verifiable maintainer statement is available from the room or evidence archive right now.','warn');return}
-  const where=live?`${MAINTAINER.room} #${MAINTAINER.seq}, ${String(m.ts).slice(0,10)}`:`archived copy of ${MAINTAINER.room} #${MAINTAINER.seq}, ${String(m.ts).slice(0,10)}`;
+  const where=live?`${room} #${m.seq}, ${String(m.ts).slice(0,10)}`:`archived copy of ${room} #${m.seq}, ${String(m.ts).slice(0,10)}`;
   if(st==='valid')show(`signature verified (${where}).`,'ok');
   else if(st==='unchecked')show('your browser cannot check this signature.','warn');
   else show('the signature does not verify.','bad');
