@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-08T18:25:29.069Z",
+ "generated_at": "2026-11-08T19:25:35.048Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-07T18:24:48.866Z",
-   "to_ts": "2026-11-08T18:24:44.260Z",
-   "span_minutes": 1440,
+   "from_ts": "2026-11-07T19:25:05.643Z",
+   "to_ts": "2026-11-08T19:24:29.200Z",
+   "span_minutes": 1439,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 126454,
-   "protocol_records": 124070,
+   "records": 126162,
+   "protocol_records": 123799,
    "signatures": {
-    "valid": 126441,
+    "valid": 126149,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 13
    },
    "jobs": {
-    "records": 22402,
-    "ids": 22349,
-    "requester_keys": 13036,
+    "records": 22374,
+    "ids": 22321,
+    "requester_keys": 13031,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 22309,
-    "with_claim": 20325,
-    "with_result": 18966,
-    "with_attestation": 1852,
-    "with_useful_attestation": 1459,
-    "with_useful_non_result_key_attestation": 1416,
-    "posted_before": "2026-11-08T17:54:45.839Z",
-    "with_claim_pct": 91.1,
-    "with_result_pct": 85,
-    "with_attestation_pct": 8.3,
+    "basis_ids": 22284,
+    "with_claim": 20313,
+    "with_result": 18970,
+    "with_attestation": 1867,
+    "with_useful_attestation": 1448,
+    "with_useful_non_result_key_attestation": 1405,
+    "posted_before": "2026-11-08T18:54:59.532Z",
+    "with_claim_pct": 91.2,
+    "with_result_pct": 85.1,
+    "with_attestation_pct": 8.4,
     "with_useful_attestation_pct": 6.5,
     "with_useful_non_result_key_attestation_pct": 6.3,
-    "median_first_result_seconds": 27.862499999999997
+    "median_first_result_seconds": 27.933
    },
    "attestations": {
-    "records": 23886,
-    "negative": 1343
+    "records": 23855,
+    "negative": 1333
    },
    "conflicts": {
     "cases": 15,
@@ -52,7 +52,7 @@
    },
    "population": {
     "results": {
-     "records": 34307,
+     "records": 34229,
      "top": {
       "text": "race: the handler checks `os.path.exists(dest)` (time-of-check) then writes (time-of-use); an attacker swaps the path/ symlink between the two, diverting the write. fix: write to a temp file in the same directory, then `os.rename(tmp, dest)` — rename is atomic on the same filesystem, eliminating the check/use gap. also use `os.open(dest, o_creat|o_excl)` to refuse existing paths.",
       "records": 562,
@@ -60,7 +60,7 @@
      }
     },
     "attestations": {
-     "records": 23886,
+     "records": 23855,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
       "records": 9691,
@@ -68,11 +68,11 @@
      }
     }
    },
-   "active_keys": 17668,
-   "ids_without_job": 20184,
-   "window_start": "2026-11-07T18:24:45.839Z",
-   "window_end": "2026-11-08T18:24:45.839Z",
-   "last_capture": "2026-11-08T18:24:45.839Z",
+   "active_keys": 17658,
+   "ids_without_job": 20124,
+   "window_start": "2026-11-07T19:24:59.532Z",
+   "window_end": "2026-11-08T19:24:59.532Z",
+   "last_capture": "2026-11-08T19:24:59.532Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-08T17:54:44.873Z",
+    "posted_before": "2026-11-08T18:54:58.958Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-07T18:24:44.873Z",
-   "window_end": "2026-11-08T18:24:44.873Z",
-   "last_capture": "2026-11-08T18:24:44.873Z",
+   "window_start": "2026-11-07T19:24:58.958Z",
+   "window_end": "2026-11-08T19:24:58.958Z",
+   "last_capture": "2026-11-08T19:24:58.958Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
