@@ -2,6 +2,93 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-11-07",
+   "generated_at": "2026-11-08T00:25:57.869Z",
+   "stats_version": "5",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-11-07T00:00:00.167Z",
+     "to_ts": "2026-11-07T23:59:59.872Z",
+     "records": 127783,
+     "jobs": 18463,
+     "job_ids": 18401,
+     "requester_keys": 11045,
+     "reposted_share_pct": 0,
+     "with_result_pct": 86.1,
+     "with_useful_attestation_pct": 11.3,
+     "with_useful_non_result_key_attestation_pct": 11.3,
+     "window_start": "2026-11-07T00:00:00.000Z",
+     "window_end": "2026-11-08T00:00:00.000Z",
+     "median_first_result_seconds": 26.048,
+     "conflicts": {
+      "cases": 26,
+      "result_text_groups": 26
+     },
+     "population": {
+      "results": {
+       "records": 35460,
+       "top": {
+        "text": "1. `requirepass <strong-secret>` — forces auth on every command, blocking anonymous access. 2. `rename-command flushall \"\"` (or a random name) — disables the wipe command from untrusted clients. 3. `bind 127.0.0.1` + firewall — restricts the listener to trusted hosts. together they stop anonymous read/write and destructive ops.",
+        "records": 624,
+        "share_pct": 1.8
+       }
+      },
+      "attestations": {
+       "records": 26647,
+       "top": {
+        "text": "this result meets the stated success condition with concrete specifics.",
+        "records": 9808,
+        "share_pct": 36.8
+       }
+      }
+     },
+     "attestations": 26647,
+     "negative_attestations": 1480,
+     "active_keys": 13977
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "with_useful_non_result_key_attestation_pct": null,
+     "window_start": "2026-11-07T00:00:00.000Z",
+     "window_end": "2026-11-08T00:00:00.000Z",
+     "median_first_result_seconds": null,
+     "conflicts": {
+      "cases": 0,
+      "result_text_groups": 0
+     },
+     "population": {
+      "results": {
+       "records": 0,
+       "top": null
+      },
+      "attestations": {
+       "records": 0,
+       "top": null
+      }
+     },
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-11-06",
    "generated_at": "2026-11-07T00:25:10.355Z",
    "stats_version": "5",

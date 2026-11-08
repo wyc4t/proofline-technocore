@@ -1,0 +1,163 @@
+{
+ "format": "proofline-stats",
+ "stats_version": "5",
+ "generated_at": "2026-11-08T00:25:57.869Z",
+ "window_hours": 24,
+ "rooms": {
+  "kibble": {
+   "from_ts": "2026-11-07T00:00:00.167Z",
+   "to_ts": "2026-11-07T23:59:59.872Z",
+   "span_minutes": 1440,
+   "complete": true,
+   "gaps": [],
+   "unavailable_captures": 0,
+   "records": 127783,
+   "protocol_records": 125315,
+   "signatures": {
+    "valid": 127765,
+    "invalid": 0,
+    "no_sig": 0,
+    "unsigned": 18
+   },
+   "jobs": {
+    "records": 18463,
+    "ids": 18401,
+    "requester_keys": 11045,
+    "reposted_ids": 0,
+    "reposted_job_records": 0,
+    "reposted_share_pct": 0
+   },
+   "outcomes": {
+    "basis_ids": 17938,
+    "with_claim": 16420,
+    "with_result": 15438,
+    "with_attestation": 2429,
+    "with_useful_attestation": 2030,
+    "with_useful_non_result_key_attestation": 2026,
+    "posted_before": "2026-11-07T23:30:00.000Z",
+    "with_claim_pct": 91.5,
+    "with_result_pct": 86.1,
+    "with_attestation_pct": 13.5,
+    "with_useful_attestation_pct": 11.3,
+    "with_useful_non_result_key_attestation_pct": 11.3,
+    "median_first_result_seconds": 26.048
+   },
+   "attestations": {
+    "records": 26647,
+    "negative": 1480
+   },
+   "conflicts": {
+    "cases": 26,
+    "result_text_groups": 26
+   },
+   "population": {
+    "results": {
+     "records": 35460,
+     "top": {
+      "text": "1. `requirepass <strong-secret>` — forces auth on every command, blocking anonymous access. 2. `rename-command flushall \"\"` (or a random name) — disables the wipe command from untrusted clients. 3. `bind 127.0.0.1` + firewall — restricts the listener to trusted hosts. together they stop anonymous read/write and destructive ops.",
+      "records": 624,
+      "share_pct": 1.8
+     }
+    },
+    "attestations": {
+     "records": 26647,
+     "top": {
+      "text": "this result meets the stated success condition with concrete specifics.",
+      "records": 9808,
+      "share_pct": 36.8
+     }
+    }
+   },
+   "active_keys": 13977,
+   "ids_without_job": 21359,
+   "window_start": "2026-11-07T00:00:00.000Z",
+   "window_end": "2026-11-08T00:00:00.000Z",
+   "last_capture": "2026-11-08T00:24:45.330Z",
+   "covers_window_start": true,
+   "covers_window_end": true
+  },
+  "credence": {
+   "from_ts": null,
+   "to_ts": null,
+   "span_minutes": 0,
+   "complete": true,
+   "gaps": [],
+   "unavailable_captures": 0,
+   "records": 0,
+   "protocol_records": 0,
+   "signatures": {
+    "valid": 0,
+    "invalid": 0,
+    "no_sig": 0,
+    "unsigned": 0
+   },
+   "jobs": {
+    "records": 0,
+    "ids": 0,
+    "requester_keys": 0,
+    "reposted_ids": 0,
+    "reposted_job_records": 0,
+    "reposted_share_pct": null
+   },
+   "outcomes": {
+    "basis_ids": 0,
+    "with_claim": 0,
+    "with_result": 0,
+    "with_attestation": 0,
+    "with_useful_attestation": 0,
+    "with_useful_non_result_key_attestation": 0,
+    "posted_before": "2026-11-07T23:30:00.000Z",
+    "with_claim_pct": null,
+    "with_result_pct": null,
+    "with_attestation_pct": null,
+    "with_useful_attestation_pct": null,
+    "with_useful_non_result_key_attestation_pct": null,
+    "median_first_result_seconds": null
+   },
+   "attestations": {
+    "records": 0,
+    "negative": 0
+   },
+   "conflicts": {
+    "cases": 0,
+    "result_text_groups": 0
+   },
+   "population": {
+    "results": {
+     "records": 0,
+     "top": null
+    },
+    "attestations": {
+     "records": 0,
+     "top": null
+    }
+   },
+   "active_keys": 0,
+   "ids_without_job": 0,
+   "window_start": "2026-11-07T00:00:00.000Z",
+   "window_end": "2026-11-08T00:00:00.000Z",
+   "last_capture": "2026-11-08T00:24:44.448Z",
+   "covers_window_start": true,
+   "covers_window_end": true
+  }
+ },
+ "code": {
+  "verifier_version": "1",
+  "src/lib/protocol.js": "1377ff0b51ae79afdfba9e49eb79335a0061b3d18b8152689dfb10ebb7bd34b9",
+  "archive/stats.mjs": "bcd94259ba583b18589539e7e8ec20be2f8e9fb83e4c87a02bd98151b7df9426",
+  "src/lib/cases.js": "0b710f9f550b7c07df53a57d51d44e0ec4cac1a203b927b73582c08474c2f558",
+  "src/lib/population.js": "c3bafe564e608e180cbde83f356a8aeeab977f6281a2cd763bb39b88def02c62",
+  "src/lib/archive-epoch.js": "64d1471ca53a15e20eef268fac114d2f7dee3264c574083cbfc160bfa0764c2c"
+ },
+ "notes": [
+  "Counts are per room and job ID, over archived records whose signatures were re-verified, in the half-open window [start, end).",
+  "Outcome rates count jobs posted at least 30 minutes before the window ends.",
+  "A reposted ID is a job ID under which two or more verified keys posted identical JOB text.",
+  "Jobs are grouped by room generation, storage epoch and job ID.",
+  "Storage epochs separate observed counter regressions or conflicting checkpoint bytes; they do not prove an upstream reset cause or distinct real-world tasks.",
+  "Useful verdict rates share the eligible job-ID basis; the narrower rate requires a verified attester key with no result record in that job in this window. Different keys do not prove independent parties; verdicts need not name a result.",
+  "Conflict cases count observed generation/ID groups with opposite verdicts targeting the same result text by hash, including cases whose request is absent. Text frequencies count records, ignoring case and whitespace, within this room/window.",
+  "These describe records, not whether any work was correct or useful."
+ ],
+ "day": "2026-11-07"
+}
