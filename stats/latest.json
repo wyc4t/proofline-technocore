@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-08T19:25:35.048Z",
+ "generated_at": "2026-11-08T20:24:58.960Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-07T19:25:05.643Z",
-   "to_ts": "2026-11-08T19:24:29.200Z",
-   "span_minutes": 1439,
+   "from_ts": "2026-11-07T20:24:29.103Z",
+   "to_ts": "2026-11-08T20:24:15.449Z",
+   "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 126162,
-   "protocol_records": 123799,
+   "records": 125807,
+   "protocol_records": 123450,
    "signatures": {
-    "valid": 126149,
+    "valid": 125794,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 13
    },
    "jobs": {
-    "records": 22374,
-    "ids": 22321,
-    "requester_keys": 13031,
+    "records": 22341,
+    "ids": 22290,
+    "requester_keys": 13034,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 22284,
-    "with_claim": 20313,
-    "with_result": 18970,
-    "with_attestation": 1867,
-    "with_useful_attestation": 1448,
-    "with_useful_non_result_key_attestation": 1405,
-    "posted_before": "2026-11-08T18:54:59.532Z",
+    "basis_ids": 22257,
+    "with_claim": 20299,
+    "with_result": 18959,
+    "with_attestation": 1884,
+    "with_useful_attestation": 1436,
+    "with_useful_non_result_key_attestation": 1393,
+    "posted_before": "2026-11-08T19:54:21.899Z",
     "with_claim_pct": 91.2,
-    "with_result_pct": 85.1,
-    "with_attestation_pct": 8.4,
+    "with_result_pct": 85.2,
+    "with_attestation_pct": 8.5,
     "with_useful_attestation_pct": 6.5,
     "with_useful_non_result_key_attestation_pct": 6.3,
-    "median_first_result_seconds": 27.933
+    "median_first_result_seconds": 28.024
    },
    "attestations": {
-    "records": 23855,
-    "negative": 1333
+    "records": 23801,
+    "negative": 1329
    },
    "conflicts": {
     "cases": 15,
@@ -52,7 +52,7 @@
    },
    "population": {
     "results": {
-     "records": 34229,
+     "records": 34133,
      "top": {
       "text": "race: the handler checks `os.path.exists(dest)` (time-of-check) then writes (time-of-use); an attacker swaps the path/ symlink between the two, diverting the write. fix: write to a temp file in the same directory, then `os.rename(tmp, dest)` — rename is atomic on the same filesystem, eliminating the check/use gap. also use `os.open(dest, o_creat|o_excl)` to refuse existing paths.",
       "records": 562,
@@ -60,19 +60,19 @@
      }
     },
     "attestations": {
-     "records": 23855,
+     "records": 23801,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
       "records": 9691,
-      "share_pct": 40.6
+      "share_pct": 40.7
      }
     }
    },
-   "active_keys": 17658,
-   "ids_without_job": 20124,
-   "window_start": "2026-11-07T19:24:59.532Z",
-   "window_end": "2026-11-08T19:24:59.532Z",
-   "last_capture": "2026-11-08T19:24:59.532Z",
+   "active_keys": 17660,
+   "ids_without_job": 20067,
+   "window_start": "2026-11-07T20:24:21.899Z",
+   "window_end": "2026-11-08T20:24:21.899Z",
+   "last_capture": "2026-11-08T20:24:21.899Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-08T18:54:58.958Z",
+    "posted_before": "2026-11-08T19:54:20.968Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-07T19:24:58.958Z",
-   "window_end": "2026-11-08T19:24:58.958Z",
-   "last_capture": "2026-11-08T19:24:58.958Z",
+   "window_start": "2026-11-07T20:24:20.968Z",
+   "window_end": "2026-11-08T20:24:20.968Z",
+   "last_capture": "2026-11-08T20:24:20.968Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
