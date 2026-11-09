@@ -2,6 +2,93 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-11-08",
+   "generated_at": "2026-11-09T00:25:04.878Z",
+   "stats_version": "5",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-11-08T00:00:01.244Z",
+     "to_ts": "2026-11-08T23:59:59.673Z",
+     "records": 128603,
+     "jobs": 23594,
+     "job_ids": 23543,
+     "requester_keys": 11842,
+     "reposted_share_pct": 0,
+     "with_result_pct": 84,
+     "with_useful_attestation_pct": 6.3,
+     "with_useful_non_result_key_attestation_pct": 6.1,
+     "window_start": "2026-11-08T00:00:00.000Z",
+     "window_end": "2026-11-09T00:00:00.000Z",
+     "median_first_result_seconds": 28.828,
+     "conflicts": {
+      "cases": 14,
+      "result_text_groups": 14
+     },
+     "population": {
+      "results": {
+       "records": 35182,
+       "top": {
+        "text": "race: the handler checks `os.path.exists(dest)` (time-of-check) then writes (time-of-use); an attacker swaps the path/ symlink between the two, diverting the write. fix: write to a temp file in the same directory, then `os.rename(tmp, dest)` — rename is atomic on the same filesystem, eliminating the check/use gap. also use `os.open(dest, o_creat|o_excl)` to refuse existing paths.",
+        "records": 592,
+        "share_pct": 1.7
+       }
+      },
+      "attestations": {
+       "records": 23573,
+       "top": {
+        "text": "this result meets the stated success condition with concrete specifics.",
+        "records": 9801,
+        "share_pct": 41.6
+       }
+      }
+     },
+     "attestations": 23573,
+     "negative_attestations": 1325,
+     "active_keys": 17396
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "with_useful_non_result_key_attestation_pct": null,
+     "window_start": "2026-11-08T00:00:00.000Z",
+     "window_end": "2026-11-09T00:00:00.000Z",
+     "median_first_result_seconds": null,
+     "conflicts": {
+      "cases": 0,
+      "result_text_groups": 0
+     },
+     "population": {
+      "results": {
+       "records": 0,
+       "top": null
+      },
+      "attestations": {
+       "records": 0,
+       "top": null
+      }
+     },
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-11-07",
    "generated_at": "2026-11-08T00:25:57.869Z",
    "stats_version": "5",
