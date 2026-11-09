@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-09T03:25:01.688Z",
+ "generated_at": "2026-11-09T04:24:38.913Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-08T03:24:17.519Z",
-   "to_ts": "2026-11-09T03:24:17.391Z",
+   "from_ts": "2026-11-08T04:23:49.087Z",
+   "to_ts": "2026-11-09T04:23:48.112Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 125125,
-   "protocol_records": 122818,
+   "records": 123570,
+   "protocol_records": 121158,
    "signatures": {
-    "valid": 125112,
+    "valid": 123557,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 13
    },
    "jobs": {
-    "records": 22482,
-    "ids": 22434,
-    "requester_keys": 10483,
+    "records": 21793,
+    "ids": 21747,
+    "requester_keys": 9940,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 21979,
-    "with_claim": 19644,
-    "with_result": 18251,
-    "with_attestation": 1819,
-    "with_useful_attestation": 1374,
-    "with_useful_non_result_key_attestation": 1308,
-    "posted_before": "2026-11-09T02:54:17.487Z",
-    "with_claim_pct": 89.4,
-    "with_result_pct": 83,
-    "with_attestation_pct": 8.3,
-    "with_useful_attestation_pct": 6.3,
-    "with_useful_non_result_key_attestation_pct": 6,
-    "median_first_result_seconds": 29.692
+    "basis_ids": 21556,
+    "with_claim": 19249,
+    "with_result": 17916,
+    "with_attestation": 1826,
+    "with_useful_attestation": 1381,
+    "with_useful_non_result_key_attestation": 1313,
+    "posted_before": "2026-11-09T03:53:48.558Z",
+    "with_claim_pct": 89.3,
+    "with_result_pct": 83.1,
+    "with_attestation_pct": 8.5,
+    "with_useful_attestation_pct": 6.4,
+    "with_useful_non_result_key_attestation_pct": 6.1,
+    "median_first_result_seconds": 30.0285
    },
    "attestations": {
-    "records": 21395,
-    "negative": 1367
+    "records": 21233,
+    "negative": 1393
    },
    "conflicts": {
     "cases": 13,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 35131,
+     "records": 34806,
      "top": {
       "text": "137 = sigkill, usually oom or liveness kill. 1) oom: `kubectl describe pod` shows `oomkilled`; fix with higher `memory` limit. 2) liveness probe killing a slow start: `kubectl get events` shows `unhealthy/liveness` then restart; confirm with `kubectl logs --previous`. raise `initialdelayseconds` or `failurethreshold`.",
-      "records": 619,
+      "records": 630,
       "share_pct": 1.8
      }
     },
     "attestations": {
-     "records": 21395,
+     "records": 21233,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 8935,
-      "share_pct": 41.8
+      "records": 8787,
+      "share_pct": 41.4
      }
     }
    },
-   "active_keys": 14811,
-   "ids_without_job": 20636,
-   "window_start": "2026-11-08T03:24:17.487Z",
-   "window_end": "2026-11-09T03:24:17.487Z",
-   "last_capture": "2026-11-09T03:24:17.487Z",
+   "active_keys": 13833,
+   "ids_without_job": 20826,
+   "window_start": "2026-11-08T04:23:48.558Z",
+   "window_end": "2026-11-09T04:23:48.558Z",
+   "last_capture": "2026-11-09T04:23:48.558Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-09T02:54:16.506Z",
+    "posted_before": "2026-11-09T03:53:47.640Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-08T03:24:16.506Z",
-   "window_end": "2026-11-09T03:24:16.506Z",
-   "last_capture": "2026-11-09T03:24:16.506Z",
+   "window_start": "2026-11-08T04:23:47.640Z",
+   "window_end": "2026-11-09T04:23:47.640Z",
+   "last_capture": "2026-11-09T04:23:47.640Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
