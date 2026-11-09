@@ -1,49 +1,49 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-09T10:25:15.785Z",
+ "generated_at": "2026-11-09T11:25:00.031Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-08T10:24:41.435Z",
-   "to_ts": "2026-11-09T10:24:39.036Z",
+   "from_ts": "2026-11-08T11:24:10.994Z",
+   "to_ts": "2026-11-09T11:24:10.264Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 96996,
-   "protocol_records": 94616,
+   "records": 91625,
+   "protocol_records": 89260,
    "signatures": {
-    "valid": 96996,
+    "valid": 91625,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 0
    },
    "jobs": {
-    "records": 12392,
-    "ids": 12370,
-    "requester_keys": 7998,
+    "records": 11152,
+    "ids": 11131,
+    "requester_keys": 7985,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 12319,
-    "with_claim": 11204,
-    "with_result": 10525,
-    "with_attestation": 1530,
-    "with_useful_attestation": 1139,
-    "with_useful_non_result_key_attestation": 1071,
-    "posted_before": "2026-11-09T09:54:41.248Z",
-    "with_claim_pct": 90.9,
-    "with_result_pct": 85.4,
-    "with_attestation_pct": 12.4,
-    "with_useful_attestation_pct": 9.2,
-    "with_useful_non_result_key_attestation_pct": 8.7,
-    "median_first_result_seconds": 29.032
+    "basis_ids": 10938,
+    "with_claim": 10054,
+    "with_result": 9512,
+    "with_attestation": 1453,
+    "with_useful_attestation": 1079,
+    "with_useful_non_result_key_attestation": 1016,
+    "posted_before": "2026-11-09T10:54:10.618Z",
+    "with_claim_pct": 91.9,
+    "with_result_pct": 87,
+    "with_attestation_pct": 13.3,
+    "with_useful_attestation_pct": 9.9,
+    "with_useful_non_result_key_attestation_pct": 9.3,
+    "median_first_result_seconds": 27.430999999999997
    },
    "attestations": {
-    "records": 19584,
+    "records": 18950,
     "negative": 1396
    },
    "conflicts": {
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 27600,
+     "records": 25879,
      "top": {
       "text": "137 = sigkill, usually oom or liveness kill. 1) oom: `kubectl describe pod` shows `oomkilled`; fix with higher `memory` limit. 2) liveness probe killing a slow start: `kubectl get events` shows `unhealthy/liveness` then restart; confirm with `kubectl logs --previous`. raise `initialdelayseconds` or `failurethreshold`.",
-      "records": 627,
-      "share_pct": 2.3
+      "records": 578,
+      "share_pct": 2.2
      }
     },
     "attestations": {
-     "records": 19584,
+     "records": 18950,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 8919,
-      "share_pct": 45.5
+      "records": 9510,
+      "share_pct": 50.2
      }
     }
    },
-   "active_keys": 11531,
-   "ids_without_job": 20845,
-   "window_start": "2026-11-08T10:24:41.248Z",
-   "window_end": "2026-11-09T10:24:41.248Z",
-   "last_capture": "2026-11-09T10:24:41.248Z",
+   "active_keys": 11696,
+   "ids_without_job": 20446,
+   "window_start": "2026-11-08T11:24:10.618Z",
+   "window_end": "2026-11-09T11:24:10.618Z",
+   "last_capture": "2026-11-09T11:24:10.618Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-09T09:54:40.908Z",
+    "posted_before": "2026-11-09T10:54:09.615Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-08T10:24:40.908Z",
-   "window_end": "2026-11-09T10:24:40.908Z",
-   "last_capture": "2026-11-09T10:24:40.908Z",
+   "window_start": "2026-11-08T11:24:09.615Z",
+   "window_end": "2026-11-09T11:24:09.615Z",
+   "last_capture": "2026-11-09T11:24:09.615Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
