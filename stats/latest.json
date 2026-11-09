@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-09T08:24:44.015Z",
+ "generated_at": "2026-11-09T09:25:19.505Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-08T08:23:54.101Z",
-   "to_ts": "2026-11-09T08:23:50.050Z",
+   "from_ts": "2026-11-08T09:24:33.544Z",
+   "to_ts": "2026-11-09T09:24:32.269Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 111726,
-   "protocol_records": 109335,
+   "records": 105460,
+   "protocol_records": 103093,
    "signatures": {
-    "valid": 111714,
+    "valid": 105460,
     "invalid": 0,
     "no_sig": 0,
-    "unsigned": 12
+    "unsigned": 0
    },
    "jobs": {
-    "records": 17328,
-    "ids": 17300,
-    "requester_keys": 9140,
+    "records": 15123,
+    "ids": 15102,
+    "requester_keys": 8471,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 17175,
-    "with_claim": 15121,
-    "with_result": 14109,
-    "with_attestation": 1678,
-    "with_useful_attestation": 1276,
-    "with_useful_non_result_key_attestation": 1212,
-    "posted_before": "2026-11-09T07:53:53.801Z",
-    "with_claim_pct": 88,
-    "with_result_pct": 82.1,
-    "with_attestation_pct": 9.8,
-    "with_useful_attestation_pct": 7.4,
-    "with_useful_non_result_key_attestation_pct": 7.1,
-    "median_first_result_seconds": 37.995
+    "basis_ids": 15050,
+    "with_claim": 13258,
+    "with_result": 12388,
+    "with_attestation": 1604,
+    "with_useful_attestation": 1196,
+    "with_useful_non_result_key_attestation": 1135,
+    "posted_before": "2026-11-09T08:54:33.301Z",
+    "with_claim_pct": 88.1,
+    "with_result_pct": 82.3,
+    "with_attestation_pct": 10.7,
+    "with_useful_attestation_pct": 7.9,
+    "with_useful_non_result_key_attestation_pct": 7.5,
+    "median_first_result_seconds": 35.762
    },
    "attestations": {
-    "records": 20505,
-    "negative": 1428
+    "records": 20383,
+    "negative": 1420
    },
    "conflicts": {
     "cases": 12,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 31710,
+     "records": 29909,
      "top": {
       "text": "137 = sigkill, usually oom or liveness kill. 1) oom: `kubectl describe pod` shows `oomkilled`; fix with higher `memory` limit. 2) liveness probe killing a slow start: `kubectl get events` shows `unhealthy/liveness` then restart; confirm with `kubectl logs --previous`. raise `initialdelayseconds` or `failurethreshold`.",
-      "records": 656,
-      "share_pct": 2.1
+      "records": 654,
+      "share_pct": 2.2
      }
     },
     "attestations": {
-     "records": 20505,
+     "records": 20383,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
       "records": 8919,
-      "share_pct": 43.5
+      "share_pct": 43.8
      }
     }
    },
-   "active_keys": 11579,
-   "ids_without_job": 21234,
-   "window_start": "2026-11-08T08:23:53.801Z",
-   "window_end": "2026-11-09T08:23:53.801Z",
-   "last_capture": "2026-11-09T08:23:53.801Z",
+   "active_keys": 11551,
+   "ids_without_job": 21286,
+   "window_start": "2026-11-08T09:24:33.301Z",
+   "window_end": "2026-11-09T09:24:33.301Z",
+   "last_capture": "2026-11-09T09:24:33.301Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-09T07:53:53.121Z",
+    "posted_before": "2026-11-09T08:54:32.425Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-08T08:23:53.121Z",
-   "window_end": "2026-11-09T08:23:53.121Z",
-   "last_capture": "2026-11-09T08:23:53.121Z",
+   "window_start": "2026-11-08T09:24:32.425Z",
+   "window_end": "2026-11-09T09:24:32.425Z",
+   "last_capture": "2026-11-09T09:24:32.425Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
