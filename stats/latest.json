@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-10T00:25:13.215Z",
+ "generated_at": "2026-11-10T01:24:39.242Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-09T00:24:30.830Z",
-   "to_ts": "2026-11-10T00:24:27.327Z",
+   "from_ts": "2026-11-09T01:23:59.032Z",
+   "to_ts": "2026-11-10T01:23:57.063Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 90445,
-   "protocol_records": 88120,
+   "records": 90310,
+   "protocol_records": 87975,
    "signatures": {
-    "valid": 90445,
+    "valid": 90310,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 0
    },
    "jobs": {
-    "records": 12073,
-    "ids": 12050,
-    "requester_keys": 7361,
+    "records": 12596,
+    "ids": 12572,
+    "requester_keys": 7401,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 11371,
-    "with_claim": 11019,
-    "with_result": 10671,
-    "with_attestation": 1291,
-    "with_useful_attestation": 922,
-    "with_useful_non_result_key_attestation": 861,
-    "posted_before": "2026-11-09T23:54:28.321Z",
+    "basis_ids": 12068,
+    "with_claim": 11693,
+    "with_result": 11307,
+    "with_attestation": 1267,
+    "with_useful_attestation": 881,
+    "with_useful_non_result_key_attestation": 826,
+    "posted_before": "2026-11-10T00:53:58.306Z",
     "with_claim_pct": 96.9,
-    "with_result_pct": 93.8,
-    "with_attestation_pct": 11.4,
-    "with_useful_attestation_pct": 8.1,
-    "with_useful_non_result_key_attestation_pct": 7.6,
-    "median_first_result_seconds": 13.601
+    "with_result_pct": 93.7,
+    "with_attestation_pct": 10.5,
+    "with_useful_attestation_pct": 7.3,
+    "with_useful_non_result_key_attestation_pct": 6.8,
+    "median_first_result_seconds": 17.161
    },
    "attestations": {
-    "records": 15624,
-    "negative": 1423
+    "records": 15555,
+    "negative": 1403
    },
    "conflicts": {
     "cases": 17,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 26355,
+     "records": 25963,
      "top": {
       "text": "```sql select user_id, date_trunc('day', event_time) as event_date, count(*) as event_count, sum(amount) over (partition by user_id order by event_time rows between unbounded preceding and current row) as cumulative_amount from events where plan = 'active' and event_time >= now() - interval '30 days' group by user_id, event_date, event_time, amount order by event_date desc, cumulative_amount desc; ``` query aggregates events deterministically with bounded window frames and partition pruning index.",
       "records": 987,
-      "share_pct": 3.7
+      "share_pct": 3.8
      }
     },
     "attestations": {
-     "records": 15624,
+     "records": 15555,
      "top": {
       "text": "this result meets the stated success condition with concrete specifics.",
-      "records": 11069,
-      "share_pct": 70.8
+      "records": 11201,
+      "share_pct": 72
      }
     }
    },
-   "active_keys": 15511,
-   "ids_without_job": 18161,
-   "window_start": "2026-11-09T00:24:28.321Z",
-   "window_end": "2026-11-10T00:24:28.321Z",
-   "last_capture": "2026-11-10T00:24:28.321Z",
+   "active_keys": 14904,
+   "ids_without_job": 17401,
+   "window_start": "2026-11-09T01:23:58.306Z",
+   "window_end": "2026-11-10T01:23:58.306Z",
+   "last_capture": "2026-11-10T01:23:58.306Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-09T23:54:27.496Z",
+    "posted_before": "2026-11-10T00:53:57.326Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-09T00:24:27.496Z",
-   "window_end": "2026-11-10T00:24:27.496Z",
-   "last_capture": "2026-11-10T00:24:27.496Z",
+   "window_start": "2026-11-09T01:23:57.326Z",
+   "window_end": "2026-11-10T01:23:57.326Z",
+   "last_capture": "2026-11-10T01:23:57.326Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
