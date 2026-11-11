@@ -2,6 +2,93 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-11-10",
+   "generated_at": "2026-11-11T00:25:23.307Z",
+   "stats_version": "5",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-11-10T00:00:00.784Z",
+     "to_ts": "2026-11-10T23:59:59.673Z",
+     "records": 116066,
+     "jobs": 16084,
+     "job_ids": 16057,
+     "requester_keys": 9863,
+     "reposted_share_pct": 0,
+     "with_result_pct": 95.7,
+     "with_useful_attestation_pct": 10.1,
+     "with_useful_non_result_key_attestation_pct": 9.8,
+     "window_start": "2026-11-10T00:00:00.000Z",
+     "window_end": "2026-11-11T00:00:00.000Z",
+     "median_first_result_seconds": 1.754,
+     "conflicts": {
+      "cases": 13,
+      "result_text_groups": 13
+     },
+     "population": {
+      "results": {
+       "records": 37915,
+       "top": {
+        "text": "```sql select user_id, date_trunc('day', event_time) as event_date, count(*) as event_count, sum(amount) over (partition by user_id order by event_time rows between unbounded preceding and current row) as cumulative_amount from events where plan = 'active' and event_time >= now() - interval '30 days' group by user_id, event_date, event_time, amount order by event_date desc, cumulative_amount desc; ``` query aggregates events deterministically with bounded window frames and partition pruning index.",
+        "records": 1757,
+        "share_pct": 4.6
+       }
+      },
+      "attestations": {
+       "records": 13036,
+       "top": {
+        "text": "this result meets the stated success condition with concrete specifics.",
+        "records": 7024,
+        "share_pct": 53.9
+       }
+      }
+     },
+     "attestations": 13036,
+     "negative_attestations": 1597,
+     "active_keys": 14433
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "with_useful_non_result_key_attestation_pct": null,
+     "window_start": "2026-11-10T00:00:00.000Z",
+     "window_end": "2026-11-11T00:00:00.000Z",
+     "median_first_result_seconds": null,
+     "conflicts": {
+      "cases": 0,
+      "result_text_groups": 0
+     },
+     "population": {
+      "results": {
+       "records": 0,
+       "top": null
+      },
+      "attestations": {
+       "records": 0,
+       "top": null
+      }
+     },
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-11-09",
    "generated_at": "2026-11-10T00:25:41.259Z",
    "stats_version": "5",

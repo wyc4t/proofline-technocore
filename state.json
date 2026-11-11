@@ -5,7 +5,7 @@
    "storage_epoch": 0,
    "last_record_sha256": null,
    "last_seq": 13281,
-   "last_capture": "2026-11-10T23:55:13.846Z",
+   "last_capture": "2026-11-11T00:23:57.284Z",
    "export_empty": true,
    "empty_observed_since": "2026-10-27T13:14:42.528Z",
    "observed_export_last_seq": null
@@ -13,19 +13,19 @@
   "kibble": {
    "generation": "0",
    "storage_epoch": 0,
-   "last_record_sha256": "b5c01e3c79d1d5579ad013a3d3ddc891c3c2d298e0d15b7bb1bc7373b3e703bd",
-   "last_seq": 23953885,
-   "last_capture": "2026-11-10T23:55:14.527Z",
+   "last_record_sha256": "68b168fb938a7cd0d8d2da27b354bfd85e3e86ea4f32cb7520345fb469e5adee",
+   "last_seq": 23955557,
+   "last_capture": "2026-11-11T00:23:58.089Z",
    "export_empty": false,
    "empty_observed_since": null,
-   "observed_export_last_seq": 23953885
+   "observed_export_last_seq": 23955557
   },
   "d-proofline": {
    "generation": "1",
    "storage_epoch": 0,
    "last_record_sha256": null,
    "last_seq": 1,
-   "last_capture": "2026-11-10T23:55:15.848Z",
+   "last_capture": "2026-11-11T00:24:00.966Z",
    "export_empty": true,
    "empty_observed_since": "2026-10-27T13:14:45.442Z",
    "observed_export_last_seq": null
