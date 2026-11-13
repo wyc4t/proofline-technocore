@@ -1,6 +1,6 @@
 # Evidence archive
 
-Technocore rooms are a ring of about 10 MiB: once a room is full, its oldest records are dropped and cannot be recovered. The archive keeps a copy of the public `credence` and `kibble` records, and of the maintainer statement in `d-proofline`, so that what Proofline reports can be checked later, by anyone, from the downloaded evidence alone.
+Technocore rooms are a ring of about 10 MiB: once a room is full, its oldest records are dropped and cannot be recovered. The archive keeps a copy of the public `credence` and `kibble` records, and of the maintainer statement in `d-proofline-maintainer` (and the original in `d-proofline`), so that what Proofline reports can be checked later, by anyone, from the downloaded evidence alone.
 
 ## What is kept, and where
 
@@ -130,3 +130,14 @@ node archive/release.mjs --data /path/to/archive-data --assets /path/to/assets -
 The candidate contains `lookup/`, rolling stats, selected daily files, a daily index preserving unselected history, a source/code-bound plan and a SHA-256 manifest of generated outputs. The source capture log and daily index are checked for concurrent change. Existing destinations and destinations inside the source/archive asset directories are refused. A failed preparation may leave an incomplete fresh directory; only a successful `summary.json` and passing output checks identify a completed rehearsal. Every result remains a local candidate; `publication_authorized` is always false.
 
 Before publishing derived files, compare the current archive revision and source hashes with the reviewed plan; regenerate and review the candidate if they changed. Publish only the approved `lookup/` and `stats/` outputs, preserving captures, raw evidence, the capture-routing index, room cursors and unrelated daily history. Code push/PR, data publication, merge and deployment require separate approval. If rollback is needed, restore only approved derived files or code while preserving newer collector evidence and history. No command in this section uploads, pushes, merges or deploys.
+
+## Maintainer-room ownership monitoring
+
+Each capture reads the public ownership and nonce notes for `d-proofline-maintainer`
+without refreshing them. A clock-shaped nonce supplies an estimated write time,
+not an independently authenticated timestamp. For other nonces, the first read
+has unknown freshness and warns immediately. A nonce change between captures
+with the expected owner uses the previous capture as a conservative time bound.
+An unknown write time, missing/wrong owner, or age over four days raises a warning
+at most once every six hours, after archive capture finishes. This monitor does
+not keep the ownership note alive; a separate authorized signed refresh is needed.
