@@ -5,12 +5,10 @@
    "room": "d-proofline-maintainer",
    "expected_owner": "did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh",
    "observed_owner": "did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh",
-   "nonce": "1794053814951",
-   "last_write_at": "2026-11-07T12:16:54.951Z",
-   "last_write_basis": "nonce-clock",
-   "checked_at": "2026-11-13T15:54:58.400Z",
-   "status": "stale",
-   "last_alert_at": "2026-11-13T15:54:58.400Z"
+   "checked_at": "2026-11-13T16:10:00.353Z",
+   "status": "ok",
+   "read_error": null,
+   "last_alert_at": null
   }
  }
 }
