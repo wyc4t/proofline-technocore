@@ -133,11 +133,17 @@ Before publishing derived files, compare the current archive revision and source
 
 ## Maintainer-room ownership monitoring
 
-Each capture reads the public ownership and nonce notes for `d-proofline-maintainer`
-without refreshing them. A clock-shaped nonce supplies an estimated write time,
-not an independently authenticated timestamp. For other nonces, the first read
-has unknown freshness and warns immediately. A nonce change between captures
-with the expected owner uses the previous capture as a conservative time bound.
-An unknown write time, missing/wrong owner, or age over four days raises a warning
-at most once every six hours, after archive capture finishes. This monitor does
-not keep the ownership note alive; a separate authorized signed refresh is needed.
+Each capture reads the public ownership note for `d-proofline-maintainer`
+without writing to Technocore. A missing or unexpected owner raises a warning at
+most once every six hours, after archive capture finishes. Read errors are recorded
+as `unchecked`, not interpreted as missing ownership.
+
+**Correction to PR #30:** an old ownership nonce is not evidence that ownership
+is about to expire. Technocore's room-guard notes are retained while the room is
+active; the room's own activity governs its idle retention. Rewriting an ownership
+note does not update room activity. This monitor neither predicts expiry nor
+requires periodic signed ownership refreshes. It removes the earlier inferred
+write-time fields and obsolete `stale` status on its next observation.
+
+Source: Technocore [`_guards_a_live_room`, `_reapable`, and `note_set`](https://github.com/flop-labs/technocore-chat/blob/3cd868e9a920fe61ad318d71ced1af11501b8fae/src/store.py).
+This source review does not establish an exact live-service expiry time.

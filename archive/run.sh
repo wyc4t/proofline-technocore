@@ -64,7 +64,7 @@ if [ -n "$FIRST" ] && [ ! -f "data/stats/daily/$YDAY.json" ] && [[ ! "$YDAY" < "
   ) || echo "daily digest not computed this time"
 fi
 
-# Maintainer room: check that its ownership note is still being refreshed. Records the
+# Maintainer room: check the observed owner, without inferring expiry from nonce age. Records the
 # result in data/ownership.json and, when it needs attention, writes ownership-alert.txt,
 # which the workflow's last step turns into a failed run. Never blocks the capture.
 node code/archive/ownership.mjs --data data --room d-proofline-maintainer \
