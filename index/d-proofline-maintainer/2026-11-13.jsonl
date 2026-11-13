@@ -1,0 +1,1 @@
+{"captured_at":"2026-11-13T15:53:09.181Z","room":"d-proofline-maintainer","generation":"1","storage_epoch":0,"events":[{"type":"first_capture"}],"new_records":2,"new_first_seq":1,"new_last_seq":2,"new_sha256":"f38eafa99671cf03ff8d8a7876de868b79b2fd9a707dd3b26d7f6801f23bac36","storage":{"kind":"git","files":["rooms/d-proofline-maintainer/g1/2026-11-07.jsonl"]}}
