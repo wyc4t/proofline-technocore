@@ -3,26 +3,15 @@
 //
 //   node archive/ownership.mjs --data <dir> --room <d-room> --owner <did:key> [--alert-file <path>]
 //
-// A Technocore ownership note (/kv/room-owners/<room>) is deleted after 7 days without a
-// write, and once it is gone the room can never be claimed again (the server refuses a claim
-// on any room that has ever held a message). The maintainer's own agent refreshes the note
-// daily; this check notices when that refresh has stopped, while there is still time to act.
-//
-// It reads two public notes, read-only: the owner, and the server's replay counter
-// /kv/room-nonce/<room>, which changes on every signed ownership write. The time of the last
-// write is the nonce itself when it reads as a millisecond clock (the maintainer's signer uses
-// one). Otherwise freshness is unknown on first observation; a change between
-// consecutive owned-note captures is conservatively dated from the previous check. The result is kept in
-// <data>/ownership.json. When the owner is missing or wrong, or the last write is older than
-// --max-age-days (default 4), it writes --alert-file, at most once per --alert-every-hours
-// (default 6); the workflow's last step fails on that file, so GitHub sends the usual
-// failed-run notice. This script itself always exits 0: it must never block a capture.
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+// Ownership guard notes are retained while their room is active. Their nonce is a
+// replay counter, not a room-activity timestamp or an expiry deadline. Check the
+// observed owner only: missing or unexpected owners need investigation. This
+// monitor never refreshes ownership or posts messages. Read failures are recorded
+// as unchecked, never as proof that ownership is missing. Captures always continue.
+import { readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
-
-const CLOCK_FLOOR = Date.parse('2026-01-01T00:00:00Z');
 
 // A note read is a text/plain body: an untrusted-content banner, a blank line, then the value.
 export function parseNote(body) {
@@ -32,8 +21,8 @@ export function parseNote(body) {
 }
 
 async function readNote(base, ns, key) {
-  const res = await fetch(`${base}/kv/${ns}/${encodeURIComponent(key)}`, {
-    signal: AbortSignal.timeout(30_000), headers: { 'user-agent': 'proofline-archive/ownership' },
+  const res = await fetch(`${base}/kv/${ns}/${encodeURIComponent(key)}?check=${Date.now()}`, {
+    signal: AbortSignal.timeout(30_000), headers: { 'user-agent': 'proofline-archive/ownership', 'cache-control': 'no-cache' },
   });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`${ns}: HTTP ${res.status}`);
@@ -41,37 +30,22 @@ async function readNote(base, ns, key) {
 }
 
 // Pure: the next state for one room, and whether to alert.
-export function assess({ prev, room, expected, owner, nonce, now, maxAgeMs, alertEveryMs }) {
+export function assess({ prev, room, expected, owner, now, alertEveryMs, readError = null }) {
   const at = new Date(now).toISOString();
-  let lastWriteAt = prev?.last_write_at ?? null, basis = prev?.last_write_basis ?? null;
-  if (nonce !== null && nonce !== (prev?.nonce ?? null)) {
-    const n = Number(nonce);
-    if (/^\d{13}$/.test(nonce) && n >= CLOCK_FLOOR && n <= now + 10 * 60e3) { lastWriteAt = new Date(n).toISOString(); basis = 'nonce-clock'; }
-    else {
-      // First observation is not evidence of a recent write. If the same owner
-      // had a nonce at the previous capture, a change occurred after that check;
-      // use that earlier bound rather than granting a fresh window from now.
-      const previousCheck = Date.parse(prev?.checked_at ?? '');
-      const boundedChange = prev?.observed_owner === expected && prev?.nonce != null
-        && Number.isFinite(previousCheck) && previousCheck <= now;
-      lastWriteAt = boundedChange ? new Date(previousCheck).toISOString() : null;
-      basis = boundedChange ? 'observed-change-lower-bound' : 'unknown';
-    }
-  }
-  const ageMs = lastWriteAt ? now - Date.parse(lastWriteAt) : null;
   let status = 'ok', problem = null;
-  if (owner === null) { status = 'missing'; problem = `${room} has no ownership note`; }
-  else if (owner !== expected) { status = 'wrong-owner'; problem = `${room} is owned by ${owner}, not the maintainer key`; }
-  else if (ageMs === null || ageMs > maxAgeMs) {
-    status = 'stale';
-    problem = ageMs === null ? `${room}: time of the last ownership write is unknown`
-      : `${room}: ownership write age estimate ${(ageMs / 86400e3).toFixed(1)} days (${basis}); notes expire after 7 idle days`;
-  }
-  const lastAlert = prev?.last_alert_at ? Date.parse(prev.last_alert_at) : 0;
-  const alert = status !== 'ok' && now - lastAlert >= alertEveryMs;
+  if (readError !== null) { status = 'unchecked'; problem = `${room}: ownership could not be checked (${readError})`; }
+  else if (owner === null) { status = 'missing'; problem = `${room} has no observed ownership note`; }
+  else if (owner !== expected) { status = 'wrong-owner'; problem = `${room} has an unexpected observed owner`; }
+  // Old versions warned about nonce age. Do not let that obsolete warning suppress
+  // the first real ownership failure, and discard all inferred write/expiry fields.
+  const priorFailure = ['missing', 'wrong-owner'].includes(prev?.status);
+  const lastAlert = priorFailure ? Date.parse(prev?.last_alert_at ?? '') : NaN;
+  const needsAttention = status === 'missing' || status === 'wrong-owner';
+  const alert = needsAttention && (!Number.isFinite(lastAlert) || now - lastAlert >= alertEveryMs);
   const next = {
-    room, expected_owner: expected, observed_owner: owner, nonce, last_write_at: lastWriteAt,
-    last_write_basis: basis, checked_at: at, status, last_alert_at: alert ? at : (prev?.last_alert_at ?? null),
+    room, expected_owner: expected, observed_owner: readError === null ? owner : null,
+    checked_at: at, status, read_error: readError,
+    last_alert_at: alert ? at : needsAttention && Number.isFinite(lastAlert) ? prev.last_alert_at : null,
   };
   return { next, alert, problem };
 }
@@ -81,29 +55,26 @@ async function main() {
     data: { type: 'string' }, room: { type: 'string' }, owner: { type: 'string' },
     base: { type: 'string', default: 'https://technocore.chat' },
     'alert-file': { type: 'string', default: 'ownership-alert.txt' },
-    'max-age-days': { type: 'string', default: '4' }, 'alert-every-hours': { type: 'string', default: '6' },
+    'alert-every-hours': { type: 'string', default: '6' },
   } });
   if (!values.data || !values.room || !values.owner) throw new Error('--data, --room and --owner are required');
   const path = join(values.data, 'ownership.json');
   const all = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : { format: 'proofline-ownership', rooms: {} };
-  let owner, nonce;
+  let owner = null, readError = null;
   try {
-    [owner, nonce] = await Promise.all([readNote(values.base, 'room-owners', values.room), readNote(values.base, 'room-nonce', values.room)]);
+    owner = await readNote(values.base, 'room-owners', values.room);
   } catch (e) {
-    console.log(`ownership not checked this time: ${e.message}`);
-    return;
+    readError = e.message;
   }
   const { next, alert, problem } = assess({
-    prev: all.rooms[values.room], room: values.room, expected: values.owner, owner, nonce, now: Date.now(),
-    maxAgeMs: Number(values['max-age-days']) * 86400e3, alertEveryMs: Number(values['alert-every-hours']) * 3600e3,
+    prev: all.rooms[values.room], room: values.room, expected: values.owner, owner, readError, now: Date.now(),
+    alertEveryMs: Number(values['alert-every-hours']) * 3600e3,
   });
   all.rooms[values.room] = next;
   writeFileSync(path, JSON.stringify(all, null, 1) + '\n');
-  console.log(`ownership ${values.room}: ${next.status}${next.last_write_at ? `, last write ${next.last_write_at}` : ''}`);
-  const action = next.status === 'stale'
-    ? `Refresh it from the maintainer's agent: re-sign /kv/room-owners/${values.room} with a fresh nonce.`
-    : 'A room that has held messages cannot be claimed again, so this needs the maintainer to decide what happens next.';
-  if (alert) writeFileSync(values['alert-file'], `${problem}. ${action}\n`);
+  console.log(`ownership ${values.room}: ${next.status}${readError ? ` (${readError})` : ''}`);
+  if (next.status === 'ok') rmSync(values['alert-file'], { force: true });
+  if (alert) writeFileSync(values['alert-file'], `${problem}. Inspect current room and ownership state before deciding on a signed action. This is not an expiry prediction.\n`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
