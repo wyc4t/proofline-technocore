@@ -377,8 +377,8 @@ const MAINTAINER={did:'did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh'
 // room, so a statement copied into another room never verifies there.
 const isStatement=m=>m&&m.from===MAINTAINER.did&&/^Proofline maintainer statement:/.test(String(m.text))&&/maintain Proofline/.test(String(m.text));
 async function archivedStatement(){
-  const fetchText=async u=>{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(String(r.status));return r.text()};
-  const fetchBytes=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(String(r.status));return new Uint8Array(await r.arrayBuffer())};
+  const fetchText=async u=>{const r=await fetch(u,{cache:'no-store',signal:AbortSignal.timeout(10_000)});if(!r.ok)throw new Error(String(r.status));return r.text()};
+  const fetchBytes=async u=>{const r=await fetch(u,{signal:AbortSignal.timeout(10_000)});if(!r.ok)throw new Error(String(r.status));return new Uint8Array(await r.arrayBuffer())};
   const a=MAINTAINER.archived;
   const res=await loadPinned({room:a.room,gen:a.gen,from:a.seq,to:a.seq,fetchText,fetchBytes,assetUrl:()=>''});
   const dec=new TextDecoder();return res.lines.map(l=>parseRoomPage(dec.decode(l))).find(m=>isStatement(m)&&Number(m.seq)===a.seq)||null;
@@ -388,7 +388,7 @@ async function checkMaintainer(){
   const show=(text,tone)=>{out.textContent=text;out.className=`proof ${tone}`};
   let m=null,live=true,room=MAINTAINER.room;
   try{
-    const res=await fetch(`https://technocore.chat/r/${MAINTAINER.room}/export`,{cache:'no-store'});
+    const res=await fetch(`https://technocore.chat/r/${MAINTAINER.room}/export`,{cache:'no-store',signal:AbortSignal.timeout(10_000)});
     if(res.ok)for(const line of (await res.text()).split('\n')){let c=null;try{c=line.trim()?parseRoomPage(line):null}catch{}if(isStatement(c)){m=c;break}}
   }catch{}
   let st=isStatement(m)?await checkSignature(room,m):null;

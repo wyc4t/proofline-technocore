@@ -11,7 +11,8 @@
 // It reads two public notes, read-only: the owner, and the server's replay counter
 // /kv/room-nonce/<room>, which changes on every signed ownership write. The time of the last
 // write is the nonce itself when it reads as a millisecond clock (the maintainer's signer uses
-// one), otherwise the first capture that saw the new value. The result is kept in
+// one). Otherwise freshness is unknown on first observation; a change between
+// consecutive owned-note captures is conservatively dated from the previous check. The result is kept in
 // <data>/ownership.json. When the owner is missing or wrong, or the last write is older than
 // --max-age-days (default 4), it writes --alert-file, at most once per --alert-every-hours
 // (default 6); the workflow's last step fails on that file, so GitHub sends the usual
@@ -46,7 +47,16 @@ export function assess({ prev, room, expected, owner, nonce, now, maxAgeMs, aler
   if (nonce !== null && nonce !== (prev?.nonce ?? null)) {
     const n = Number(nonce);
     if (/^\d{13}$/.test(nonce) && n >= CLOCK_FLOOR && n <= now + 10 * 60e3) { lastWriteAt = new Date(n).toISOString(); basis = 'nonce-clock'; }
-    else { lastWriteAt = at; basis = 'observed-change'; }
+    else {
+      // First observation is not evidence of a recent write. If the same owner
+      // had a nonce at the previous capture, a change occurred after that check;
+      // use that earlier bound rather than granting a fresh window from now.
+      const previousCheck = Date.parse(prev?.checked_at ?? '');
+      const boundedChange = prev?.observed_owner === expected && prev?.nonce != null
+        && Number.isFinite(previousCheck) && previousCheck <= now;
+      lastWriteAt = boundedChange ? new Date(previousCheck).toISOString() : null;
+      basis = boundedChange ? 'observed-change-lower-bound' : 'unknown';
+    }
   }
   const ageMs = lastWriteAt ? now - Date.parse(lastWriteAt) : null;
   let status = 'ok', problem = null;
@@ -55,7 +65,7 @@ export function assess({ prev, room, expected, owner, nonce, now, maxAgeMs, aler
   else if (ageMs === null || ageMs > maxAgeMs) {
     status = 'stale';
     problem = ageMs === null ? `${room}: time of the last ownership write is unknown`
-      : `${room}: last ownership write ${(ageMs / 86400e3).toFixed(1)} days ago; the note is deleted after 7 days without a write`;
+      : `${room}: ownership write age estimate ${(ageMs / 86400e3).toFixed(1)} days (${basis}); notes expire after 7 idle days`;
   }
   const lastAlert = prev?.last_alert_at ? Date.parse(prev.last_alert_at) : 0;
   const alert = status !== 'ok' && now - lastAlert >= alertEveryMs;

@@ -19,20 +19,36 @@ test('a millisecond-clock nonce dates the last write', () => {
   assert.equal(alert, false);
 });
 
-test('a nonce that is not a clock is dated by the capture that first saw it', () => {
-  const { next } = assess({ ...base, owner: DID, nonce: '42' });
-  assert.equal(next.last_write_basis, 'observed-change');
-  assert.equal(next.last_write_at, new Date(NOW).toISOString());
-  const later = assess({ ...base, prev: next, owner: DID, nonce: '42', now: NOW + 5 * DAY });
-  assert.equal(later.next.last_write_at, next.last_write_at);
+test('first observation of a non-clock nonce has unknown freshness and alerts', () => {
+  const { next, alert } = assess({ ...base, owner: DID, nonce: '42' });
+  assert.equal(next.last_write_basis, 'unknown');
+  assert.equal(next.last_write_at, null);
+  assert.equal(next.status, 'stale');
+  assert.equal(alert, true);
+});
+
+test('an observed nonce change uses the previous capture as a conservative bound', () => {
+  const prev = assess({ ...base, owner: DID, nonce: '42' }).next;
+  const changed = assess({ ...base, prev, owner: DID, nonce: '43', now: NOW + DAY });
+  assert.equal(changed.next.last_write_basis, 'observed-change-lower-bound');
+  assert.equal(changed.next.last_write_at, new Date(NOW).toISOString());
+  assert.equal(changed.next.status, 'ok');
+  const later = assess({ ...base, prev: changed.next, owner: DID, nonce: '43', now: NOW + 5 * DAY });
+  assert.equal(later.next.last_write_at, changed.next.last_write_at);
   assert.equal(later.next.status, 'stale');
+});
+
+test('a changed nonce after an observation gap cannot imply recent freshness', () => {
+  const prev = assess({ ...base, owner: DID, nonce: '42' }).next;
+  const changed = assess({ ...base, prev, owner: DID, nonce: '43', now: NOW + 5 * DAY });
+  assert.equal(changed.next.status, 'stale');
 });
 
 test('no write for more than 4 days alerts, at most every 6 hours', () => {
   const first = assess({ ...base, owner: DID, nonce: String(NOW - 4.5 * DAY) });
   assert.equal(first.next.status, 'stale');
   assert.equal(first.alert, true);
-  assert.match(first.problem, /4\.5 days ago/);
+  assert.match(first.problem, /age estimate 4\.5 days \(nonce-clock\)/);
   const soon = assess({ ...base, prev: first.next, owner: DID, nonce: first.next.nonce, now: NOW + 3600e3 });
   assert.equal(soon.alert, false);
   const after = assess({ ...base, prev: first.next, owner: DID, nonce: first.next.nonce, now: NOW + 6 * 3600e3 });
@@ -55,5 +71,12 @@ test('a missing or foreign owner always needs attention', () => {
 
 test('a nonce from the future is not trusted as a clock', () => {
   const { next } = assess({ ...base, owner: DID, nonce: String(NOW + DAY) });
-  assert.equal(next.last_write_basis, 'observed-change');
+  assert.equal(next.last_write_basis, 'unknown');
+  assert.equal(next.status, 'stale');
+});
+
+test('a missing nonce cannot establish freshness on first observation', () => {
+  const { next, alert } = assess({ ...base, owner: DID, nonce: null });
+  assert.equal(next.status, 'stale');
+  assert.equal(alert, true);
 });

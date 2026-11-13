@@ -11,12 +11,12 @@ const changed = raw.replace('maintain Proofline,', 'maintain Proofline!,');
 const source = fs.readFileSync(new URL('../src/app.js', import.meta.url), 'utf8');
 const functions = source.slice(source.indexOf('const MAINTAINER='), source.indexOf('\ncheckMaintainer();'));
 
-async function run(live, archived = raw, verifier = checkSignature) {
+async function run(live, archived = raw, verifier = checkSignature, liveFetch = null) {
   const out = {};
   let archiveRequests = 0;
   const context = {
-    $: () => out, TextDecoder, parseRoomPage, checkSignature: verifier,
-    fetch: async () => new Response(live + '\n'),
+    $: () => out, TextDecoder, AbortSignal, parseRoomPage, checkSignature: verifier,
+    fetch: liveFetch ?? (async () => new Response(live + '\n')),
     loadPinned: async () => {
       archiveRequests++;
       return { lines: archived ? [new TextEncoder().encode(archived)] : [] };
@@ -90,4 +90,15 @@ test('unsupported browser stays unchecked, never verified', async () => {
   assert.equal(r.archiveRequests, 0);
   assert.equal(r.out.className, 'proof warn');
   assert.equal(r.out.textContent, 'your browser cannot check this signature.');
+});
+
+test('a timed-out live request falls back to the verified archive', async () => {
+  let signal;
+  const r = await run('', raw, checkSignature, async (_url, options) => {
+    signal = options.signal;
+    throw new DOMException('timed out', 'TimeoutError');
+  });
+  assert.ok(signal instanceof AbortSignal);
+  assert.equal(r.archiveRequests, 1);
+  assert.match(r.out.textContent, /signature verified \(archived copy/);
 });
