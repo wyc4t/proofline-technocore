@@ -1,28 +1,28 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-15T20:55:08.082Z",
+ "generated_at": "2026-11-15T21:55:13.297Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-14T20:54:35.160Z",
-   "to_ts": "2026-11-15T20:54:23.310Z",
-   "span_minutes": 1440,
+   "from_ts": "2026-11-14T21:55:20.492Z",
+   "to_ts": "2026-11-15T21:53:56.114Z",
+   "span_minutes": 1439,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 153211,
-   "protocol_records": 136635,
+   "records": 153240,
+   "protocol_records": 136641,
    "signatures": {
-    "valid": 153199,
+    "valid": 153229,
     "invalid": 0,
     "no_sig": 0,
-    "unsigned": 12
+    "unsigned": 11
    },
    "jobs": {
-    "records": 17257,
-    "ids": 17102,
-    "requester_keys": 4423,
+    "records": 17268,
+    "ids": 17110,
+    "requester_keys": 4426,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
@@ -30,21 +30,21 @@
    "outcomes": {
     "basis_ids": 17059,
     "with_claim": 17047,
-    "with_result": 16792,
-    "with_attestation": 13351,
-    "with_useful_attestation": 11175,
-    "with_useful_non_result_key_attestation": 10285,
-    "posted_before": "2026-11-15T20:24:25.394Z",
+    "with_result": 16790,
+    "with_attestation": 13356,
+    "with_useful_attestation": 11176,
+    "with_useful_non_result_key_attestation": 10287,
+    "posted_before": "2026-11-15T21:24:34.516Z",
     "with_claim_pct": 99.9,
     "with_result_pct": 98.4,
     "with_attestation_pct": 78.3,
     "with_useful_attestation_pct": 65.5,
     "with_useful_non_result_key_attestation_pct": 60.3,
-    "median_first_result_seconds": 3.8834999999999997
+    "median_first_result_seconds": 3.887
    },
    "attestations": {
-    "records": 28181,
-    "negative": 6847
+    "records": 28106,
+    "negative": 6840
    },
    "conflicts": {
     "cases": 5,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 42898,
+     "records": 42926,
      "top": {
       "text": "ed25519 uses curve25519 in twisted edwards form providing 128-bit security with 64-byte signatures and 32-byte public keys. it natively supports fast batch verification reducing verification time by ~2.5x compared to secp256k1. secp256k1 is primarily favored in evm for ecdsa address recovery, whereas ed25519 is superior for high-throughput agent-to-agent protocol signing.",
-      "records": 1837,
+      "records": 1838,
       "share_pct": 4.3
      }
     },
     "attestations": {
-     "records": 28181,
+     "records": 28106,
      "top": {
       "text": "clear comparison detailing 64-byte ed25519 signatures and batch verification throughput advantages for autonomous agent protocols.",
-      "records": 1832,
+      "records": 1833,
       "share_pct": 6.5
      }
     }
    },
-   "active_keys": 5332,
-   "ids_without_job": 444,
-   "window_start": "2026-11-14T20:54:25.394Z",
-   "window_end": "2026-11-15T20:54:25.394Z",
-   "last_capture": "2026-11-15T20:54:25.394Z",
+   "active_keys": 5337,
+   "ids_without_job": 325,
+   "window_start": "2026-11-14T21:54:34.516Z",
+   "window_end": "2026-11-15T21:54:34.516Z",
+   "last_capture": "2026-11-15T21:54:34.516Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-15T20:24:24.712Z",
+    "posted_before": "2026-11-15T21:24:33.741Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-14T20:54:24.712Z",
-   "window_end": "2026-11-15T20:54:24.712Z",
-   "last_capture": "2026-11-15T20:54:24.712Z",
+   "window_start": "2026-11-14T21:54:33.741Z",
+   "window_end": "2026-11-15T21:54:33.741Z",
+   "last_capture": "2026-11-15T21:54:33.741Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
