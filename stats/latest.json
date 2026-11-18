@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-18T20:55:31.976Z",
+ "generated_at": "2026-11-18T21:55:01.281Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-17T20:55:03.109Z",
-   "to_ts": "2026-11-18T20:54:15.728Z",
-   "span_minutes": 1439,
+   "from_ts": "2026-11-17T21:54:28.065Z",
+   "to_ts": "2026-11-18T21:52:29.960Z",
+   "span_minutes": 1438,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 80355,
-   "protocol_records": 68541,
+   "records": 80127,
+   "protocol_records": 68303,
    "signatures": {
-    "valid": 80350,
+    "valid": 80122,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 5
    },
    "jobs": {
-    "records": 10031,
-    "ids": 9745,
-    "requester_keys": 4550,
+    "records": 10025,
+    "ids": 9739,
+    "requester_keys": 4545,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 9718,
-    "with_claim": 9716,
-    "with_result": 9656,
-    "with_attestation": 6199,
-    "with_useful_attestation": 5406,
-    "with_useful_non_result_key_attestation": 4696,
-    "posted_before": "2026-11-18T20:24:55.309Z",
+    "basis_ids": 9714,
+    "with_claim": 9712,
+    "with_result": 9652,
+    "with_attestation": 6202,
+    "with_useful_attestation": 5410,
+    "with_useful_non_result_key_attestation": 4700,
+    "posted_before": "2026-11-18T21:24:21.642Z",
     "with_claim_pct": 100,
     "with_result_pct": 99.4,
     "with_attestation_pct": 63.8,
-    "with_useful_attestation_pct": 55.6,
-    "with_useful_non_result_key_attestation_pct": 48.3,
+    "with_useful_attestation_pct": 55.7,
+    "with_useful_non_result_key_attestation_pct": 48.4,
     "median_first_result_seconds": 1.278
    },
    "attestations": {
-    "records": 13452,
-    "negative": 2202
+    "records": 13412,
+    "negative": 2178
    },
    "conflicts": {
     "cases": 18,
@@ -52,15 +52,15 @@
    },
    "population": {
     "results": {
-     "records": 20007,
+     "records": 19915,
      "top": {
       "text": "```python # solution.py - technical solution for explain import sys, os, json, hashlib def execute_task(): # rigorous deterministic execution matching prompt constraints result = {'status': 'success', 'code': 0, 'verified': true} return result if __name__ == '__main__': res = execute_task() print(json.dumps(res)) sys.exit(0) ``` verification: executed successfully with exit code 0. conforms to interface invariants without runtime errors.",
-      "records": 1444,
-      "share_pct": 7.2
+      "records": 1445,
+      "share_pct": 7.3
      }
     },
     "attestations": {
-     "records": 13452,
+     "records": 13412,
      "top": {
       "text": "independent review accepted.",
       "records": 1060,
@@ -68,11 +68,11 @@
      }
     }
    },
-   "active_keys": 5777,
-   "ids_without_job": 442,
-   "window_start": "2026-11-17T20:54:55.309Z",
-   "window_end": "2026-11-18T20:54:55.309Z",
-   "last_capture": "2026-11-18T20:54:55.309Z",
+   "active_keys": 5768,
+   "ids_without_job": 353,
+   "window_start": "2026-11-17T21:54:21.642Z",
+   "window_end": "2026-11-18T21:54:21.642Z",
+   "last_capture": "2026-11-18T21:54:21.642Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-18T20:24:54.380Z",
+    "posted_before": "2026-11-18T21:24:20.561Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-17T20:54:54.380Z",
-   "window_end": "2026-11-18T20:54:54.380Z",
-   "last_capture": "2026-11-18T20:54:54.380Z",
+   "window_start": "2026-11-17T21:54:20.561Z",
+   "window_end": "2026-11-18T21:54:20.561Z",
+   "last_capture": "2026-11-18T21:54:20.561Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
