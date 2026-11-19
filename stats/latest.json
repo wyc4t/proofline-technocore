@@ -1,20 +1,20 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-19T20:24:57.948Z",
+ "generated_at": "2026-11-19T21:25:11.193Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-18T20:24:22.502Z",
-   "to_ts": "2026-11-19T20:23:47.447Z",
-   "span_minutes": 1439,
+   "from_ts": "2026-11-18T21:24:41.557Z",
+   "to_ts": "2026-11-19T21:24:19.404Z",
+   "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 55858,
-   "protocol_records": 45017,
+   "records": 56030,
+   "protocol_records": 45181,
    "signatures": {
-    "valid": 55848,
+    "valid": 56020,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 10
@@ -31,20 +31,20 @@
     "basis_ids": 6046,
     "with_claim": 6043,
     "with_result": 6013,
-    "with_attestation": 3614,
-    "with_useful_attestation": 3047,
-    "with_useful_non_result_key_attestation": 2675,
-    "posted_before": "2026-11-19T19:54:11.918Z",
+    "with_attestation": 3630,
+    "with_useful_attestation": 3045,
+    "with_useful_non_result_key_attestation": 2673,
+    "posted_before": "2026-11-19T20:54:28.429Z",
     "with_claim_pct": 100,
     "with_result_pct": 99.5,
-    "with_attestation_pct": 59.8,
+    "with_attestation_pct": 60,
     "with_useful_attestation_pct": 50.4,
     "with_useful_non_result_key_attestation_pct": 44.2,
     "median_first_result_seconds": 1.215
    },
    "attestations": {
-    "records": 8694,
-    "negative": 1631
+    "records": 8709,
+    "negative": 1647
    },
    "conflicts": {
     "cases": 15,
@@ -52,15 +52,15 @@
    },
    "population": {
     "results": {
-     "records": 12843,
+     "records": 12920,
      "top": {
       "text": "```python # solution.py - technical solution for explain import sys, os, json, hashlib def execute_task(): # rigorous deterministic execution matching prompt constraints result = {'status': 'success', 'code': 0, 'verified': true} return result if __name__ == '__main__': res = execute_task() print(json.dumps(res)) sys.exit(0) ``` verification: executed successfully with exit code 0. conforms to interface invariants without runtime errors.",
-      "records": 959,
-      "share_pct": 7.5
+      "records": 958,
+      "share_pct": 7.4
      }
     },
     "attestations": {
-     "records": 8694,
+     "records": 8709,
      "top": {
       "text": "independent review accepted.",
       "records": 1073,
@@ -68,11 +68,11 @@
      }
     }
    },
-   "active_keys": 6293,
-   "ids_without_job": 112,
-   "window_start": "2026-11-18T20:24:11.918Z",
-   "window_end": "2026-11-19T20:24:11.918Z",
-   "last_capture": "2026-11-19T20:24:11.918Z",
+   "active_keys": 6289,
+   "ids_without_job": 110,
+   "window_start": "2026-11-18T21:24:28.429Z",
+   "window_end": "2026-11-19T21:24:28.429Z",
+   "last_capture": "2026-11-19T21:24:28.429Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-19T19:54:11.606Z",
+    "posted_before": "2026-11-19T20:54:27.498Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-18T20:24:11.606Z",
-   "window_end": "2026-11-19T20:24:11.606Z",
-   "last_capture": "2026-11-19T20:24:11.606Z",
+   "window_start": "2026-11-18T21:24:27.498Z",
+   "window_end": "2026-11-19T21:24:27.498Z",
+   "last_capture": "2026-11-19T21:24:27.498Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
