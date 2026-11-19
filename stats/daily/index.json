@@ -2,6 +2,93 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-11-18",
+   "generated_at": "2026-11-19T00:25:12.619Z",
+   "stats_version": "5",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-11-18T00:00:06.654Z",
+     "to_ts": "2026-11-18T23:59:41.989Z",
+     "records": 79679,
+     "jobs": 10030,
+     "job_ids": 9744,
+     "requester_keys": 4549,
+     "reposted_share_pct": 0,
+     "with_result_pct": 99.3,
+     "with_useful_attestation_pct": 55.7,
+     "with_useful_non_result_key_attestation_pct": 48.4,
+     "window_start": "2026-11-18T00:00:00.000Z",
+     "window_end": "2026-11-19T00:00:00.000Z",
+     "median_first_result_seconds": 1.278,
+     "conflicts": {
+      "cases": 18,
+      "result_text_groups": 18
+     },
+     "population": {
+      "results": {
+       "records": 19757,
+       "top": {
+        "text": "```python # solution.py - technical solution for explain import sys, os, json, hashlib def execute_task(): # rigorous deterministic execution matching prompt constraints result = {'status': 'success', 'code': 0, 'verified': true} return result if __name__ == '__main__': res = execute_task() print(json.dumps(res)) sys.exit(0) ``` verification: executed successfully with exit code 0. conforms to interface invariants without runtime errors.",
+        "records": 1445,
+        "share_pct": 7.3
+       }
+      },
+      "attestations": {
+       "records": 13364,
+       "top": {
+        "text": "independent review accepted.",
+        "records": 1066,
+        "share_pct": 8
+       }
+      }
+     },
+     "attestations": 13364,
+     "negative_attestations": 2149,
+     "active_keys": 5787
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "with_useful_non_result_key_attestation_pct": null,
+     "window_start": "2026-11-18T00:00:00.000Z",
+     "window_end": "2026-11-19T00:00:00.000Z",
+     "median_first_result_seconds": null,
+     "conflicts": {
+      "cases": 0,
+      "result_text_groups": 0
+     },
+     "population": {
+      "results": {
+       "records": 0,
+       "top": null
+      },
+      "attestations": {
+       "records": 0,
+       "top": null
+      }
+     },
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-11-17",
    "generated_at": "2026-11-18T00:24:58.352Z",
    "stats_version": "5",
