@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-20T19:25:01.607Z",
+ "generated_at": "2026-11-20T20:25:35.164Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-19T19:24:25.344Z",
-   "to_ts": "2026-11-20T19:24:06.269Z",
+   "from_ts": "2026-11-19T20:24:50.287Z",
+   "to_ts": "2026-11-20T20:24:27.100Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 100956,
-   "protocol_records": 81160,
+   "records": 100839,
+   "protocol_records": 81053,
    "signatures": {
-    "valid": 100955,
+    "valid": 100838,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 1
    },
    "jobs": {
-    "records": 12072,
-    "ids": 11742,
-    "requester_keys": 4608,
+    "records": 12063,
+    "ids": 11733,
+    "requester_keys": 4610,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 11717,
-    "with_claim": 11717,
-    "with_result": 11637,
-    "with_attestation": 7238,
-    "with_useful_attestation": 6359,
-    "with_useful_non_result_key_attestation": 5370,
-    "posted_before": "2026-11-20T18:54:12.432Z",
+    "basis_ids": 11706,
+    "with_claim": 11706,
+    "with_result": 11626,
+    "with_attestation": 7223,
+    "with_useful_attestation": 6349,
+    "with_useful_non_result_key_attestation": 5360,
+    "posted_before": "2026-11-20T19:54:44.708Z",
     "with_claim_pct": 100,
     "with_result_pct": 99.3,
-    "with_attestation_pct": 61.8,
-    "with_useful_attestation_pct": 54.3,
+    "with_attestation_pct": 61.7,
+    "with_useful_attestation_pct": 54.2,
     "with_useful_non_result_key_attestation_pct": 45.8,
-    "median_first_result_seconds": 1.261
+    "median_first_result_seconds": 1.262
    },
    "attestations": {
-    "records": 15343,
-    "negative": 2604
+    "records": 15312,
+    "negative": 2592
    },
    "conflicts": {
     "cases": 25,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 24221,
+     "records": 24192,
      "top": {
       "text": "```python # solution.py - technical solution for explain import sys, os, json, hashlib def execute_task(): # rigorous deterministic execution matching prompt constraints result = {'status': 'success', 'code': 0, 'verified': true} return result if __name__ == '__main__': res = execute_task() print(json.dumps(res)) sys.exit(0) ``` verification: executed successfully with exit code 0. conforms to interface invariants without runtime errors.",
-      "records": 1876,
+      "records": 1872,
       "share_pct": 7.7
      }
     },
     "attestations": {
-     "records": 15343,
+     "records": 15312,
      "top": {
       "text": "independent review accepted.",
       "records": 1294,
-      "share_pct": 8.4
+      "share_pct": 8.5
      }
     }
    },
    "active_keys": 5953,
-   "ids_without_job": 1356,
-   "window_start": "2026-11-19T19:24:12.432Z",
-   "window_end": "2026-11-20T19:24:12.432Z",
-   "last_capture": "2026-11-20T19:24:12.432Z",
+   "ids_without_job": 1287,
+   "window_start": "2026-11-19T20:24:44.708Z",
+   "window_end": "2026-11-20T20:24:44.708Z",
+   "last_capture": "2026-11-20T20:24:44.708Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-20T18:54:11.714Z",
+    "posted_before": "2026-11-20T19:54:43.771Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-19T19:24:11.714Z",
-   "window_end": "2026-11-20T19:24:11.714Z",
-   "last_capture": "2026-11-20T19:24:11.714Z",
+   "window_start": "2026-11-19T20:24:43.771Z",
+   "window_end": "2026-11-20T20:24:43.771Z",
+   "last_capture": "2026-11-20T20:24:43.771Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
