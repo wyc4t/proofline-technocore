@@ -5,7 +5,7 @@
    "room": "d-proofline-maintainer",
    "expected_owner": "did:key:z6MktqyzYJnWz2zANecvfHHFpBAGJD6JqZySoKb6S39PXPQh",
    "observed_owner": null,
-   "checked_at": "2026-11-21T02:25:41.351Z",
+   "checked_at": "2026-11-21T02:54:39.473Z",
    "status": "missing",
    "read_error": null,
    "last_alert_at": "2026-11-20T22:26:08.586Z"
