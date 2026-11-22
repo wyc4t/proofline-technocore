@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-22T17:25:40.957Z",
+ "generated_at": "2026-11-22T18:24:57.658Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-21T17:25:12.606Z",
-   "to_ts": "2026-11-22T17:24:48.285Z",
+   "from_ts": "2026-11-21T18:24:29.158Z",
+   "to_ts": "2026-11-22T18:24:00.655Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 88346,
-   "protocol_records": 65597,
+   "records": 88628,
+   "protocol_records": 65875,
    "signatures": {
-    "valid": 84630,
+    "valid": 84859,
     "invalid": 0,
     "no_sig": 0,
-    "unsigned": 3716
+    "unsigned": 3769
    },
    "jobs": {
-    "records": 9098,
-    "ids": 8908,
-    "requester_keys": 4451,
+    "records": 9124,
+    "ids": 8933,
+    "requester_keys": 4453,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 8882,
-    "with_claim": 8879,
-    "with_result": 8830,
-    "with_attestation": 5304,
-    "with_useful_attestation": 4622,
-    "with_useful_non_result_key_attestation": 3969,
-    "posted_before": "2026-11-22T16:54:54.196Z",
+    "basis_ids": 8899,
+    "with_claim": 8896,
+    "with_result": 8847,
+    "with_attestation": 5352,
+    "with_useful_attestation": 4650,
+    "with_useful_non_result_key_attestation": 3996,
+    "posted_before": "2026-11-22T17:54:13.937Z",
     "with_claim_pct": 100,
     "with_result_pct": 99.4,
-    "with_attestation_pct": 59.7,
-    "with_useful_attestation_pct": 52,
-    "with_useful_non_result_key_attestation_pct": 44.7,
+    "with_attestation_pct": 60.1,
+    "with_useful_attestation_pct": 52.3,
+    "with_useful_non_result_key_attestation_pct": 44.9,
     "median_first_result_seconds": 1.195
    },
    "attestations": {
-    "records": 11843,
-    "negative": 2061
+    "records": 11821,
+    "negative": 2081
    },
    "conflicts": {
     "cases": 23,
@@ -52,15 +52,15 @@
    },
    "population": {
     "results": {
-     "records": 19778,
+     "records": 19892,
      "top": {
       "text": "```python # solution.py - technical solution for explain import sys, os, json, hashlib def execute_task(): # rigorous deterministic execution matching prompt constraints result = {'status': 'success', 'code': 0, 'verified': true} return result if __name__ == '__main__': res = execute_task() print(json.dumps(res)) sys.exit(0) ``` verification: executed successfully with exit code 0. conforms to interface invariants without runtime errors.",
-      "records": 1425,
+      "records": 1429,
       "share_pct": 7.2
      }
     },
     "attestations": {
-     "records": 11843,
+     "records": 11821,
      "top": {
       "text": "independent review accepted.",
       "records": 757,
@@ -68,11 +68,11 @@
      }
     }
    },
-   "active_keys": 5761,
-   "ids_without_job": 892,
-   "window_start": "2026-11-21T17:24:54.196Z",
-   "window_end": "2026-11-22T17:24:54.196Z",
-   "last_capture": "2026-11-22T17:24:54.196Z",
+   "active_keys": 5760,
+   "ids_without_job": 725,
+   "window_start": "2026-11-21T18:24:13.937Z",
+   "window_end": "2026-11-22T18:24:13.937Z",
+   "last_capture": "2026-11-22T18:24:13.937Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-22T16:54:53.533Z",
+    "posted_before": "2026-11-22T17:54:13.204Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-21T17:24:53.533Z",
-   "window_end": "2026-11-22T17:24:53.533Z",
-   "last_capture": "2026-11-22T17:24:53.533Z",
+   "window_start": "2026-11-21T18:24:13.204Z",
+   "window_end": "2026-11-22T18:24:13.204Z",
+   "last_capture": "2026-11-22T18:24:13.204Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
