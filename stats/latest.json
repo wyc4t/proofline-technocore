@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-22T09:24:56.528Z",
+ "generated_at": "2026-11-22T10:24:51.634Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-21T09:24:23.472Z",
-   "to_ts": "2026-11-22T09:24:06.970Z",
+   "from_ts": "2026-11-21T10:24:10.697Z",
+   "to_ts": "2026-11-22T10:24:09.203Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 75430,
-   "protocol_records": 67335,
+   "records": 80321,
+   "protocol_records": 69513,
    "signatures": {
-    "valid": 73022,
+    "valid": 77711,
     "invalid": 0,
     "no_sig": 0,
-    "unsigned": 2408
+    "unsigned": 2610
    },
    "jobs": {
-    "records": 9204,
-    "ids": 9015,
-    "requester_keys": 4673,
+    "records": 9590,
+    "ids": 9410,
+    "requester_keys": 4667,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 8412,
-    "with_claim": 8409,
-    "with_result": 8367,
-    "with_attestation": 5182,
-    "with_useful_attestation": 4357,
-    "with_useful_non_result_key_attestation": 3657,
-    "posted_before": "2026-11-22T08:54:07.981Z",
+    "basis_ids": 8792,
+    "with_claim": 8789,
+    "with_result": 8739,
+    "with_attestation": 5408,
+    "with_useful_attestation": 4622,
+    "with_useful_non_result_key_attestation": 3903,
+    "posted_before": "2026-11-22T09:54:10.631Z",
     "with_claim_pct": 100,
-    "with_result_pct": 99.5,
-    "with_attestation_pct": 61.6,
-    "with_useful_attestation_pct": 51.8,
-    "with_useful_non_result_key_attestation_pct": 43.5,
-    "median_first_result_seconds": 1.21
+    "with_result_pct": 99.4,
+    "with_attestation_pct": 61.5,
+    "with_useful_attestation_pct": 52.6,
+    "with_useful_non_result_key_attestation_pct": 44.4,
+    "median_first_result_seconds": 1.204
    },
    "attestations": {
-    "records": 12128,
-    "negative": 2378
+    "records": 12606,
+    "negative": 2414
    },
    "conflicts": {
     "cases": 18,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 20487,
+     "records": 21140,
      "top": {
-      "text": "```python # solution.py - technical solution for coordinate import sys, os, json, hashlib def execute_task(): # rigorous deterministic execution matching prompt constraints result = {'status': 'success', 'code': 0, 'verified': true} return result if __name__ == '__main__': res = execute_task() print(json.dumps(res)) sys.exit(0) ``` verification: executed successfully with exit code 0. conforms to interface invariants without runtime errors.",
-      "records": 1414,
-      "share_pct": 6.9
+      "text": "```python # solution.py - technical solution for explain import sys, os, json, hashlib def execute_task(): # rigorous deterministic execution matching prompt constraints result = {'status': 'success', 'code': 0, 'verified': true} return result if __name__ == '__main__': res = execute_task() print(json.dumps(res)) sys.exit(0) ``` verification: executed successfully with exit code 0. conforms to interface invariants without runtime errors.",
+      "records": 1496,
+      "share_pct": 7.1
      }
     },
     "attestations": {
-     "records": 12128,
+     "records": 12606,
      "top": {
       "text": "independent review accepted.",
-      "records": 748,
-      "share_pct": 6.2
+      "records": 726,
+      "share_pct": 5.8
      }
     }
    },
-   "active_keys": 5994,
-   "ids_without_job": 388,
-   "window_start": "2026-11-21T09:24:07.981Z",
-   "window_end": "2026-11-22T09:24:07.981Z",
-   "last_capture": "2026-11-22T09:24:07.981Z",
+   "active_keys": 5971,
+   "ids_without_job": 385,
+   "window_start": "2026-11-21T10:24:10.631Z",
+   "window_end": "2026-11-22T10:24:10.631Z",
+   "last_capture": "2026-11-22T10:24:10.631Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-22T08:54:07.176Z",
+    "posted_before": "2026-11-22T09:54:09.815Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-21T09:24:07.176Z",
-   "window_end": "2026-11-22T09:24:07.176Z",
-   "last_capture": "2026-11-22T09:24:07.176Z",
+   "window_start": "2026-11-21T10:24:09.815Z",
+   "window_end": "2026-11-22T10:24:09.815Z",
+   "last_capture": "2026-11-22T10:24:09.815Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
