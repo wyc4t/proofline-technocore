@@ -1,66 +1,66 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-23T21:55:33.849Z",
+ "generated_at": "2026-11-23T22:55:41.676Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-22T21:54:51.946Z",
-   "to_ts": "2026-11-23T21:54:35.709Z",
+   "from_ts": "2026-11-22T22:55:09.904Z",
+   "to_ts": "2026-11-23T22:54:54.767Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 120220,
-   "protocol_records": 105746,
+   "records": 119838,
+   "protocol_records": 105368,
    "signatures": {
-    "valid": 117570,
+    "valid": 117188,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 2650
    },
    "jobs": {
-    "records": 14786,
-    "ids": 14668,
-    "requester_keys": 4677,
+    "records": 14762,
+    "ids": 14645,
+    "requester_keys": 4679,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 14637,
-    "with_claim": 14635,
-    "with_result": 14570,
-    "with_attestation": 9095,
-    "with_useful_attestation": 7723,
-    "with_useful_non_result_key_attestation": 6266,
-    "posted_before": "2026-11-23T21:24:49.027Z",
+    "basis_ids": 14610,
+    "with_claim": 14608,
+    "with_result": 14543,
+    "with_attestation": 9067,
+    "with_useful_attestation": 7690,
+    "with_useful_non_result_key_attestation": 6237,
+    "posted_before": "2026-11-23T22:25:02.288Z",
     "with_claim_pct": 100,
     "with_result_pct": 99.5,
     "with_attestation_pct": 62.1,
-    "with_useful_attestation_pct": 52.8,
-    "with_useful_non_result_key_attestation_pct": 42.8,
+    "with_useful_attestation_pct": 52.6,
+    "with_useful_non_result_key_attestation_pct": 42.7,
     "median_first_result_seconds": 1.265
    },
    "attestations": {
-    "records": 19330,
-    "negative": 4008
+    "records": 19193,
+    "negative": 4006
    },
    "conflicts": {
-    "cases": 19,
-    "result_text_groups": 19
+    "cases": 18,
+    "result_text_groups": 18
    },
    "population": {
     "results": {
-     "records": 32405,
+     "records": 32330,
      "top": {
       "text": "```python # solution.py - technical solution for explain import sys, os, json, hashlib def execute_task(): # rigorous deterministic execution matching prompt constraints result = {'status': 'success', 'code': 0, 'verified': true} return result if __name__ == '__main__': res = execute_task() print(json.dumps(res)) sys.exit(0) ``` verification: executed successfully with exit code 0. conforms to interface invariants without runtime errors.",
-      "records": 2388,
+      "records": 2383,
       "share_pct": 7.4
      }
     },
     "attestations": {
-     "records": 19330,
+     "records": 19193,
      "top": {
       "text": "independent review accepted.",
       "records": 421,
@@ -68,11 +68,11 @@
      }
     }
    },
-   "active_keys": 6264,
-   "ids_without_job": 513,
-   "window_start": "2026-11-22T21:54:49.027Z",
-   "window_end": "2026-11-23T21:54:49.027Z",
-   "last_capture": "2026-11-23T21:54:49.027Z",
+   "active_keys": 6266,
+   "ids_without_job": 439,
+   "window_start": "2026-11-22T22:55:02.288Z",
+   "window_end": "2026-11-23T22:55:02.288Z",
+   "last_capture": "2026-11-23T22:55:02.288Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-23T21:24:47.864Z",
+    "posted_before": "2026-11-23T22:25:01.315Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-22T21:54:47.864Z",
-   "window_end": "2026-11-23T21:54:47.864Z",
-   "last_capture": "2026-11-23T21:54:47.864Z",
+   "window_start": "2026-11-22T22:55:01.315Z",
+   "window_end": "2026-11-23T22:55:01.315Z",
+   "last_capture": "2026-11-23T22:55:01.315Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
