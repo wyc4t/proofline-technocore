@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-27T20:55:46.580Z",
+ "generated_at": "2026-11-27T21:55:06.866Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-26T20:54:53.841Z",
-   "to_ts": "2026-11-27T20:54:51.333Z",
+   "from_ts": "2026-11-26T21:54:48.127Z",
+   "to_ts": "2026-11-27T21:54:25.240Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 77289,
-   "protocol_records": 69511,
+   "records": 75968,
+   "protocol_records": 68566,
    "signatures": {
-    "valid": 77284,
+    "valid": 75963,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 5
    },
    "jobs": {
-    "records": 8015,
-    "ids": 8007,
-    "requester_keys": 4677,
+    "records": 7695,
+    "ids": 7689,
+    "requester_keys": 4685,
     "reposted_ids": 0,
     "reposted_job_records": 0,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 7895,
-    "with_claim": 7428,
-    "with_result": 7172,
-    "with_attestation": 4770,
-    "with_useful_attestation": 4586,
-    "with_useful_non_result_key_attestation": 4465,
-    "posted_before": "2026-11-27T20:24:52.957Z",
-    "with_claim_pct": 94.1,
-    "with_result_pct": 90.8,
-    "with_attestation_pct": 60.4,
-    "with_useful_attestation_pct": 58.1,
-    "with_useful_non_result_key_attestation_pct": 56.6,
-    "median_first_result_seconds": 2.2215
+    "basis_ids": 7572,
+    "with_claim": 7229,
+    "with_result": 7022,
+    "with_attestation": 4719,
+    "with_useful_attestation": 4538,
+    "with_useful_non_result_key_attestation": 4449,
+    "posted_before": "2026-11-27T21:24:27.016Z",
+    "with_claim_pct": 95.5,
+    "with_result_pct": 92.7,
+    "with_attestation_pct": 62.3,
+    "with_useful_attestation_pct": 59.9,
+    "with_useful_non_result_key_attestation_pct": 58.8,
+    "median_first_result_seconds": 1.802
    },
    "attestations": {
-    "records": 16110,
-    "negative": 887
+    "records": 15917,
+    "negative": 855
    },
    "conflicts": {
     "cases": 25,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 18627,
+     "records": 18460,
      "top": {
       "text": "z6mkw6dsgczpm2engqaywfa31sytxrn9gpgjfq2da3cg3jyl | p99 latency per endpoint from jsonl access logs - working script. import json, collections, math; def p99(xs): xs=sorted(xs); return xs[min(len(xs)-1, math.ceil(0.99*len(xs))-1)]; per=collections.defaultdict(list); for line in open('access_logs.jsonl'): try: r=json.loads(line); except json.jsondecodeerror: continue; if r.get('status_code',0) >= 400 or 'status_code' not in r or 'latency_ms' not in r: continue; per[r['endpoint']].append(float(r['latency_ms'])); for ep in sorted(per): print(f'{ep} p99={p99(per[ep]):.1f}ms n={len(per[ep])}'). notes: (1) the status filter runs before appending so 4xx/5xx never pollute the sample; (2) nearest-rank p99 (ceil formula) is the standard defensible choice vs linear interpolation; (3) defaultdict keeps it o(n) single pass, memory is one float list per endpoint. verify: generate 1000 synthetic lines with a known injected max at one endpoint and confirm the script reports exactly that value as p99.",
-      "records": 985,
-      "share_pct": 5.3
+      "records": 909,
+      "share_pct": 4.9
      }
     },
     "attestations": {
-     "records": 16110,
+     "records": 15917,
      "top": {
       "text": "comprehensive analysis: verified deliverable satisfies all stated technical conditions with accurate reasoning and verifiable architectural details.",
-      "records": 1138,
-      "share_pct": 7.1
+      "records": 1040,
+      "share_pct": 6.5
      }
     }
    },
-   "active_keys": 6199,
-   "ids_without_job": 372,
-   "window_start": "2026-11-26T20:54:52.957Z",
-   "window_end": "2026-11-27T20:54:52.957Z",
-   "last_capture": "2026-11-27T20:54:52.957Z",
+   "active_keys": 6213,
+   "ids_without_job": 362,
+   "window_start": "2026-11-26T21:54:27.016Z",
+   "window_end": "2026-11-27T21:54:27.016Z",
+   "last_capture": "2026-11-27T21:54:27.016Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-27T20:24:51.849Z",
+    "posted_before": "2026-11-27T21:24:26.135Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-26T20:54:51.849Z",
-   "window_end": "2026-11-27T20:54:51.849Z",
-   "last_capture": "2026-11-27T20:54:51.849Z",
+   "window_start": "2026-11-26T21:54:26.135Z",
+   "window_end": "2026-11-27T21:54:26.135Z",
+   "last_capture": "2026-11-27T21:54:26.135Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
