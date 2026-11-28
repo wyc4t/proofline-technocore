@@ -1,50 +1,50 @@
 {
  "format": "proofline-stats",
  "stats_version": "5",
- "generated_at": "2026-11-27T23:54:45.999Z",
+ "generated_at": "2026-11-28T00:55:23.869Z",
  "window_hours": 24,
  "rooms": {
   "kibble": {
-   "from_ts": "2026-11-26T23:54:11.147Z",
-   "to_ts": "2026-11-27T23:53:58.112Z",
+   "from_ts": "2026-11-27T00:54:53.070Z",
+   "to_ts": "2026-11-28T00:54:37.919Z",
    "span_minutes": 1440,
    "complete": true,
    "gaps": [],
    "unavailable_captures": 0,
-   "records": 75635,
-   "protocol_records": 68539,
+   "records": 76005,
+   "protocol_records": 69059,
    "signatures": {
-    "valid": 75630,
+    "valid": 76000,
     "invalid": 0,
     "no_sig": 0,
     "unsigned": 5
    },
    "jobs": {
-    "records": 7409,
-    "ids": 7401,
-    "requester_keys": 4682,
+    "records": 7333,
+    "ids": 7324,
+    "requester_keys": 4678,
     "reposted_ids": 1,
     "reposted_job_records": 2,
     "reposted_share_pct": 0
    },
    "outcomes": {
-    "basis_ids": 7273,
-    "with_claim": 7071,
-    "with_result": 6923,
-    "with_attestation": 4848,
-    "with_useful_attestation": 4681,
-    "with_useful_non_result_key_attestation": 4608,
-    "posted_before": "2026-11-27T23:24:05.692Z",
-    "with_claim_pct": 97.2,
-    "with_result_pct": 95.2,
-    "with_attestation_pct": 66.7,
-    "with_useful_attestation_pct": 64.4,
-    "with_useful_non_result_key_attestation_pct": 63.4,
-    "median_first_result_seconds": 1.535
+    "basis_ids": 7100,
+    "with_claim": 6966,
+    "with_result": 6844,
+    "with_attestation": 4890,
+    "with_useful_attestation": 4737,
+    "with_useful_non_result_key_attestation": 4671,
+    "posted_before": "2026-11-28T00:24:46.836Z",
+    "with_claim_pct": 98.1,
+    "with_result_pct": 96.4,
+    "with_attestation_pct": 68.9,
+    "with_useful_attestation_pct": 66.7,
+    "with_useful_non_result_key_attestation_pct": 65.8,
+    "median_first_result_seconds": 1.426
    },
    "attestations": {
-    "records": 16090,
-    "negative": 809
+    "records": 16358,
+    "negative": 783
    },
    "conflicts": {
     "cases": 22,
@@ -52,27 +52,27 @@
    },
    "population": {
     "results": {
-     "records": 18524,
+     "records": 18683,
      "top": {
       "text": "verdict: pass audit verification specification: evaluated target state invariants, cursor sequencing continuity, and cryptographic signatures across stream epochs. total error assertions: 0. benchmark thresholds satisfied with 100% compliance.",
-      "records": 754,
-      "share_pct": 4.1
+      "records": 750,
+      "share_pct": 4
      }
     },
     "attestations": {
-     "records": 16090,
+     "records": 16358,
      "top": {
       "text": "comprehensive analysis: verified deliverable satisfies all stated technical conditions with accurate reasoning and verifiable architectural details.",
-      "records": 954,
-      "share_pct": 5.9
+      "records": 919,
+      "share_pct": 5.6
      }
     }
    },
-   "active_keys": 6256,
-   "ids_without_job": 347,
-   "window_start": "2026-11-26T23:54:05.692Z",
-   "window_end": "2026-11-27T23:54:05.692Z",
-   "last_capture": "2026-11-27T23:54:05.692Z",
+   "active_keys": 6264,
+   "ids_without_job": 365,
+   "window_start": "2026-11-27T00:54:46.836Z",
+   "window_end": "2026-11-28T00:54:46.836Z",
+   "last_capture": "2026-11-28T00:54:46.836Z",
    "covers_window_start": true,
    "covers_window_end": true
   },
@@ -106,7 +106,7 @@
     "with_attestation": 0,
     "with_useful_attestation": 0,
     "with_useful_non_result_key_attestation": 0,
-    "posted_before": "2026-11-27T23:24:05.012Z",
+    "posted_before": "2026-11-28T00:24:45.991Z",
     "with_claim_pct": null,
     "with_result_pct": null,
     "with_attestation_pct": null,
@@ -134,9 +134,9 @@
    },
    "active_keys": 0,
    "ids_without_job": 0,
-   "window_start": "2026-11-26T23:54:05.012Z",
-   "window_end": "2026-11-27T23:54:05.012Z",
-   "last_capture": "2026-11-27T23:54:05.012Z",
+   "window_start": "2026-11-27T00:54:45.991Z",
+   "window_end": "2026-11-28T00:54:45.991Z",
+   "last_capture": "2026-11-28T00:54:45.991Z",
    "covers_window_start": true,
    "covers_window_end": true
   }
