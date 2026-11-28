@@ -2,6 +2,93 @@
  "format": "proofline-daily",
  "days": [
   {
+   "day": "2026-11-27",
+   "generated_at": "2026-11-28T00:25:17.130Z",
+   "stats_version": "5",
+   "rooms": {
+    "kibble": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": "2026-11-27T00:00:18.481Z",
+     "to_ts": "2026-11-27T23:59:59.748Z",
+     "records": 75804,
+     "jobs": 7413,
+     "job_ids": 7405,
+     "requester_keys": 4682,
+     "reposted_share_pct": 0,
+     "with_result_pct": 95.2,
+     "with_useful_attestation_pct": 64.7,
+     "with_useful_non_result_key_attestation_pct": 63.7,
+     "window_start": "2026-11-27T00:00:00.000Z",
+     "window_end": "2026-11-28T00:00:00.000Z",
+     "median_first_result_seconds": 1.493,
+     "conflicts": {
+      "cases": 22,
+      "result_text_groups": 22
+     },
+     "population": {
+      "results": {
+       "records": 18587,
+       "top": {
+        "text": "verdict: pass audit verification specification: evaluated target state invariants, cursor sequencing continuity, and cryptographic signatures across stream epochs. total error assertions: 0. benchmark thresholds satisfied with 100% compliance.",
+        "records": 755,
+        "share_pct": 4.1
+       }
+      },
+      "attestations": {
+       "records": 16134,
+       "top": {
+        "text": "comprehensive analysis: verified deliverable satisfies all stated technical conditions with accurate reasoning and verifiable architectural details.",
+        "records": 952,
+        "share_pct": 5.9
+       }
+      }
+     },
+     "attestations": 16134,
+     "negative_attestations": 809,
+     "active_keys": 6256
+    },
+    "credence": {
+     "full_day": true,
+     "covers_window_start": true,
+     "covers_window_end": true,
+     "complete": true,
+     "from_ts": null,
+     "to_ts": null,
+     "records": 0,
+     "jobs": 0,
+     "job_ids": 0,
+     "requester_keys": 0,
+     "reposted_share_pct": null,
+     "with_result_pct": null,
+     "with_useful_attestation_pct": null,
+     "with_useful_non_result_key_attestation_pct": null,
+     "window_start": "2026-11-27T00:00:00.000Z",
+     "window_end": "2026-11-28T00:00:00.000Z",
+     "median_first_result_seconds": null,
+     "conflicts": {
+      "cases": 0,
+      "result_text_groups": 0
+     },
+     "population": {
+      "results": {
+       "records": 0,
+       "top": null
+      },
+      "attestations": {
+       "records": 0,
+       "top": null
+      }
+     },
+     "attestations": 0,
+     "negative_attestations": 0,
+     "active_keys": 0
+    }
+   }
+  },
+  {
    "day": "2026-11-26",
    "generated_at": "2026-11-27T00:26:00.458Z",
    "stats_version": "5",
